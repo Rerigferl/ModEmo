@@ -1,5 +1,5 @@
 {
-    "name": "vpm-package.editor",
+    "name": "numeira.mod-emo.editor",
     "references": [ ],
     "includePlatforms": [
         "Editor"

@@ -1,8 +1,8 @@
 {
-  "name": "vpm-package",
-  "version": "0.0.0",
-  "displayName": "",
-  "description": "",
-  "url" : "",
-  "vpmDependencies" : { }
+    "name": "numeira.mod-emo",
+    "version": "0.0.0",
+    "displayName": "",
+    "description": "",
+    "url": "https://github.com/Rerigferl/ModEmo",
+    "vpmDependencies": {}
 }
