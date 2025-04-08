@@ -1,6 +1,12 @@
 {
     "name": "numeira.mod-emo.editor",
-    "references": [ ],
+    "rootNamespace": "",
+    "references": [
+        "numeira.mod-emo.runtime",
+        "numeira.mod-emo.direct-blend-tree",
+        "nadena.dev.ndmf",
+        "nadena.dev.modular-avatar.core"
+    ],
     "includePlatforms": [
         "Editor"
     ],

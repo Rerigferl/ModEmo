@@ -1,13 +1,12 @@
 {
-    "name": "numeira.mod-emo.runtime",
+    "name": "numeira.mod-emo.direct-blend-tree",
     "rootNamespace": "",
-    "references": [
-        "nadena.dev.ndmf.runtime",
-        "nadena.dev.modular-avatar.core"
+    "references": [],
+    "includePlatforms": [
+        "Editor"
     ],
-    "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": false,
