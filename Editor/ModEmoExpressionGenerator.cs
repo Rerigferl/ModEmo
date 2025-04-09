@@ -28,7 +28,15 @@ internal sealed class ModEmoExpressionGenerator
         var animator = this.animator = new AnimatorController() { name = "ModEmo" };
 
         CreateBlendShapeAnimations();
-
+        {
+            var t = DirectBlendTree.AddBlendTree("Expression");
+            t.BlendParameter = "ModEmo/ExpressionID";
+            foreach(var (x, i) in ModEmo.ExportExpressions().SelectMany(x => x).Select((x,i) => (x,i)))
+            {
+               var tr =  t.AddDirectBlendTree(x.Name, i + 1);
+                x.Build(tr, AssetContainer);
+            }
+        }
         var compiledTree = DirectBlendTree.Build(AssetContainer);
         animator.AddLayer("ModEmo DirectBlendTree");
         animator.layers[^1].defaultWeight = 1;

@@ -1,10 +1,12 @@
 ﻿namespace Numeira;
 public class DirectBlendTree : BlendTreeBase
 {
-    public string DirectBlendParameter { get; set; } = "1";
+    public string DirectBlendParameter { get; set; } = "";
 
     public BlendTree Build(Object? assetContainer = null)
     {
+        if (string.IsNullOrEmpty(DirectBlendParameter))
+            DirectBlendParameter = "1";
         var tree = CreateDirectBlendTree();
         tree.name = $"{tree.name}(WD On)";
         void Recursive(BlendTree tree)
@@ -12,7 +14,8 @@ public class DirectBlendTree : BlendTreeBase
             var children = tree.children;
             foreach (ref var x in children.AsSpan())
             {
-                x.directBlendParameter = DirectBlendParameter;
+                if (string.IsNullOrEmpty(x.directBlendParameter))
+                    x.directBlendParameter = DirectBlendParameter;
                 if (x.motion is BlendTree bt)
                 {
                     bt.hideFlags |= HideFlags.HideInHierarchy;
@@ -38,6 +41,7 @@ public class DirectBlendTree : BlendTreeBase
         var blendTree = new BlendTree();
         blendTree.name = Name;
         blendTree.blendType = BlendTreeType.Direct;
+        blendTree.blendParameter = DirectBlendParameter;
         SetNormalizedBlendValues(blendTree, false);
         foreach (var (child, _) in Children)
         {

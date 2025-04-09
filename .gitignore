@@ -72,3 +72,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 /LICENSE.md.meta
+
+Debug/
+Debug.meta

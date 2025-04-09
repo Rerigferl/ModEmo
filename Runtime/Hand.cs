@@ -1,9 +1,10 @@
 ﻿namespace Numeira;
 
+[Flags]
 internal enum Hand
 {
-    None,
-    Left,
-    Right,
-    Both,
+    None = 0,
+    Left = 1,
+    Right = 2,
+    Both = 3,
 }

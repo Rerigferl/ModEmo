@@ -20,18 +20,3 @@ internal static class ComponentExt
         return result.ToArray();
     }
 }
-
-internal static class ListSingleton<T>
-{
-    public static readonly List<T> Value = new(8);
-}
-
-internal static class ListExt
-{
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Span<T> AsSpan<T>(this List<T> list)
-    {
-        var tuple = Unsafe.As<Tuple<T[], int>>(list);
-        return tuple.Item1.AsSpan(0, tuple.Item2);
-    }
-}
