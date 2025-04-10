@@ -63,7 +63,11 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             // TODO: マルチプラットフォーム化の時にいい感じにする
             var fx = animatorAPI.Controllers[VRCAvatarDescriptor.AnimLayerType.FX];
 
-            fx.AddLayer(LayerPriority.Default, BlendShapeControllerGenerator.Generate(context));
+            var priority = new LayerPriority(1);
+
+            fx.AddLayer(priority, InputConverterGenerator.Generate(context));
+            fx.AddLayer(priority, ExpressionControllerGenerator.Generate(context));
+            fx.AddLayer(priority, BlendShapeControllerGenerator.Generate(context));
 
             fx.Parameters = fx.Parameters.AddRange(data.Parameters.Select(x => (AnimatorControllerParameter)x).Select(x => KeyValuePair.Create(x.name, x)));
         }

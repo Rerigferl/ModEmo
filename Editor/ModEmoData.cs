@@ -56,13 +56,4 @@ internal sealed class ModEmoData
         public readonly float Value;
         public readonly float Max;
     }
-
-    private sealed class ParameterEqualityComparer : IEqualityComparer<ParameterConfig>
-    {
-        public bool Equals(ParameterConfig x, ParameterConfig y)
-            => x.nameOrPrefix == y.nameOrPrefix;
-
-        public int GetHashCode(ParameterConfig obj)
-            => obj.nameOrPrefix.GetHashCode();
-    }
 }

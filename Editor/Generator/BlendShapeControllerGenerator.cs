@@ -1,9 +1,7 @@
 ﻿namespace Numeira;
 
-internal sealed class BlendShapeControllerGenerator
+internal static class BlendShapeControllerGenerator
 {
-    private BlendShapeControllerGenerator() { }
-
     public static VirtualLayer Generate(BuildContext context)
     {
         var rootTree = new DirectBlendTree();
@@ -27,7 +25,7 @@ internal sealed class BlendShapeControllerGenerator
 
                 var root = category.AddDirectBlendTree(name);
 
-                var parameterName = $"ModEmo/BlendShape/{name}";
+                var parameterName = $"{ParameterNames.BlendShapes.Prefix}{name}";
                 var overrideParameterName = $"{ParameterNames.Internal.BlendShapes.OverridePrefix}{name}";
                 var controlParameterName = $"{ParameterNames.Internal.BlendShapes.ControlPrefix}{name}";
                 var disableParameterName = $"{ParameterNames.Internal.BlendShapes.DisablePrefix}{name}";
@@ -80,9 +78,43 @@ internal sealed class BlendShapeControllerGenerator
 
                     tree.BlendParameter = controlParameterName;
                 }
-
-
             }
+        }
+
+        layer.StateMachine!.AddState("DirectBlendTree (WD On)", vcc.Clone(rootTree.Build(context.AssetContainer)));
+        return layer;
+    }
+}
+
+internal static class InputConverterGenerator
+{
+
+    public static VirtualLayer Generate(BuildContext context)
+    {
+        var rootTree = new DirectBlendTree();
+        var vcc = context.GetVirtualControllerContext();
+        var layer = VirtualLayer.Create(vcc.CloneContext, "[ModEmo] Input Converter");
+        var data = context.GetData();
+
+        string[] dirs = { "Left", "Right" };
+
+        foreach (var dir in dirs)
+        {
+            var tree = rootTree.AddBlendTree(dir);
+            tree.BlendParameter = $"Gesture{dir}";
+
+            var zero = new AnimationClip() { name = $"Input {dir} Min" };
+            var one = new AnimationClip() { name = $"Input {dir} Max" };
+
+            var bind = new EditorCurveBinding() { path = "", propertyName = $"{ParameterNames.Internal.Input.Prefix}{dir}", type = typeof(Animator) };
+            AnimationUtility.SetEditorCurve(zero, bind, AnimationCurve.Constant(0, 0, 0));
+            AnimationUtility.SetEditorCurve(one, bind, AnimationCurve.Constant(0, 0, 7));
+
+            tree.AddMotion(zero, 0);
+            tree.AddMotion(one, 7);
+
+            data.Parameters.Add(new(tree.BlendParameter, 0));
+            data.Parameters.Add(new(bind.propertyName, 0f));
         }
 
         layer.StateMachine!.AddState("DirectBlendTree (WD On)", vcc.Clone(rootTree.Build(context.AssetContainer)));
