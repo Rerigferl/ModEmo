@@ -4,12 +4,12 @@ using System.Reflection.Emit;
 namespace Numeira;
 public class DirectBlendTree : BlendTreeBase
 {
-    public string DirectBlendParameter { get; set; } = "1";
+    public static string DefaultDirectBlendParameter { get; set; } = "1";
+
+    public string DirectBlendParameter { get; set; } = DefaultDirectBlendParameter; 
 
     public BlendTree Build(Object? assetContainer = null)
     {
-        if (string.IsNullOrEmpty(DirectBlendParameter))
-            DirectBlendParameter = "1";
         var tree = CreateDirectBlendTree();
         tree.name = $"{tree.name}(WD On)";
         void Recursive(BlendTree tree)
@@ -61,25 +61,6 @@ public class DirectBlendTree : BlendTreeBase
         so.FindProperty("m_NormalizedBlendValues").boolValue = value;
         so.ApplyModifiedPropertiesWithoutUndo();
     }
-
-    public IEnumerable<AnimatorParameter> GetAnimatorParameters()
-    {
-        var list = new List<AnimatorParameter>();
-        GetAnimatorParameters(list);
-        return list;
-    }
-
-    public void GetAnimatorParameters(List<AnimatorParameter> result)
-    {
-        CorrectUsageAnimatorParameters(result);
-    }
-
-    protected override void CorrectUsageAnimatorParameters(List<AnimatorParameter> result)
-    {
-        result.Add(new(DirectBlendParameter, 1f));
-        base.CorrectUsageAnimatorParameters(result);
-    }
-
 }
 
 internal static class BlendTreeAccessor

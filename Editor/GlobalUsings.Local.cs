@@ -1,0 +1,1 @@
+﻿global using ParameterNames = Numeira.ModEmoConstants.Parameters;

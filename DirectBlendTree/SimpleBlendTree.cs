@@ -20,10 +20,4 @@ public sealed class SimpleBlendTree : BlendTreeBase
 
         blendTree.AddChild(tree, threshold ?? 0);
     }
-
-    protected override void CorrectUsageAnimatorParameters(List<AnimatorParameter> result)
-    {
-        result.Add(new(BlendParameter, 0f));
-        base.CorrectUsageAnimatorParameters(result);
-    }
 }

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Immutable;
 using nadena.dev.modular_avatar.core;
 using nadena.dev.ndmf;
-using nadena.dev.ndmf.animator;
 using VRC.SDK3.Avatars.Components;
 
 [assembly: ExportsPlugin(typeof(Numeira.ModEmoPluginDefinition))]
@@ -16,7 +11,13 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
 {
     protected override void Configure()
     {
-        InPhase(BuildPhase.Generating).WithRequiredExtensions(new[] { typeof(ExtensionContext) }, sequence => sequence.Run(GeneratingPass.Instance));
+        InPhase(BuildPhase.Generating)
+            .WithRequiredExtensions(new[] { typeof(ExtensionContext), typeof(VirtualControllerContext) }, 
+            sequence =>
+            {
+                sequence
+                    .Run(GeneratingPass.Instance);
+            });
     }
 
     public sealed class ExtensionContext : IExtensionContext
@@ -24,11 +25,9 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
         private ModEmoTagComponent[]? components;
         public ReadOnlySpan<ModEmoTagComponent> Components => components;
         public ModEmo Root { get; private set; } = null!;
-        private static Guid seed;
 
         public void OnActivate(BuildContext context)
         {
-            seed = Guid.NewGuid();
             var components = this.components = context.AvatarRootObject.GetComponentsInChildren<ModEmoTagComponent>(true);
             Root = (components.FirstOrDefault(x => x is ModEmo) as ModEmo)!;
         }
@@ -50,19 +49,23 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
     {
         protected override void Execute(BuildContext context)
         {
-            var modEmo = context.Extension<ExtensionContext>().Root;
+            var modEmo = context.GetModEmoContext().Root;
             if (modEmo == null)
                 return;
 
-            var generator = new ModEmoExpressionGenerator(modEmo, context.AssetContainer);
-            var compiled = generator.Build();
-            context.AssetSaver.SaveAsset(compiled);
 
-            var mama = modEmo.gameObject.AddComponent<ModularAvatarMergeAnimator>();
-            mama.animator = compiled;
-            mama.matchAvatarWriteDefaults = false;
-            mama.pathMode = MergeAnimatorPathMode.Absolute;
-            mama.layerType = VRCAvatarDescriptor.AnimLayerType.FX;
+            var data = context.GetData();
+            data.Parameters.Add(new(ParameterNames.Internal.One, 1f));
+            DirectBlendTree.DefaultDirectBlendParameter = ParameterNames.Internal.One;
+
+            var animatorAPI = context.GetVirtualControllerContext();
+
+            // TODO: マルチプラットフォーム化の時にいい感じにする
+            var fx = animatorAPI.Controllers[VRCAvatarDescriptor.AnimLayerType.FX];
+
+            fx.AddLayer(LayerPriority.Default, BlendShapeControllerGenerator.Generate(context));
+
+            fx.Parameters = fx.Parameters.AddRange(data.Parameters.Select(x => (AnimatorControllerParameter)x).Select(x => KeyValuePair.Create(x.name, x)));
         }
     }
 }

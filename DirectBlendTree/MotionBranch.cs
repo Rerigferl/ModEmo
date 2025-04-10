@@ -17,8 +17,4 @@ public class MotionBranch : IBlendTree
     {
         blendTree.AddChild(Motion, threshold ?? 0);
     }
-
-    void IBlendTree.CorrectUsageAnimatorParameters(List<AnimatorParameter> result)
-    {
-    }
 }

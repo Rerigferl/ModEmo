@@ -16,6 +16,12 @@
     "precompiledReferences": [],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "nadena.dev.ndmf",
+            "expression": "0",
+            "define": "NDMF"
+        }
+    ],
     "noEngineReferences": false
 }
