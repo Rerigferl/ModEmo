@@ -1,4 +1,6 @@
-﻿namespace Numeira;
+﻿using System.Collections.Immutable;
+
+namespace Numeira;
 
 internal static class BlendShapeControllerGenerator
 {
@@ -10,7 +12,21 @@ internal static class BlendShapeControllerGenerator
         var modEmo = context.GetModEmoContext().Root;
         var data = context.GetData();
 
-        var usageMap = modEmo.ExportExpressions().SelectMany(x => x).SelectMany(x => x.BlendShapes).Select(x => x.Name).ToHashSet();
+        var usageMap = modEmo.ExportExpressions().SelectMany(x => x).SelectMany(x => x.Frames).SelectMany(x => x.BlendShapes).Where(blendShape =>
+        {
+            foreach(var (_, x) in data.CategorizedBlendShapes)
+            {
+                if (!x.TryGetValue(blendShape.Name, out var info))
+                    continue;
+
+                if (blendShape.Value != info.Value)
+                    return true;
+            }
+
+            return false;
+        }).Select(x => x.Name).ToHashSet();
+
+        List<string> generated = new();
 
         foreach (var (key, shapes) in data.CategorizedBlendShapes.OrderBy(x => x.Key))
         {
@@ -25,6 +41,7 @@ internal static class BlendShapeControllerGenerator
 
                 var root = category.AddDirectBlendTree(name);
 
+                generated.Add(name);
                 var parameterName = $"{ParameterNames.BlendShapes.Prefix}{name}";
                 var overrideParameterName = $"{ParameterNames.Internal.BlendShapes.OverridePrefix}{name}";
                 var controlParameterName = $"{ParameterNames.Internal.BlendShapes.ControlPrefix}{name}";
@@ -81,41 +98,7 @@ internal static class BlendShapeControllerGenerator
             }
         }
 
-        layer.StateMachine!.AddState("DirectBlendTree (WD On)", vcc.Clone(rootTree.Build(context.AssetContainer)));
-        return layer;
-    }
-}
-
-internal static class InputConverterGenerator
-{
-
-    public static VirtualLayer Generate(BuildContext context)
-    {
-        var rootTree = new DirectBlendTree();
-        var vcc = context.GetVirtualControllerContext();
-        var layer = VirtualLayer.Create(vcc.CloneContext, "[ModEmo] Input Converter");
-        var data = context.GetData();
-
-        string[] dirs = { "Left", "Right" };
-
-        foreach (var dir in dirs)
-        {
-            var tree = rootTree.AddBlendTree(dir);
-            tree.BlendParameter = $"Gesture{dir}";
-
-            var zero = new AnimationClip() { name = $"Input {dir} Min" };
-            var one = new AnimationClip() { name = $"Input {dir} Max" };
-
-            var bind = new EditorCurveBinding() { path = "", propertyName = $"{ParameterNames.Internal.Input.Prefix}{dir}", type = typeof(Animator) };
-            AnimationUtility.SetEditorCurve(zero, bind, AnimationCurve.Constant(0, 0, 0));
-            AnimationUtility.SetEditorCurve(one, bind, AnimationCurve.Constant(0, 0, 7));
-
-            tree.AddMotion(zero, 0);
-            tree.AddMotion(one, 7);
-
-            data.Parameters.Add(new(tree.BlendParameter, 0));
-            data.Parameters.Add(new(bind.propertyName, 0f));
-        }
+        data.GeneratedBlendshapeControls = generated.ToImmutableHashSet();
 
         layer.StateMachine!.AddState("DirectBlendTree (WD On)", vcc.Clone(rootTree.Build(context.AssetContainer)));
         return layer;

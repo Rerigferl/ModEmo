@@ -43,15 +43,7 @@ namespace Numeira
 
             public IModEmoExpressionPatterns Key => expressionPatterns.GetComponent<IModEmoExpressionPatterns>();
 
-            public IEnumerator<IModEmoExpression> GetEnumerator()
-            {
-                foreach(var x in expressionPatterns)
-                {
-                    var component = x.GetComponent<IModEmoExpression>();
-                    if (component != null)
-                        yield return component;
-                }
-            }
+            public IEnumerator<IModEmoExpression> GetEnumerator() => Key.Expressions.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }

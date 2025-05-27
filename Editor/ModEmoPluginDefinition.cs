@@ -58,6 +58,9 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             data.Parameters.Add(new(ParameterNames.Internal.One, 1f));
             DirectBlendTree.DefaultDirectBlendParameter = ParameterNames.Internal.One;
 
+            data.Parameters.Add(new(ParameterNames.Internal.Input.Left, 0));
+            data.Parameters.Add(new(ParameterNames.Internal.Input.Right, 0));
+
             var animatorAPI = context.GetVirtualControllerContext();
 
             // TODO: マルチプラットフォーム化の時にいい感じにする
@@ -70,6 +73,19 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             fx.AddLayer(priority, BlendShapeControllerGenerator.Generate(context));
 
             fx.Parameters = fx.Parameters.AddRange(data.Parameters.Select(x => (AnimatorControllerParameter)x).Select(x => KeyValuePair.Create(x.name, x)));
+
+            new MenuGenerator(context).Generate();
+        }
+    }
+}
+
+static partial class Ext
+{
+    public static void AddLayers(this VirtualAnimatorController controller, LayerPriority priority, params VirtualLayer[] layers)
+    {
+        foreach (var layer in layers)
+        {
+            controller.AddLayer(priority, layer);
         }
     }
 }

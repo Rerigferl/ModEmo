@@ -19,4 +19,15 @@ internal static class ComponentExt
         }
         return result.ToArray();
     }
+
+    public static T GetOrAddComponent<T>(this GameObject obj) where T : Component
+    {
+        if (obj == null)
+            return default!;
+
+        if (obj.TryGetComponent<T>(out var x)) 
+            return x;
+        x = obj.AddComponent<T>();
+        return x;
+    }
 }

@@ -15,6 +15,9 @@ internal sealed class ModEmoData
 
     public HashSet<AnimatorParameter> Parameters { get; } = new(AnimatorParameter.ParameterNameEqualityComparer.Instance);
 
+    public AnimationClip BlankClip { get; } = AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath("3107326e8ebb7da42981f107a7207199"));
+
+    public ImmutableHashSet<string>? GeneratedBlendshapeControls { get; set; }
 
     internal static ModEmoData Init(BuildContext context) => new(context.GetModEmoContext().Root);
 

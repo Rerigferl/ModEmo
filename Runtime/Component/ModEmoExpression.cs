@@ -1,46 +1,48 @@
 ﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Expression")]
-    internal sealed class ModEmoExpression : ModEmoTagComponent, IModEmoExpression
+    internal class ModEmoExpression : ModEmoTagComponent, IModEmoExpression
     {
         public string Name = "";
         public bool DesyncWithObjectName = false;
+        public ExpressionMode Mode;
 
         [SerializeReference]
-        public IModEmoExpressionCondition[] Conditions = { };
+        public IModEmoExpressionCondition Condition = new VRChatExpressionCondition();
 
-        IEnumerable<IModEmoExpressionCondition> IModEmoExpression.Conditions => Conditions;
+        IModEmoExpressionCondition IModEmoExpression.Condition => Condition;
 
-        private IEnumerable<BlendShape> BlendShapes => GetComponentsInChildren<ModEmoBlendShapesSelector>().SelectMany(x => x.BlendShapes);
+        string IModEmoExpression.Name => GetName();
 
-        IEnumerable<BlendShape> IModEmoExpression.BlendShapes => BlendShapes;
+        IEnumerable<IModEmoExpressionFrame> IModEmoExpression.Frames => GetFrames();
 
-        string IModEmoExpression.Name => DesyncWithObjectName ? Name : name;
+        ExpressionMode IModEmoExpression.Mode => Mode;
 
-#if UNITY_EDITOR
-        void IModEmoExpression.Build(DirectBlendTree rootTree, Object assetContainer)
+        protected virtual string GetName() => DesyncWithObjectName ? Name : name;
+
+        protected virtual IEnumerable<IModEmoExpressionFrame> GetFrames()
         {
-            var clip = new AnimationClip();
-            AssetDatabase.AddObjectToAsset(clip, assetContainer);
-            foreach(var blendshape in BlendShapes)
+            foreach(var selector in gameObject.GetComponentsInDirectChildren<ModEmoBlendShapesSelector>())
             {
-                AnimationUtility.SetEditorCurve(clip, AnimationUtils.CreateAAPBinding($"ModEmo/BlendShape/{blendshape.Name}"), AnimationCurve.Constant(0, 0, blendshape.Value));
+                yield return new ExpressionFrame(0, selector.BlendShapes);
             }
-            rootTree.AddMotion(clip);
         }
-#endif
     }
 
     internal interface IModEmoExpression
     {
         string Name { get; }
 
-        IEnumerable<IModEmoExpressionCondition> Conditions { get; }
+        ExpressionMode Mode { get; }
 
-        IEnumerable<BlendShape> BlendShapes { get; }
+        IModEmoExpressionCondition Condition { get; }
 
-#if UNITY_EDITOR
-        void Build(DirectBlendTree rootTree, Object assetContainer);
-#endif
+        IEnumerable<IModEmoExpressionFrame> Frames { get; }
+    }
+
+    internal enum ExpressionMode
+    {
+        Default,
+        Combine,
     }
 }

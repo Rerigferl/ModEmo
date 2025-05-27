@@ -1,4 +1,6 @@
-﻿namespace Numeira;
+﻿using System;
+
+namespace Numeira;
 
 [Serializable]
 internal struct Condition
@@ -15,24 +17,36 @@ internal sealed class VRChatExpressionCondition : IModEmoExpressionCondition
     public Hand Hand;
     public Gesture Gesture;
 
-#if UNITY_EDITOR
-    public IEnumerable<AnimatorCondition> ToAnimatorConditions()
+    public IEnumerable<int> ToExpressionIndexes()
     {
-        if (Hand.HasFlag(Hand.Left))
-            yield return CreateGestureCondition("GestureLeft");
-
-        if (Hand.HasFlag(Hand.Right))
-            yield return CreateGestureCondition("GestureRight");
+        if (Hand is Hand.Right)
+        {
+            for(int i = 0; i < 8; i++)
+            {
+                yield return GestureToIndex(Gesture, (Gesture)i);
+            }
+        }
+        else if (Hand is Hand.Left)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                yield return GestureToIndex((Gesture)i, Gesture);
+            }
+        }
+        else
+        {
+            yield return GestureToIndex(Gesture, Gesture);
+        }
+        yield break;
     }
 
-    private AnimatorCondition CreateGestureCondition(string parameterName)
-        => new() { parameter = parameterName, mode = AnimatorConditionMode.Equals, threshold = (int)Gesture };
-#endif
+    private int GestureToIndex(Gesture right, Gesture left)
+    {
+        return 1 + (int)(left) + (int)(right) * 8;
+    }
 }
 
 internal interface IModEmoExpressionCondition
 {
-#if UNITY_EDITOR
-    IEnumerable<AnimatorCondition> ToAnimatorConditions();
-#endif
+    IEnumerable<int> ToExpressionIndexes();
 }
