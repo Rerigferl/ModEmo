@@ -221,7 +221,7 @@ MonoBehaviour:
       type: {class: VRChatExpressionCondition, ns: Numeira, asm: numeira.mod-emo.runtime}
       data:
         Hand: 2
-        Gesture: 2
+        Gesture: 1
 --- !u!1 &3125004486963354223
 GameObject:
   m_ObjectHideFlags: 0
@@ -292,7 +292,7 @@ GameObject:
   - component: {fileID: 1180896462823597988}
   - component: {fileID: 6973600189703390285}
   m_Layer: 0
-  m_Name: Fist (Right)
+  m_Name: Open (Right)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -339,7 +339,7 @@ MonoBehaviour:
       type: {class: VRChatExpressionCondition, ns: Numeira, asm: numeira.mod-emo.runtime}
       data:
         Hand: 2
-        Gesture: 1
+        Gesture: 2
 --- !u!1 &3512421600076438048
 GameObject:
   m_ObjectHideFlags: 0
