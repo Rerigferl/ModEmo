@@ -1,22 +1,29 @@
 ﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Expression")]
+    [ExecuteInEditMode]
     internal class ModEmoExpression : ModEmoExpressionBase
     {
         public ExpressionMode Mode;
         public Hand UseHandWeight;
+
         [SerializeReference]
         public IModEmoExpressionCondition Condition = new VRChatExpressionCondition();
 
         protected override IModEmoExpressionCondition GetCondition() => Condition;
         protected override ExpressionMode GetMode() => Mode;
         protected override Hand GetUseGestureWeight() => UseHandWeight;
+
+
     }
 
+    [ExecuteInEditMode]
     internal abstract class ModEmoExpressionBase : ModEmoTagComponent, IModEmoExpression
     {
         public string Name = "";
         public bool DesyncWithObjectName = false;
+
+        protected ModEmoExpressionSettings Settings => gameObject.GetOrAddComponent<ModEmoExpressionSettings>();
 
         string IModEmoExpression.Name => GetName();
 
