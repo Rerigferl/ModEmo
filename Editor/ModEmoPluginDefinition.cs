@@ -69,7 +69,10 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             var priority = new LayerPriority(1);
 
             fx.AddLayer(priority, InputConverterGenerator.Generate(context));
+            fx.AddLayer(priority, GestureWeightSmootherGenerator.Generate(context));
             fx.AddLayer(priority, ExpressionControllerGenerator.Generate(context));
+            if (ExpressionControllerGenerator.GenerateBlinkController(context) is { } blink)
+                fx.AddLayer(priority, blink);
             fx.AddLayer(priority, BlendShapeControllerGenerator.Generate(context));
 
             fx.Parameters = fx.Parameters.AddRange(data.Parameters.Select(x => (AnimatorControllerParameter)x).Select(x => KeyValuePair.Create(x.name, x)));

@@ -4,10 +4,17 @@
     internal sealed class ModEmoExpressionFrame : ModEmoTagComponent, IModEmoExpressionFrame
     {
         public float Keyframe;
+        public TimeScale TimeScale = TimeScale.Frame;
 
-        float IModEmoExpressionFrame.Keyframe => Keyframe;
+        float IModEmoExpressionFrame.Keyframe => TimeScale is TimeScale.Seconds ? Keyframe : Keyframe / 60f;
 
         IEnumerable<BlendShape> IModEmoExpressionFrame.BlendShapes => gameObject.GetComponentsInDirectChildren<ModEmoBlendShapesSelector>().SelectMany(x => x.BlendShapes);
+    }
+
+    internal enum TimeScale
+    {
+        Frame = 0,
+        Seconds = 1,
     }
 
     internal interface IModEmoExpressionFrame

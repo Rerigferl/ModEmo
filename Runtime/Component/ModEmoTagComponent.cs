@@ -2,8 +2,9 @@
 
 namespace Numeira;
 
-[DisallowMultipleComponent]
-internal abstract class ModEmoTagComponent : MonoBehaviour, IEditorOnly
+internal abstract class ModEmoTagComponent : MonoBehaviour, IEditorOnly, IModEmoComponent
 {
     internal const string ComponentMenuPrefix = "ModEmo/ModEmo ";
 }
+
+internal interface IModEmoComponent { }

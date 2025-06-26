@@ -32,6 +32,9 @@ namespace Numeira
                     yield return new ExpressionFrame(key.time, Enumerable.Repeat(new BlendShape() { Name = propertyName, Value = key.value }, 1));
                 }
             }
+
+            foreach (var x in base.GetFrames())
+                yield return x;
         }
     }
 }

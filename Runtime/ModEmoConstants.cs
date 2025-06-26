@@ -48,7 +48,9 @@ internal static partial class ModEmoConstants
                 public const string Prefix = $"{Internal.Prefix}{nameof(Input)}/";
 
                 public const string Left = $"{Prefix}Left";
+                public const string LeftWeight = $"{Left}/Weight";
                 public const string Right = $"{Prefix}Right";
+                public const string RightWeight = $"{Right}/Weight";
                 public const string Switch = $"{Prefix}Switch";
                 public const string Override = $"{Prefix}Override";
             }

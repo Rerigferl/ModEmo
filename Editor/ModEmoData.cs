@@ -13,6 +13,8 @@ internal sealed class ModEmoData
 
     public ImmutableDictionary<string, ImmutableDictionary<string, BlendShapeInfo>> CategorizedBlendShapes { get; }
 
+    public ImmutableDictionary<string, BlendShapeInfo> BlendShapes { get; }
+
     public HashSet<AnimatorParameter> Parameters { get; } = new(AnimatorParameter.ParameterNameEqualityComparer.Instance);
 
     public AnimationClip BlankClip { get; } = AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath("3107326e8ebb7da42981f107a7207199"));
@@ -45,6 +47,7 @@ internal sealed class ModEmoData
 
             info.GetOrAdd(currentGroup, _ => new()).TryAdd(name, new(Face, i));
         }
+        BlendShapes = info.Values.SelectMany(x => x).ToImmutableDictionary(x => x.Key, x => x.Value);
         CategorizedBlendShapes = info.ToImmutableDictionary(x => x.Key, x => x.Value.ToImmutableDictionary());
     }
 
@@ -54,6 +57,12 @@ internal sealed class ModEmoData
         {
             Value = face.GetBlendShapeWeight(index);
             Max = face.sharedMesh.GetBlendShapeFrameWeight(index, 0);
+        }
+
+        public BlendShapeInfo(float value, float max)
+        {
+            Value = value;
+            Max = max;
         }
 
         public readonly float Value;
