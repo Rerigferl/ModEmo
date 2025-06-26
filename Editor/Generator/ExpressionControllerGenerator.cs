@@ -12,7 +12,13 @@ internal static class ExpressionControllerGenerator
         var data = context.GetData();
 
         var expressionPatterns = modEmo.ExportExpressions();
-        var usageMap = expressionPatterns.SelectMany(x => x).SelectMany(x => x.Frames).SelectMany(x => x.BlendShapes).Select(x => x.Name).ToHashSet();
+        var usageMap = expressionPatterns
+            .SelectMany(x => x)
+            .SelectMany(x => x.Frames)
+            .SelectMany(x => x.BlendShapes)
+            .Where(x => data.BlendShapes.TryGetValue(x.Name, out var value) && value.Value != x.Value)
+            .Select(x => x.Name)
+            .ToHashSet();
 
         data.Parameters.Add(new(ParameterNames.Expression.Pattern, 0));
 
@@ -102,14 +108,25 @@ internal static class ExpressionControllerGenerator
 
             AnimationClip MakeAnimationClip(IModEmoExpression expression, AnimationClip? source = null)
             {
-                var clip = new AnimationClip() { name = source == null ? expression.Name : $"{source.name} + {expression.Name}" };
-
+                var generator = new AnimationClipGenerator() { Name = source == null ? expression.Name : $"{source.name} + {expression.Name}" };
                 if (source != null)
                 {
-                    foreach(var bind in AnimationUtility.GetCurveBindings(source))
+                    foreach (var bind in AnimationUtility.GetCurveBindings(source))
                     {
+                        if (!data.BlendShapes.TryGetValue(bind.propertyName, out var value))
+                            continue;
+
                         var curve = AnimationUtility.GetEditorCurve(source, bind);
-                        AnimationUtility.SetEditorCurve(clip, bind, curve);
+                        var keys = curve.keys;
+                        if (!keys.Any(x => x.value != value.Value))
+                            continue;
+
+                        foreach(var x in keys)
+                        {
+                            var bind2 = new EditorCurveBinding() { path = "", type = typeof(Animator), propertyName = $"{ParameterNames.BlendShapes.Prefix}{bind.propertyName}" };
+
+                            generator.Add(bind, x.time, x.value);
+                        }
                     }
                 }
                 else
@@ -120,46 +137,26 @@ internal static class ExpressionControllerGenerator
 
                         if (!data.BlendShapes.TryGetValue(blendShape, out var defaultValue))
                             defaultValue = new ModEmoData.BlendShapeInfo(0, 100);
-                        AnimationUtility.SetEditorCurve(clip, bind, AnimationCurve.Constant(0, 0, defaultValue.Value / defaultValue.Max /* TODO: デフォルト値を入れる */));
+
+                        generator.Add(bind, 0, defaultValue.Value / defaultValue.Max);
                     }
                 }
 
-                var frames = expression.Frames.GroupBy(x => x.Keyframe, x => x.BlendShapes, (x, y) => new ExpressionFrame(x, y.SelectMany(y => y))).ToArray();
-
-                List<KeyValuePair<EditorCurveBinding, Keyframe>> aaa = new();
-
-                foreach (var (key, blendshapes) in frames)
+                foreach(var frame in expression.Frames)
                 {
-                    foreach (var blendShape in blendshapes)
+                    foreach(var blendShape in frame.BlendShapes)
                     {
                         var bind = AnimationUtils.CreateAAPBinding($"{ParameterNames.BlendShapes.Prefix}{blendShape.Name}");
                         if (blendShape.Cancel)
                             bind = AnimationUtils.CreateAAPBinding($"{ParameterNames.Internal.BlendShapes.DisablePrefix}{blendShape.Name}");
-                        float x = blendShape.Value / 100f;
-                        Debug.LogError($"{blendShape.Name} {key} {x}");
-                        aaa.Add(KeyValuePair.Create(bind, new Keyframe(key, x, 0, 0)));
+                        if (!data.BlendShapes.TryGetValue(blendShape.Name, out var defaultValue))
+                            defaultValue = new ModEmoData.BlendShapeInfo(0, 100);
+
+                        generator.Add(bind, frame.Keyframe, blendShape.Value / defaultValue.Max);
                     }
                 }
 
-                foreach(var group in aaa.GroupBy(x => x.Key, x => x.Value))
-                {
-                    var a = group.ToArray();
-                    for (int i = 0; i < a.Length; i++)
-                    {
-                        if (i > 0)
-                            a[i].inTangent = Tangent(a[i - 1].time, a[i].time, a[i - 1].value, a[i].value);
-                        if (i < a.Length - 1)
-                            a[i].outTangent = Tangent(a[i].time, a[i + 1].time, a[i].value, a[i + 1].value);
-                    }
-                    AnimationUtility.SetEditorCurve(clip, group.Key, new AnimationCurve(a));
-                }
-
-                return clip;
-
-                float Tangent(float timeStart, float timeEnd, float valueStart, float valueEnd)
-                {
-                    return (valueEnd - valueStart) / (timeEnd - timeStart);
-                }
+                return generator.Export();
             }
 
             foreach(var x in registeredClips.Index().Where(x => x.Value.Clip != null).GroupBy(x => x.Value, x => x.Index, AnimationData.EqualityComparer.Default))
