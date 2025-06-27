@@ -30,4 +30,18 @@ internal static class ComponentExt
         x = obj.AddComponent<T>();
         return x;
     }
+
+    public static void RemoveComponents<T>(this GameObject obj)
+    {
+        foreach(var component in obj.GetComponents<T>())
+        {
+            var x = component as MonoBehaviour;
+            var so = new SerializedObject(x);
+            var script = so.FindProperty("m_Script");
+            script.objectReferenceValue = null;
+            so.ApplyModifiedProperties();
+        }
+        GameObjectUtility.RemoveMonoBehavioursWithMissingScript(obj);
+        return;
+    }
 }

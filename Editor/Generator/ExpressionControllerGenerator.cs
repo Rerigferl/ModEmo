@@ -1,4 +1,6 @@
-﻿namespace Numeira;
+﻿using static Codice.Client.Common.Locks.ServerLocks.ForWorkingBranchOnRepoByItem;
+
+namespace Numeira;
 
 internal static class ExpressionControllerGenerator
 {
@@ -57,51 +59,67 @@ internal static class ExpressionControllerGenerator
 
             registeredClips.AsSpan().Clear();
 
+            var gestures = Enum.GetValues(typeof(Gesture)).Cast<Gesture>();
+            var maskAndIndexes = gestures.SelectMany(x => gestures.Select(y => (Left: x, Right: y)))
+                .Select(x =>
+                {
+                    return (Mask: GestureToMask(x.Left, x.Right), Index: GestureToIndex(x.Left, x.Right));
+                    static uint GestureToMask(Gesture left, Gesture right) => (0b_0000_0001_0000_0000u << (int)right | 0b_0000_0000_0000_0001u << (int)left);
+                    static int GestureToIndex(Gesture left, Gesture right) => 1 + (int)(left) + (int)(right) * 8;
+                })
+                .ToArray();
+
             foreach (var expression in expressions.Where(x => x.Mode == ExpressionMode.Default))
             {
-                var indexes = expression.Condition.ToExpressionIndexes();
-
-                AnimationClip? clip = null;
-
-                foreach (var index in indexes)
+                if (expression.Settings.ConditionFolder is { } conditionFolder && conditionFolder.GetComponentsInDirectChildren<IModEmoCondition>()?.FirstOrDefault() is { } condition)
                 {
-                    _ = index < registeredClips.Length;
-                    if (registeredClips[index].Clip != null)
-                        continue;
+                    var conditionMask = condition.GetConditionMask();
+                    var indexes = maskAndIndexes.Where(x => (conditionMask & x.Mask) != 0).Select(x => x.Index);
 
-                    clip ??= MakeAnimationClip(expression);
-                    registeredClips[index].Clip = clip;
-                    registeredClips[index].Weight = expression.UseGestureWeight;
+                    AnimationClip? clip = null;
+
+                    foreach (var index in indexes)
+                    {
+                        _ = index < registeredClips.Length;
+                        if (registeredClips[index].Clip != null)
+                            continue;
+
+                        clip ??= MakeAnimationClip(expression);
+                        registeredClips[index].Clip = clip;
+                        registeredClips[index].TimeParameterName = expression.GameObject?.GetComponent<IModEmoMotionTime>()?.ParameterName;
+                    }
                 }
+
             }
 
             foreach (var expression in expressions.Where(x => x.Mode == ExpressionMode.Combine))
             {
-                // TODO: これ右手+右手みたいなアニメーション生成しない？
-
-                var indexes = expression.Condition.ToExpressionIndexes();
-
-                AnimationClip? clip = null;
-                Dictionary<AnimationClip, AnimationClip> combinedCache = new();
-
-                foreach (var index in indexes)
+                if (expression.Settings.ConditionFolder is { } conditionFolder && conditionFolder.GetComponentsInDirectChildren<IModEmoCondition>()?.FirstOrDefault() is { } condition)
                 {
-                    _ = index < registeredClips.Length;
-                    ref var registered = ref registeredClips.AsSpan()[index].Clip;
-                    if (registered != null)
-                    {
-                        if (!combinedCache.TryGetValue(registered, out var combined))
-                        {
-                            combined = MakeAnimationClip(expression, registered);
-                            combinedCache.Add(registered, combined);
-                        }
+                    var conditionMask = condition.GetConditionMask();
+                    var indexes = maskAndIndexes.Where(x => (conditionMask & x.Mask) != 0).Select(x => x.Index);
+                    AnimationClip? clip = null;
+                    Dictionary<AnimationClip, AnimationClip> combinedCache = new();
 
-                        registered = combined;
-                    }
-                    else
+                    foreach (var index in indexes)
                     {
-                        clip ??= MakeAnimationClip(expression);
-                        registered = clip;
+                        _ = index < registeredClips.Length;
+                        ref var registered = ref registeredClips.AsSpan()[index].Clip;
+                        if (registered != null)
+                        {
+                            if (!combinedCache.TryGetValue(registered, out var combined))
+                            {
+                                combined = MakeAnimationClip(expression, registered);
+                                combinedCache.Add(registered, combined);
+                            }
+
+                            registered = combined;
+                        }
+                        else
+                        {
+                            clip ??= MakeAnimationClip(expression);
+                            registered = clip;
+                        }
                     }
                 }
             }
@@ -154,6 +172,13 @@ internal static class ExpressionControllerGenerator
 
                         generator.Add(bind, frame.Keyframe, blendShape.Value / defaultValue.Max);
                     }
+
+
+                    if (frame.Publisher is { } publisher && publisher.GameObject?.GetComponent<IModEmoExpressionBlinkController>() is { } blinkCtrl)
+                    {
+                        var bind = AnimationUtils.CreateAAPBinding(ParameterNames.Blink.Disable);
+                        generator.Add(bind, frame.Keyframe, blinkCtrl.Enable ? 0 : 1);
+                    }
                 }
 
                 return generator.Export();
@@ -164,15 +189,10 @@ internal static class ExpressionControllerGenerator
                 var state = stateMachine.AddState(x.Key.Clip!.name);
                 state.motion = x.Key.Clip!;
 
-                if (x.Key.Weight != default)
+                if (x.Key.TimeParameterName != default)
                 {
                     state.timeParameterActive = true;
-                    state.timeParameter = x.Key.Weight switch
-                    {
-                        Hand.Left => ParameterNames.Internal.Input.LeftWeight,
-                        Hand.Right => ParameterNames.Internal.Input.RightWeight,
-                        _ => default,
-                    };
+                    state.timeParameter = x.Key.TimeParameterName;
                 }
 
                 foreach (var index in x)
@@ -200,28 +220,53 @@ internal static class ExpressionControllerGenerator
         if (modEmo.BlinkExpression == null)
             return default;
 
-        var layer = new AnimatorControllerLayer() { name = "[ModEmo] Blink" };
-        var stateMachine = layer.stateMachine = new();
+        var layer = VirtualLayer.Create(vcc.CloneContext, "[ModEmo] Blink");
+        var tree = new DirectBlendTree();
 
         var data = context.GetData();
+        data.Parameters.Add(new($"{ParameterNames.Blink.Enable}", 1f));
+        data.Parameters.Add(new($"{ParameterNames.Blink.Disable}", 0f));
+        data.Parameters.Add(new($"{ParameterNames.Blink.Result}", 0f));
 
-        var state = stateMachine.AddState("Blink");
-        var clip = MakeAnimationClip(modEmo.BlinkExpression);
-        state.motion = clip;
-        var settings = AnimationUtility.GetAnimationClipSettings(clip);
-        settings.loopTime = true;
-        AnimationUtility.SetAnimationClipSettings(clip, settings);
+        // Gate
+        {
+            var result_0 = AnimationUtils.CreateAAPClip(ParameterNames.Blink.Result, 0);
+            var result_1 = AnimationUtils.CreateAAPClip(ParameterNames.Blink.Result, 1);
+
+            var t = tree.AddBlendTree("Gate");
+            t.BlendParameter = ParameterNames.Blink.Enable;
+            t.AddMotion(result_0);
+            t = t.AddBlendTree("Gate 2");
+            t.BlendParameter = ParameterNames.Blink.Disable;
+            t.AddMotion(result_1);
+            t.AddMotion(result_0);
+        }
+
+        // Motion
+        {
+            var clip = MakeAnimationClip(modEmo.BlinkExpression);
+            var settings = AnimationUtility.GetAnimationClipSettings(clip);
+            settings.loopTime = true;
+            AnimationUtility.SetAnimationClipSettings(clip, settings);
+
+            var t = tree.AddBlendTree("Motion");
+            t.BlendParameter = ParameterNames.Blink.Result;
+            t.AddMotion(data.BlankClip, 0);
+            t.AddMotion(data.BlankClip, 0.9999f);
+            t.AddMotion(clip, 1);
+        }
 
         static AnimationClip MakeAnimationClip(IModEmoExpression expression)
         {
             var clip = new AnimationClip() { name = expression.Name };
 
-            var frames = expression.Frames.GroupBy(x => x.Keyframe, x => x.BlendShapes, (x, y) => new ExpressionFrame(x, y.SelectMany(y => y))).ToArray();
+            var frames = expression.Frames.GroupBy(x => (x.Keyframe, Frame: x), x => x.BlendShapes, (x, y) => new ExpressionFrame(x.Keyframe, y.SelectMany(y => y), x.Frame), new Comparer()).ToArray();
 
             List<KeyValuePair<EditorCurveBinding, Keyframe>> aaa = new();
 
-            foreach (var (key, blendshapes) in frames)
+            foreach (var frame in frames)
             {
+                var (key, blendshapes) = frame;
                 foreach (var blendShape in blendshapes)
                 {
                     var bind = AnimationUtils.CreateAAPBinding($"{ParameterNames.BlendShapes.Prefix}{blendShape.Name}");
@@ -253,21 +298,30 @@ internal static class ExpressionControllerGenerator
             }
         }
 
-        return vcc.Clone(layer, 0);
+        layer.StateMachine!.AddState("DirectBlendTree (WD On)", vcc.Clone(tree.Build(context.AssetContainer)));
+
+        return layer;
     }
 
+    private sealed class Comparer : IEqualityComparer<(float Keyframe, IModEmoExpressionFrame Frame)>
+    {
+        public bool Equals((float Keyframe, IModEmoExpressionFrame Frame) x, (float Keyframe, IModEmoExpressionFrame Frame) y)
+            => x.Keyframe == y.Keyframe;
 
+        public int GetHashCode((float Keyframe, IModEmoExpressionFrame Frame) obj)
+            => obj.Keyframe.GetHashCode();
+    }
 
     private struct AnimationData
     {
-        public AnimationData(AnimationClip clip, Hand? weight)
+        public AnimationData(AnimationClip clip, string? timeParameterName = null)
         {
             Clip = clip;
-            Weight = weight ?? default;
+            TimeParameterName = timeParameterName;
         }
 
         public AnimationClip? Clip;
-        public Hand Weight;
+        public string? TimeParameterName;
 
         public sealed class EqualityComparer : IEqualityComparer<AnimationData>
         {

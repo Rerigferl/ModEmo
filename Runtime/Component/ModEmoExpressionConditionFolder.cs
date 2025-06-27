@@ -17,4 +17,9 @@
 
         public IModEmoCondition? GetCondition() => gameObject.GetComponentsInDirectChildren<IModEmoCondition>().FirstOrDefault();
     }
+
+    internal interface IModEmoExpressionConditionFolder
+    {
+        IModEmoCondition GetCondition();
+    }
 }

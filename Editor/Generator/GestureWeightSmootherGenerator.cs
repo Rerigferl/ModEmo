@@ -10,7 +10,6 @@ internal static class GestureWeightSmootherGenerator
         var tree = new DirectBlendTree();
 
         var data = context.GetData();
-        data.Parameters.Add(new("SmoothAmount", 0.65f));
         data.Parameters.Add(new("GestureLeftWeight", 0f));
         data.Parameters.Add(new("GestureRightWeight", 0f));
         data.Parameters.Add(new($"{ParameterNames.Internal.Input.LeftWeight}", 0f));
@@ -19,7 +18,7 @@ internal static class GestureWeightSmootherGenerator
         foreach (var side in new[] { "Left", "Right" })
         {
             var a = tree.AddBlendTree(side);
-            a.BlendParameter = "SmoothAmount";
+            a.BlendParameter = ParameterNames.Internal.SmoothAmount;
             var b1 = a.AddBlendTree("");
             b1.BlendParameter = $"Gesture{side}Weight";
             var b2 = a.AddBlendTree("");

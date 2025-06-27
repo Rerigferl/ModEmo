@@ -3,7 +3,7 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "AnimationClip Expression")]
-    internal sealed class ModEmoAnimationClipExpression : ModEmoExpression
+    internal sealed class ModEmoAnimationClipExpression : ModEmoDefaultExpression
     {
         public AnimationClip? AnimationClip;
         public bool NameFromAnimationClip = true;
@@ -29,7 +29,7 @@ namespace Numeira
 
                 foreach(var key in curve.keys)
                 {
-                    yield return new ExpressionFrame(key.time, Enumerable.Repeat(new BlendShape() { Name = propertyName, Value = key.value }, 1));
+                    yield return new ExpressionFrame(key.time, Enumerable.Repeat(new BlendShape() { Name = propertyName, Value = key.value }, 1), this);
                 }
             }
 

@@ -8,7 +8,7 @@ namespace Numeira
     {
         public ModEmoSettings Settings = new();
 
-        public ModEmoExpressionBase? BlinkExpression;
+        public ModEmoExpression? BlinkExpression;
 
         public IEnumerable<IGrouping<IModEmoExpressionPatterns, IModEmoExpression>> ExportExpressions()
             => new ExpressionGroups(this);

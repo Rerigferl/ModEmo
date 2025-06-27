@@ -11,6 +11,9 @@ public static class BlendTreeExt
     public static MotionBranch AddMotion(this IBlendTree blendTree, Motion motion, float? threshold = null)
         => blendTree.AddTo(new MotionBranch(motion), threshold);
 
+    public static ExponentialSmoothingBlendTree AddExponentialSmoothing(this IBlendTree blendTree, float? threshold = null)
+        => blendTree.AddTo(new ExponentialSmoothingBlendTree(), threshold);
+
     private static T AddTo<T>(this IBlendTree blendTree, T value, float? threshold) where T : IBlendTree
     {
         blendTree.Append(value, threshold);

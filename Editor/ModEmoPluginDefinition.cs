@@ -37,9 +37,9 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             if (components is null)
                 return;
 
-            foreach (var component in components)
+            foreach(var x in components.Select(x => x.gameObject).Distinct().ToArray())
             {
-                Object.DestroyImmediate(component);
+                x.RemoveComponents<ModEmoTagComponent>();
             }
         }
 
@@ -56,6 +56,7 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
 
             var data = context.GetData();
             data.Parameters.Add(new(ParameterNames.Internal.One, 1f));
+            data.Parameters.Add(new(ParameterNames.Internal.SmoothAmount, 0.65f));
             DirectBlendTree.DefaultDirectBlendParameter = ParameterNames.Internal.One;
 
             data.Parameters.Add(new(ParameterNames.Internal.Input.Left, 0));

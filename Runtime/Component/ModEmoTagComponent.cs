@@ -7,4 +7,8 @@ internal abstract class ModEmoTagComponent : MonoBehaviour, IEditorOnly, IModEmo
     internal const string ComponentMenuPrefix = "ModEmo/ModEmo ";
 }
 
-internal interface IModEmoComponent { }
+internal interface IModEmoComponent 
+{
+    public Component? Component => this as Component;
+    public GameObject? GameObject => Component?.gameObject;
+}

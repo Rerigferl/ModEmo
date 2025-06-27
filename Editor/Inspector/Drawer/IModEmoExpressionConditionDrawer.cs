@@ -93,6 +93,6 @@ internal sealed class IModEmoExpressionDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
-        EditorGUI.ObjectField(position, property, typeof(ModEmoExpressionBase), label);
+        EditorGUI.ObjectField(position, property, typeof(ModEmoExpression), label);
     }
 }

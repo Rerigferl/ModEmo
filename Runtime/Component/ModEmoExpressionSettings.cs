@@ -1,8 +1,8 @@
 ﻿namespace Numeira
 {
-    [AddComponentMenu("")]
+    [AddComponentMenu($"/{ComponentMenuPrefix}Expression Settings")]
     [ExecuteInEditMode]
-    internal sealed class ModEmoExpressionSettings : ModEmoTagComponent
+    internal sealed class ModEmoExpressionSettings : ModEmoTagComponent, IModEmoExpressionSettings
     {
         public ModEmoExpressionConditionFolder? ConditionFolder;
         public ModEmoExpressionMotionFolder? MotionFolder;
@@ -28,5 +28,9 @@
 
         }
 #endif
+    }
+
+    internal interface IModEmoExpressionSettings : IModEmoComponent
+    {
     }
 }

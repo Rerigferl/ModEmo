@@ -19,11 +19,34 @@ internal static partial class ModEmoConstants
             public const string Prefix = $"{Parameters.Prefix}{nameof(BlendShapes)}/";
         }
 
+        public static class Blink
+        {
+            public const string Prefix = $"{Parameters.Prefix}Blink/";
+
+            /// <summary>
+            /// Enable blinking. This is controlled from the ExMenu.
+            /// </summary>
+            public const string Enable = $"{Prefix}Enable";
+
+            /// <summary>
+            /// Disable blinking. This is controlled from the Animator.
+            /// </summary>
+            public const string Disable = $"{Prefix}Disable";
+
+            /// <summary>
+            /// Whether blinking is enabled.
+            /// </summary>
+            public const string Result = $"{Prefix}Result";
+
+            public const string SmoothedResult = $"{Prefix}SmoothedResult";
+        }
+
         public static class Internal
         {
             public const string Prefix = $"{Parameters.Prefix}I/";
 
             public const string One = $"{Prefix}One";
+            public const string SmoothAmount = $"{Prefix}SmoothAmount";
             public const string ExpressionIndex = $"{Prefix}ExpressionIndex";
             public const string ExpressionIndexSmoothed = $"{Prefix}ExpressionIndexSmoothed";
 
@@ -32,6 +55,7 @@ internal static partial class ModEmoConstants
                 public const string Prefix = $"{Internal.Prefix}{nameof(Expression)}/";
 
                 public const string Index = $"{Prefix}Index";
+                public const string EnableBlink = $"{Prefix}EnableBlink";
             }
 
             public static class BlendShapes
