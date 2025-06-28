@@ -6,8 +6,7 @@
         public string Name = "";
         public bool DesyncWithObjectName = false;
 
-        [SerializeReference]
-        public IModEmoExpression? DefaultExpression;
+        public ModEmoExpression? DefaultExpression;
 
         string IModEmoExpressionPatterns.Name => DesyncWithObjectName ? Name : name;
 

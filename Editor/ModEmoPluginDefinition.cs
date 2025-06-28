@@ -37,9 +37,9 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             if (components is null)
                 return;
 
-            foreach (var component in components)
+            foreach(var x in components.Select(x => x.gameObject).Distinct().ToArray())
             {
-                Object.DestroyImmediate(component);
+                x.RemoveComponents<ModEmoTagComponent>();
             }
         }
 
@@ -56,6 +56,7 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
 
             var data = context.GetData();
             data.Parameters.Add(new(ParameterNames.Internal.One, 1f));
+            data.Parameters.Add(new(ParameterNames.Internal.SmoothAmount, 0.65f));
             DirectBlendTree.DefaultDirectBlendParameter = ParameterNames.Internal.One;
 
             data.Parameters.Add(new(ParameterNames.Internal.Input.Left, 0));
@@ -69,7 +70,10 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             var priority = new LayerPriority(1);
 
             fx.AddLayer(priority, InputConverterGenerator.Generate(context));
+            fx.AddLayer(priority, GestureWeightSmootherGenerator.Generate(context));
             fx.AddLayer(priority, ExpressionControllerGenerator.Generate(context));
+            if (ExpressionControllerGenerator.GenerateBlinkController(context) is { } blink)
+                fx.AddLayer(priority, blink);
             fx.AddLayer(priority, BlendShapeControllerGenerator.Generate(context));
 
             fx.Parameters = fx.Parameters.AddRange(data.Parameters.Select(x => (AnimatorControllerParameter)x).Select(x => KeyValuePair.Create(x.name, x)));

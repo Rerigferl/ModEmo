@@ -5,4 +5,5 @@ internal struct BlendShape
 {
     public string Name;
     public float Value;
+    public bool Cancel;
 }

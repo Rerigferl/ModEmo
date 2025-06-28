@@ -87,3 +87,12 @@ internal class IModEmoExpressionConditionDrawer : PropertyDrawer
         return popupPosition;
     }
 }
+
+[CustomPropertyDrawer(typeof(IModEmoExpression))]
+internal sealed class IModEmoExpressionDrawer : PropertyDrawer
+{
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        EditorGUI.ObjectField(position, property, typeof(ModEmoExpression), label);
+    }
+}

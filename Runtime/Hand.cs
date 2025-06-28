@@ -1,6 +1,5 @@
 ﻿namespace Numeira;
 
-[Flags]
 internal enum Hand
 {
     Left = 1,
