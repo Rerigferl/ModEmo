@@ -11,6 +11,18 @@
         float IModEmoExpressionFrame.Keyframe => TimeScale is TimeScale.Seconds ? Keyframe : Keyframe / 60f;
 
         IEnumerable<BlendShape> IModEmoExpressionFrame.BlendShapes => gameObject.GetComponentsInDirectChildren<IModEmoExpressionFrame>().SelectMany(x => x.BlendShapes);
+
+        public override int GetHashCode()
+        {
+            HashCode hash = new();
+            hash.Add(Keyframe);
+            hash.Add(TimeScale);
+            foreach(var x in (this as IModEmoExpressionFrame).BlendShapes)
+            {
+                hash.Add(x);
+            }
+            return hash.ToHashCode();
+        }
     }
 
     internal enum TimeScale
@@ -45,5 +57,16 @@
 
         public void Deconstruct(out float keyFrame, out IEnumerable<BlendShape> blendShapes) => (keyFrame, blendShapes) = (Keyframe, BlendShapes);
 
+        public override int GetHashCode()
+        {
+            HashCode hash = new();
+            hash.Add(Keyframe);
+            hash.Add(Publisher);
+            foreach (var x in (this as IModEmoExpressionFrame).BlendShapes)
+            {
+                hash.Add(x);
+            }
+            return hash.ToHashCode();
+        }
     }
 }

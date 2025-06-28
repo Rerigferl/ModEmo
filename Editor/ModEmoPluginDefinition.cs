@@ -16,7 +16,8 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             sequence =>
             {
                 sequence
-                    .Run(GeneratingPass.Instance);
+                    .Run(GeneratingPass.Instance)
+                    .PreviewingWith(new ExpressionPreview());
             });
     }
 

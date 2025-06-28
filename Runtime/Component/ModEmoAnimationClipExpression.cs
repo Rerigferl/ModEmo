@@ -16,7 +16,7 @@ namespace Numeira
                 yield break;
 
             var binds = AnimationUtility.GetCurveBindings(AnimationClip);
-
+            Dictionary<float, List<BlendShape>> dict = new();
             foreach (var bind in binds)
             {
                 var propertyName = bind.propertyName;
@@ -29,8 +29,13 @@ namespace Numeira
 
                 foreach(var key in curve.keys)
                 {
-                    yield return new ExpressionFrame(key.time, Enumerable.Repeat(new BlendShape() { Name = propertyName, Value = key.value }, 1), this);
+                    dict.GetOrAdd(key.time, _ => new()).Add(new BlendShape() { Name = propertyName, Value = key.value });
                 }
+            }
+
+            foreach(var (key, blendshapes) in dict)
+            {
+                yield return new ExpressionFrame(key, blendshapes, this);
             }
 
             foreach (var x in base.GetFrames())
