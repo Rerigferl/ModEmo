@@ -1,6 +1,4 @@
-﻿using static VRC.SDKBase.RPC;
-
-namespace Numeira;
+﻿namespace Numeira;
 
 internal static class PatternImporter
 {
@@ -18,7 +16,7 @@ internal static class PatternImporter
 
         var layers = animatorController.layers;
 
-        Dictionary<uint, (int Index, int Side, string StateName, AnimationClip Animation)> dict = new();
+        Dictionary<uint, (int Index, int Side, AnimatorState State)> dict = new();
 
         for (int i = 3; i >= 0; i--)
         {
@@ -47,7 +45,7 @@ internal static class PatternImporter
                 if (mask == 0)
                     continue;
 
-                dict[mask] = (transition.conditions.Select(x => (int)x.threshold).Max(), i, state.name, clip);
+                dict[mask] = (transition.conditions.Select(x => (int)x.threshold).Max(), i, state);
             }
         }
 
@@ -68,7 +66,7 @@ internal static class PatternImporter
             })
             .ToDictionary(x => x.Mask, x => (x.Left, x.Right));
 
-        foreach (var (key, list) in dict.OrderByDescending(x => x.Value.Side).ThenBy(x => x.Value.Index))
+        foreach (var (key, item) in dict.OrderByDescending(x => x.Value.Side).ThenBy(x => x.Value.Index))
         {
             var bits = DeconstructPopBits((ushort)key, span);
             if (bits.Length == 0) 
@@ -76,10 +74,10 @@ internal static class PatternImporter
                 continue;
             }
 
-            var expObj = new GameObject(list.StateName);
+            var expObj = new GameObject(item.State.name);
             expObj.transform.parent = patternObj.transform;
             var exp = expObj.AddComponent<ModEmoAnimationClipExpression>();
-            exp.AnimationClip = list.Animation;
+            exp.AnimationClip = item.State.motion as AnimationClip;
 
             exp.Settings.ConditionFolder ??= ModEmoExpressionConditionFolder.New(exp.transform);
 

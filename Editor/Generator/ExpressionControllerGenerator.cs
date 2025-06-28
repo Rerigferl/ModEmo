@@ -1,6 +1,4 @@
-﻿using static Codice.Client.Common.Locks.ServerLocks.ForWorkingBranchOnRepoByItem;
-
-namespace Numeira;
+﻿namespace Numeira;
 
 internal static class ExpressionControllerGenerator
 {
@@ -74,7 +72,7 @@ internal static class ExpressionControllerGenerator
                 if (expression.Settings.ConditionFolder is { } conditionFolder && conditionFolder.GetComponentsInDirectChildren<IModEmoCondition>()?.FirstOrDefault() is { } condition)
                 {
                     var conditionMask = condition.GetConditionMask();
-                    var indexes = maskAndIndexes.Where(x => (conditionMask & x.Mask) != 0).Select(x => x.Index);
+                    var indexes = maskAndIndexes.Where(x => (conditionMask & x.Mask) == conditionMask).Select(x => x.Index);
 
                     AnimationClip? clip = null;
 
@@ -132,6 +130,9 @@ internal static class ExpressionControllerGenerator
                     foreach (var bind in AnimationUtility.GetCurveBindings(source))
                     {
                         if (!data.BlendShapes.TryGetValue(bind.propertyName, out var value))
+                            continue;
+
+                        if (!usageMap.Contains(bind.propertyName))
                             continue;
 
                         var curve = AnimationUtility.GetEditorCurve(source, bind);
