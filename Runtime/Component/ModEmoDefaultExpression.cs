@@ -23,6 +23,8 @@
 
         IEnumerable<IModEmoExpressionFrame> IModEmoExpression.Frames => GetFrames();
 
+        bool IModEmoExpression.Loop => IsLoop();
+
         protected virtual string GetName() => DesyncWithObjectName ? Name : name;
         protected virtual ExpressionMode GetMode() => ExpressionMode.Default;
         protected virtual IEnumerable<IModEmoExpressionFrame> GetFrames()
@@ -35,6 +37,7 @@
                 }
             }
         }
+        protected virtual bool IsLoop() => GetComponent<IModEmoExpressionLoopControl>() != null;
     }
 
     internal interface IModEmoExpression : IModEmoComponent
@@ -46,6 +49,8 @@
         IEnumerable<IModEmoExpressionFrame> Frames { get; }
 
         ModEmoExpressionSettings Settings { get; }
+
+        bool Loop { get; }
     }
 
     internal enum ExpressionMode

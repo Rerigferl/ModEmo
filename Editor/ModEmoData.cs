@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 using nadena.dev.modular_avatar.core;
+using UnityEngine;
 
 namespace Numeira;
 
@@ -49,6 +50,23 @@ internal sealed class ModEmoData
         }
         BlendShapes = info.Values.SelectMany(x => x).ToImmutableDictionary(x => x.Key, x => x.Value);
         CategorizedBlendShapes = info.ToImmutableDictionary(x => x.Key, x => x.Value.ToImmutableDictionary());
+    }
+
+    public static ImmutableDictionary<string, BlendShapeInfo> GetBlendShapeInfos(SkinnedMeshRenderer? renderer)
+    {
+        if (renderer is null)
+            return ImmutableDictionary<string, BlendShapeInfo>.Empty;
+
+        var mesh = renderer.sharedMesh;
+        int count = mesh.blendShapeCount;
+
+        Dictionary<string, BlendShapeInfo> info = new();
+        for (int i = 0; i < count; i++)
+        {
+            var name = mesh.GetBlendShapeName(i);
+            info.TryAdd(name, new(renderer, i));
+        }
+        return info.ToImmutableDictionary();
     }
 
     public readonly struct BlendShapeInfo

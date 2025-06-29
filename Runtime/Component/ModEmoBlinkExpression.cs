@@ -16,5 +16,7 @@ namespace Numeira
             yield return new ExpressionFrame(80 / 60f, zero, this);
             yield return new ExpressionFrame(300 / 60f, zero, this);
         }
+
+        protected override bool IsLoop() => true;
     }
 }

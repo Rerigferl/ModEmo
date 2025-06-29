@@ -175,7 +175,7 @@ internal static class ExpressionControllerGenerator
                     }
 
 
-                    if (frame.Publisher is { } publisher && publisher.GameObject?.GetComponent<IModEmoExpressionBlinkController>() is { } blinkCtrl)
+                    if (frame.Publisher is { } publisher && publisher.GameObject?.GetComponent<IModEmoExpressionBlinkControl>() is { } blinkCtrl)
                     {
                         var bind = AnimationUtils.CreateAAPBinding(ParameterNames.Blink.Disable);
                         generator.Add(bind, frame.Keyframe, blinkCtrl.Enable ? 0 : 1);

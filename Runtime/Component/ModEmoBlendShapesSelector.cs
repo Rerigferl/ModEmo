@@ -11,5 +11,13 @@ namespace Numeira
         float IModEmoExpressionFrame.Keyframe => 0;
 
         IEnumerable<BlendShape> IModEmoExpressionFrame.BlendShapes => BlendShapes;
+
+        public override int GetHashCode()
+        {
+            var hashCode = new HashCode();
+            foreach(var blendShape in BlendShapes)
+                hashCode.Add(blendShape);
+            return hashCode.ToHashCode();
+        }
     }
 }
