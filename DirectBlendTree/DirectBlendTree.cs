@@ -14,15 +14,14 @@ public class DirectBlendTree : BlendTreeBase
         tree.name = $"{tree.name}(WD On)";
         void Recursive(BlendTree tree)
         {
+            if (assetContainer != null)
+                AssetDatabase.AddObjectToAsset(tree, assetContainer);
+
             var children = tree.children;
             foreach (ref var x in children.AsSpan())
             {
                 if (x.motion is BlendTree bt)
                 {
-                    bt.hideFlags |= HideFlags.HideInHierarchy;
-                    if (assetContainer != null)
-                        AssetDatabase.AddObjectToAsset(bt, assetContainer);
-
                     Recursive(bt);
                 }
             }

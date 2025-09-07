@@ -14,7 +14,7 @@ namespace Numeira
         {
             if (AnimationClip == null)
                 yield break;
-
+#if UNITY_EDITOR
             var binds = AnimationUtility.GetCurveBindings(AnimationClip);
             Dictionary<float, List<BlendShape>> dict = new();
             foreach (var bind in binds)
@@ -37,7 +37,7 @@ namespace Numeira
             {
                 yield return new ExpressionFrame(key, blendshapes, this);
             }
-
+#endif
             foreach (var x in base.GetFrames())
                 yield return x;
         }

@@ -91,4 +91,19 @@ internal static class ModEmoExpressionExt
 
         return generator.Export();
     }
+
+    public static AnimationClip MakeDirectAnimationClip(this IModEmoExpression expression, string? path = null)
+    {
+        var generator = new AnimationClipGenerator() { Name = expression.Name };
+
+        foreach (var frame in expression.Frames)
+        {
+            foreach (var blendShape in frame.BlendShapes)
+            {
+                generator.Add(new EditorCurveBinding() { type = typeof(SkinnedMeshRenderer), path = path, propertyName = $"blendShape.{blendShape.Name}" }, frame.Keyframe, blendShape.Value);
+            }
+        }
+
+        return generator.Export();
+    }
 }

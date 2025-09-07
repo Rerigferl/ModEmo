@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using Numeira.Animation;
 
 namespace Numeira;
 
@@ -102,5 +103,10 @@ internal static class BlendShapeControllerGenerator
 
         layer.StateMachine!.AddState("DirectBlendTree (WD On)", vcc.Clone(rootTree.Build(context.AssetContainer)));
         return layer;
+    }
+
+    public static void Generate(BuildContext context, AnimatorControllerBuilder builder)
+    {
+
     }
 }

@@ -1,0 +1,24 @@
+{
+    "name": "numeira.mod-emo.animator-controller-builder",
+    "rootNamespace": "",
+    "references": [
+        "nadena.dev.ndmf"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "nadena.dev.ndmf",
+            "expression": "",
+            "define": "NDMF"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -1,7 +1,5 @@
-﻿using System.Collections.Immutable;
-using nadena.dev.modular_avatar.core;
-using nadena.dev.ndmf;
-using VRC.SDK3.Avatars.Components;
+﻿using nadena.dev.modular_avatar.core;
+using Numeira.Animation;
 
 [assembly: ExportsPlugin(typeof(Numeira.ModEmoPluginDefinition))]
 
@@ -11,8 +9,9 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
 {
     protected override void Configure()
     {
-        InPhase(BuildPhase.Generating)
-            .WithRequiredExtensions(new[] { typeof(ExtensionContext), typeof(VirtualControllerContext) }, 
+        InPhase(BuildPhase.Transforming)
+            .BeforePlugin("nadena.dev.modular-avatar")
+            .WithRequiredExtensions(new[] { typeof(ModEmoContext) }, 
             sequence =>
             {
                 sequence
@@ -21,7 +20,8 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             });
     }
 
-    public sealed class ExtensionContext : IExtensionContext
+    [DependsOnContext(typeof(VirtualControllerContext))]
+    public sealed class ModEmoContext : IExtensionContext
     {
         private ModEmoTagComponent[]? components;
         public ReadOnlySpan<ModEmoTagComponent> Components => components;
@@ -40,7 +40,7 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
 
             foreach(var x in components.Select(x => x.gameObject).Distinct().ToArray())
             {
-                x.RemoveComponents<ModEmoTagComponent>();
+                //x.RemoveComponents<ModEmoTagComponent>();
             }
         }
 
@@ -51,34 +51,43 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
         protected override void Execute(BuildContext context)
         {
             var modEmo = context.GetModEmoContext().Root;
-            if (modEmo == null)
+            if (modEmo == null || !modEmo.gameObject.activeInHierarchy || !modEmo.enabled )
                 return;
 
+            var animatorController = new AnimatorControllerBuilder() { Name = "ModEmo" };
+            animatorController.Parameters
+                .AddFloat(ParameterNames.Internal.One, 1f)
+                .AddFloat(ParameterNames.Internal.SmoothAmount, 0.65f);
 
-            var data = context.GetData();
-            data.Parameters.Add(new(ParameterNames.Internal.One, 1f));
-            data.Parameters.Add(new(ParameterNames.Internal.SmoothAmount, 0.65f));
-            DirectBlendTree.DefaultDirectBlendParameter = ParameterNames.Internal.One;
+            if (context.PlatformProvider.QualifiedName == WellKnownPlatforms.VRChatAvatar30)
+            {
 
-            data.Parameters.Add(new(ParameterNames.Internal.Input.Left, 0));
-            data.Parameters.Add(new(ParameterNames.Internal.Input.Right, 0));
+            }
+            else
+            {
+                throw new NotImplementedException($"TargetPlatform `{context.PlatformProvider.DisplayName}` is not supported");
+            }
 
-            var animatorAPI = context.GetVirtualControllerContext();
+            ExpressionControllerGenerator.Generate(context, animatorController);
 
-            // TODO: マルチプラットフォーム化の時にいい感じにする
-            var fx = animatorAPI.Controllers[VRCAvatarDescriptor.AnimLayerType.FX];
+            var assetContainer = new AssetContainer();
+            var compiledAnimatorController = animatorController.ToAnimatorController(assetContainer);
+            var ma = modEmo.gameObject.AddComponent<ModularAvatarMergeAnimator>();
+            ma.pathMode = MergeAnimatorPathMode.Absolute;
+            ma.matchAvatarWriteDefaults = true;
+            ma.layerType = VRC.SDK3.Avatars.Components.VRCAvatarDescriptor.AnimLayerType.FX;
+            ma.animator = compiledAnimatorController;
 
-            var priority = new LayerPriority(1);
+            //modEmo.AnimatorController =
 
-            fx.AddLayer(priority, InputConverterGenerator.Generate(context));
-            fx.AddLayer(priority, GestureWeightSmootherGenerator.Generate(context));
-            fx.AddLayer(priority, ExpressionControllerGenerator.Generate(context));
-            if (ExpressionControllerGenerator.GenerateBlinkController(context) is { } blink)
-                fx.AddLayer(priority, blink);
-            fx.AddLayer(priority, BlendShapeControllerGenerator.Generate(context));
+            //avatarController.AddLayer(priority, InputConverterGenerator.Generate(context));
+            //avatarController.AddLayer(priority, GestureWeightSmootherGenerator.Generate(context));
+            //avatarController.AddLayer(priority, ExpressionControllerGenerator.Generate(context));
+            //if (ExpressionControllerGenerator.GenerateBlinkController(context) is { } blink)
+            //    avatarController.AddLayer(priority, blink);
+            //avatarController.AddLayer(priority, BlendShapeControllerGenerator.Generate(context));
 
-            fx.Parameters = fx.Parameters.AddRange(data.Parameters.Select(x => (AnimatorControllerParameter)x).Select(x => KeyValuePair.Create(x.name, x)));
-
+            //avatarController.Parameters = avatarController.Parameters.AddRange(data.Parameters.Select(x => (AnimatorControllerParameter)x).Select(x => KeyValuePair.Create(x.name, x)));
             new MenuGenerator(context).Generate();
         }
     }

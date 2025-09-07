@@ -1,5 +1,5 @@
-﻿using System.Collections.Immutable;
-using nadena.dev.modular_avatar.core;
+﻿using nadena.dev.modular_avatar.core;
+using VRC.SDK3.Avatars.Components;
 
 namespace Numeira
 {
@@ -7,8 +7,6 @@ namespace Numeira
     internal sealed class ModEmo : ModEmoTagComponent
     {
         public ModEmoSettings Settings = new();
-
-        public ModEmoExpression? BlinkExpression;
 
         public IEnumerable<IGrouping<IModEmoExpressionPatterns, IModEmoExpression>> ExportExpressions()
             => new ExpressionGroups(this);
@@ -24,7 +22,7 @@ namespace Numeira
 
             public IEnumerator<ExpressionGroup> GetEnumerator()
             {
-                foreach(var x in root.gameObject)
+                foreach (var x in root.gameObject)
                 {
                     if (x.GetComponent<IModEmoExpressionPatterns>() != null)
                         yield return new(x);
@@ -56,6 +54,9 @@ namespace Numeira
     {
         public AvatarObjectReference Face = new() { referencePath = "Body" };
 
-        public string SeparatorStringRegEx = /* lang=regex */ "[-=]{2,}";
+        // lang=regex 
+        public string SeparatorStringRegEx = "[-=]{2,}";
+
+        public ModEmoExpression? BlinkExpression;
     }
 }

@@ -5,14 +5,17 @@ global using System.Linq;
 global using System.Runtime.CompilerServices;
 global using UnityEngine;
 
-#if UNITY_EDITOR
-global using UnityEditor;
-global using UnityEditor.Animations;
-
 #if NDMF
-global using nadena.dev.ndmf;
-global using nadena.dev.ndmf.animator;
+    global using nadena.dev.ndmf;
 #endif
+
+#if UNITY_EDITOR
+    global using UnityEditor;
+    global using UnityEditor.Animations;
+
+    #if NDMF
+        global using nadena.dev.ndmf.animator;
+    #endif
 
 #endif
 

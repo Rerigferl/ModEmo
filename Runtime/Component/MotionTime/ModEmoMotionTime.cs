@@ -1,12 +1,13 @@
 ﻿namespace Numeira
 {
     [RequireComponent(typeof(ModEmoExpression))]
-    internal abstract class ModEmoMotionTime : ModEmoTagComponent, IModEmoMotionTime
+    internal class ModEmoMotionTime : ModEmoTagComponent, IModEmoMotionTimeProvider
     {
-        public abstract string? ParameterName { get; }
+        public string ParameterName = "";
+        string? IModEmoMotionTimeProvider.ParameterName => ParameterName;
     }
 
-    internal interface IModEmoMotionTime
+    internal interface IModEmoMotionTimeProvider
     {
         string? ParameterName { get; }
     }

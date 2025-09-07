@@ -9,13 +9,10 @@
     }
 
     [ExecuteInEditMode]
-    [RequireComponent(typeof(ModEmoExpressionSettings))]
     internal abstract class ModEmoExpression : ModEmoTagComponent, IModEmoExpression
     {
         public string Name = "";
         public bool DesyncWithObjectName = false;
-
-        public ModEmoExpressionSettings Settings => gameObject.GetOrAddComponent<ModEmoExpressionSettings>();
 
         string IModEmoExpression.Name => GetName();
 
@@ -23,21 +20,15 @@
 
         IEnumerable<IModEmoExpressionFrame> IModEmoExpression.Frames => GetFrames();
 
-        bool IModEmoExpression.Loop => IsLoop();
-
         protected virtual string GetName() => DesyncWithObjectName ? Name : name;
         protected virtual ExpressionMode GetMode() => ExpressionMode.Default;
         protected virtual IEnumerable<IModEmoExpressionFrame> GetFrames()
         {
-            if (Settings.MotionFolder is { } motionFolder)
+            foreach (var frame in gameObject.GetComponentsInDirectChildren<IModEmoExpressionFrame>())
             {
-                foreach (var frame in motionFolder.gameObject.GetComponentsInDirectChildren<IModEmoExpressionFrame>())
-                {
-                    yield return frame;
-                }
+                yield return frame;
             }
         }
-        protected virtual bool IsLoop() => GetComponent<IModEmoExpressionLoopControl>() != null;
     }
 
     internal interface IModEmoExpression : IModEmoComponent
@@ -48,9 +39,9 @@
 
         IEnumerable<IModEmoExpressionFrame> Frames { get; }
 
-        ModEmoExpressionSettings Settings { get; }
+        IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> Conditions => Component.GetComponentsInDirectChildren<IModEmoConditionProvider>().SelectMany(x => x);
 
-        bool Loop { get; }
+        bool IsLoop => Component.GetComponent<IModEmoExpressionLoopControl>()?.IsLoop is true;
     }
 
     internal enum ExpressionMode

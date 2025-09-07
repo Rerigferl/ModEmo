@@ -1,14 +1,14 @@
-﻿namespace Numeira
+﻿
+namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Expression Patterns")]
-    internal sealed class ModEmoExpressionPatterns : ModEmoExpressionFolder, IModEmoExpressionPatterns
+    internal sealed class ModEmoExpressionPatterns : ModEmoExpressionFolder, IModEmoExpressionPatterns, IModEmoComponent
     {
         public string Name = "";
-        public bool DesyncWithObjectName = false;
 
         public ModEmoExpression? DefaultExpression;
 
-        string IModEmoExpressionPatterns.Name => DesyncWithObjectName ? Name : name;
+        string IModEmoExpressionPatterns.Name => !string.IsNullOrEmpty(Name) ? Name : name;
 
         IModEmoExpression? IModEmoExpressionPatterns.DefaultExpression => this.DefaultExpression;
     }

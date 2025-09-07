@@ -14,7 +14,7 @@ public sealed class SimpleBlendTree : BlendTreeBase
         var children = Children.AsSpan();
         for (int i = 0; i < children.Length; i++)
         {
-            float t = children[i].threshold ?? (children.Length == 0 ? 0 : (i / (children.Length - 1)));
+            float t = children[i].threshold ?? (children.Length <= 1 ? 0 : (i / (children.Length - 1)));
             children[i].BlendTree.Build(tree, t);
         }
 

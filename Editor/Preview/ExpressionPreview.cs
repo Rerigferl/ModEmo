@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Runtime.Remoting.Contexts;
-using System.Text;
-using System.Threading;
+﻿using System.Collections.Immutable;
 using System.Threading.Tasks;
-using BestHTTP;
 using nadena.dev.ndmf.preview;
 
 namespace Numeira;
@@ -49,7 +42,7 @@ internal sealed class ExpressionPreview : IRenderFilter
         public RenderAspects WhatChanged => RenderAspects.Shapes;
 
         private readonly ModEmo rootComponent;
-        private readonly ImmutableDictionary<string, ModEmoData.BlendShapeInfo> blendShapeInfos;
+        private readonly ImmutableDictionary<string, BlendShapeInfo> blendShapeInfos;
         private readonly Renderer originalRenderer;
         private IModEmoExpression? selectedExpression;
         private DateTime selectionChangedTime;
@@ -108,7 +101,7 @@ internal sealed class ExpressionPreview : IRenderFilter
             }
 
             var time = (DateTime.Now - selectionChangedTime).TotalSeconds;
-            if (selectedExpression.Loop)
+            if (selectedExpression.IsLoop)
             {
                 time = (time * 0.5) % 1;
             }

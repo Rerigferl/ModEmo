@@ -1,18 +1,27 @@
-﻿namespace Numeira
+﻿
+
+namespace Numeira
 {
     internal sealed class ModEmoVRChatCondition : ModEmoConditionBase
     {
-        public Hand Hand;
-        public Gesture Gesture;
+        public Hand Hand = Hand.Left;
+        public Gesture Gesture = Gesture.Fist;
 
-        public override ushort GetConditionMask()
+        public override IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> GetConditions()
         {
-            return Hand switch
+            yield return Group.Create(this, Factory);
+
+            static IEnumerable<AnimatorParameterCondition> Factory(ModEmoVRChatCondition x)
             {
-                Hand.Left => (ushort)(0b_0000_0000_0000_0001 << (int)Gesture),
-                Hand.Right => (ushort)(0b_0000_0001_0000_0000 << (int)Gesture),
-                _ => 0,
-            };
+                if (x.Hand.HasFlag(Hand.Left))
+                {
+                    yield return new AnimatorParameterCondition(new AnimatorParameter("GestureLeft", (int)x.Gesture), ConditionMode.Equals);
+                }
+                if (x.Hand.HasFlag(Hand.Right))
+                {
+                    yield return new AnimatorParameterCondition(new AnimatorParameter("GestureRight", (int)x.Gesture), ConditionMode.Equals);
+                }
+            }
         }
     }
 }

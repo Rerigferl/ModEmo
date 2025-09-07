@@ -1,7 +1,24 @@
-﻿namespace Numeira;
+﻿using Numeira.Animation;
+using static UnityEditor.VersionControl.Asset;
 
+namespace Numeira;
 internal static class ExpressionControllerGenerator
 {
+    [MenuItem("Test/AsdWEQWEQe")]
+    public static void A()
+    {
+        var ac = new AnimatorController();
+        AssetDatabase.CreateAsset(ac, "Assets/_Test/A.controller");
+
+        ac.AddLayer("a");
+        var layer = ac.layers[0];
+        var s = layer.stateMachine;
+
+        var s2 = s.AddStateMachine("Hello");
+
+        s.AddStateMachineExitTransition(s2);
+    }
+
     public static VirtualLayer Generate(BuildContext context)
     {
         var vcc = context.GetVirtualControllerContext();
@@ -22,6 +39,13 @@ internal static class ExpressionControllerGenerator
 
         data.Parameters.Add(new(ParameterNames.Expression.Pattern, 0));
 
+        foreach(var (pattern, patternIdx) in expressionPatterns.Index())
+        {
+            var mac = stateMachine.AddStateMachine(pattern.Key.Name);
+        }
+
+        /*
+         * 
         var registeredClips = new AnimationData[65];
 
         foreach ( var (pattern, patternIdx) in expressionPatterns.Index() )
@@ -37,8 +61,8 @@ internal static class ExpressionControllerGenerator
                 {
                     var bind = new EditorCurveBinding() { path = "", type = typeof(Animator), propertyName = $"{ParameterNames.BlendShapes.Prefix}{blendShape}" };
                     if (!data.BlendShapes.TryGetValue(blendShape, out var defaultValue))
-                        defaultValue = new ModEmoData.BlendShapeInfo(0, 100);
-                    AnimationUtility.SetEditorCurve(clip, bind, AnimationCurve.Constant(0, 0, defaultValue.Value / defaultValue.Max /* TODO: デフォルト値を入れる */));
+                        defaultValue = new BlendShapeInfo(0, 100);
+                    AnimationUtility.SetEditorCurve(clip, bind, AnimationCurve.Constant(0, 0, defaultValue.Value / defaultValue.Max /* TODO: デフォルト値を入れる /));
                 }
             }
             {
@@ -69,7 +93,7 @@ internal static class ExpressionControllerGenerator
 
             foreach (var expression in expressions.Where(x => x.Mode == ExpressionMode.Default))
             {
-                if (expression.Settings.ConditionFolder is { } conditionFolder && conditionFolder.GetComponentsInDirectChildren<IModEmoCondition>()?.FirstOrDefault() is { } condition)
+                if (expression.Settings.ConditionFolder is { } conditionFolder && conditionFolder.GetComponentsInDirectChildren<IModEmoConditionProvider>()?.FirstOrDefault() is { } condition)
                 {
                     var conditionMask = condition.GetConditionMask();
                     var indexes = maskAndIndexes.Where(x => (conditionMask & x.Mask) == conditionMask).Select(x => x.Index);
@@ -84,7 +108,7 @@ internal static class ExpressionControllerGenerator
 
                         clip ??= MakeAnimationClip(expression);
                         registeredClips[index].Clip = clip;
-                        registeredClips[index].TimeParameterName = expression.GameObject?.GetComponent<IModEmoMotionTime>()?.ParameterName;
+                        registeredClips[index].TimeParameterName = expression.GameObject?.GetComponent<IModEmoMotionTimeProvider>()?.ParameterName;
                     }
                 }
 
@@ -92,7 +116,7 @@ internal static class ExpressionControllerGenerator
 
             foreach (var expression in expressions.Where(x => x.Mode == ExpressionMode.Combine))
             {
-                if (expression.Settings.ConditionFolder is { } conditionFolder && conditionFolder.GetComponentsInDirectChildren<IModEmoCondition>()?.FirstOrDefault() is { } condition)
+                if (expression.Settings.ConditionFolder is { } conditionFolder && conditionFolder.GetComponentsInDirectChildren<IModEmoConditionProvider>()?.FirstOrDefault() is { } condition)
                 {
                     var conditionMask = condition.GetConditionMask();
                     var indexes = maskAndIndexes.Where(x => (conditionMask & x.Mask) != 0).Select(x => x.Index);
@@ -155,7 +179,7 @@ internal static class ExpressionControllerGenerator
                         var bind = new EditorCurveBinding() { path = "", type = typeof(Animator), propertyName = $"{ParameterNames.BlendShapes.Prefix}{blendShape}" };
 
                         if (!data.BlendShapes.TryGetValue(blendShape, out var defaultValue))
-                            defaultValue = new ModEmoData.BlendShapeInfo(0, 100);
+                            defaultValue = new BlendShapeInfo(0, 100);
 
                         generator.Add(bind, 0, defaultValue.Value / defaultValue.Max);
                     }
@@ -169,7 +193,7 @@ internal static class ExpressionControllerGenerator
                         if (blendShape.Cancel)
                             bind = AnimationUtils.CreateAAPBinding($"{ParameterNames.Internal.BlendShapes.DisablePrefix}{blendShape.Name}");
                         if (!data.BlendShapes.TryGetValue(blendShape.Name, out var defaultValue))
-                            defaultValue = new ModEmoData.BlendShapeInfo(0, 100);
+                            defaultValue = new BlendShapeInfo(0, 100);
 
                         generator.Add(bind, frame.Keyframe, blendShape.Value / defaultValue.Max);
                     }
@@ -211,14 +235,181 @@ internal static class ExpressionControllerGenerator
 
         }
 
+         */
         return vcc.Clone(layer, 0);
+    }
+
+    public static void Generate(BuildContext context, AnimatorControllerBuilder animatorController)
+    {
+        var modEmo = context.GetModEmoContext().Root;
+        var data = context.GetData();
+
+        var expressionPatterns = modEmo.ExportExpressions();
+        var usageMap = expressionPatterns
+            .SelectMany(x => x)
+            .SelectMany(x => x.Frames)
+            .SelectMany(x => x.BlendShapes)
+            .Where(x => data.BlendShapes.TryGetValue(x.Name, out var value) && value.Value != x.Value)
+            .Select(x => x.Name)
+            .ToHashSet();
+
+        var layer = animatorController.AddLayer("[ModEmo] Expressions");
+        var stateMachine = layer.StateMachine.WithDefaultMotion(data.BlankClip);
+
+        animatorController.Parameters.AddFloat(ParameterNames.Expression.Pattern, 0);
+        animatorController.Parameters.AddFloat(ParameterNames.Expression.Index, 0);
+
+        DirectBlendTree.DefaultDirectBlendParameter = ParameterNames.Internal.One;
+        var blendTree = new DirectBlendTree();
+
+        var patternSwitch = blendTree.AddBlendTree("Pattern Switch");
+        patternSwitch.BlendParameter = ParameterNames.Expression.Pattern;
+        var patternFallback = new MotionBranch(data.BlankClip);
+
+        const float Epsilon = 0.005f;
+
+        int expressionCount = 0;
+        foreach (var (pattern, patternIdx) in expressionPatterns.Index())
+        {
+            var patternTree = patternSwitch.AddDirectBlendTree(pattern.Key.Name, patternIdx);
+
+            var defM = new AnimationClip();
+            AnimationUtility.SetEditorCurve(defM, AnimationUtils.CreateAAPBinding(ParameterNames.Expression.Index), AnimationCurve.Constant(0, 0, expressionCount++));
+
+            IBlendTree? nextTree = null;
+
+            foreach(var (expression, expressionIdx) in pattern.Index())
+            {
+                var expressionTree = (nextTree ?? patternTree).AddDirectBlendTree(expression.Name);
+                nextTree = expressionTree;
+
+                var expressionMotion = new AnimationClip();
+                AnimationUtility.SetEditorCurve(expressionMotion, AnimationUtils.CreateAAPBinding(ParameterNames.Expression.Index), AnimationCurve.Constant(0, 0, expressionCount++));
+                
+                foreach (var conditionsOr in expression.Conditions)
+                {
+                    float? prevValue = null;
+                    var fallbackTree = new DirectBlendTree() { Name = "Fallback" };
+                    foreach(var conditionsAnd in conditionsOr)
+                    {
+                        var conditionTree = nextTree.AddBlendTree(conditionsAnd.Parameter.Name, prevValue);
+                        conditionTree.BlendParameter = conditionsAnd.Parameter.Name;
+                        animatorController.Parameters.AddFloat(conditionsAnd.Parameter.Name);
+                        float value = conditionsAnd.Parameter.Value;
+                        prevValue = value;
+
+                        conditionTree.Append(fallbackTree, value - Epsilon);
+                        conditionTree.Append(fallbackTree, value + Epsilon);
+                        nextTree = conditionTree;
+                    }
+
+                    if (prevValue is { } x)
+                    {
+                        nextTree?.AddMotion(expressionMotion, x);
+                    }
+
+                    nextTree = fallbackTree;
+                }
+            }
+
+            nextTree?.AddMotion(defM);
+        }
+
+        var idleState = stateMachine.AddState("DBT (DO NOT OPEN IN EDITOR!) (WD On)");
+        idleState.Motion = blendTree.Build();
+
+    }
+
+    private sealed class ConditionExpressionComparer : IEqualityComparer<IModEmoExpression>
+    {
+        public static ConditionExpressionComparer Instance { get; } = new();
+        public bool Equals(IModEmoExpression x, IModEmoExpression y)
+            => GetHashCode(x) == GetHashCode(y);
+
+        public int GetHashCode(IModEmoExpression obj)
+        {
+            HashCode hash = new();
+            foreach(var x in obj.Conditions)
+            {
+                foreach(var y in x)
+                {
+                    hash.Add(y);
+                }
+            }
+            return hash.ToHashCode();
+        }
+    }
+
+    private static void ApplyTransitionWithCondition(StateBuilder state, AnimatorParameterCondition condition, Func<StateBuilder, TransitionBuilder> transitionBuilder)
+    {
+        var mode = condition.Mode;
+        var name = condition.Parameter.Name;
+        switch (condition.Parameter.Value.Type)
+        {
+            case AnimatorControllerParameterType.Bool:
+                {
+                    var value = (bool)condition.Parameter.Value;
+                    if (mode is ConditionMode.Equals)
+                    {
+                        transitionBuilder(state).AddCondition(value ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, name, 0);
+                    }
+                    else
+                    {
+                        transitionBuilder(state).AddCondition(value ? AnimatorConditionMode.IfNot : AnimatorConditionMode.If, name, 0);
+                    }
+                }
+                break;
+            case AnimatorControllerParameterType.Int:
+                {
+                    if (mode.HasFlag(ConditionMode.Equals))
+                    {
+                        transitionBuilder(state).AddCondition(AnimatorConditionMode.Equals, name, condition.Parameter.Value);
+                    }
+                    else if (mode.HasFlag(ConditionMode.NotEqual))
+                    {
+                        transitionBuilder(state).AddCondition(AnimatorConditionMode.NotEqual, name, condition.Parameter.Value);
+                    }
+                    if (mode.HasFlag(ConditionMode.GreaterThan))
+                    {
+                        transitionBuilder(state).AddCondition(AnimatorConditionMode.Greater, name, condition.Parameter.Value);
+                    }
+                    else if (mode.HasFlag(ConditionMode.LessThan))
+                    {
+                        transitionBuilder(state).AddCondition(AnimatorConditionMode.Greater, name, condition.Parameter.Value);
+                    }
+                }
+                break;
+            case AnimatorControllerParameterType.Float:
+                {
+                    if (mode.HasFlag(ConditionMode.Equals))
+                    {
+                        transitionBuilder(state)
+                            .AddCondition(AnimatorConditionMode.Less, name, condition.Parameter.Value + float.Epsilon)
+                            .AddCondition(AnimatorConditionMode.Greater, name, condition.Parameter.Value - float.Epsilon);
+                    }
+                    else if (mode.HasFlag(ConditionMode.NotEqual))
+                    {
+                        transitionBuilder(state).AddCondition(AnimatorConditionMode.Less, name, condition.Parameter.Value - float.Epsilon);
+                        transitionBuilder(state).AddCondition(AnimatorConditionMode.Greater, name, condition.Parameter.Value + float.Epsilon);
+                    }
+                    if (mode.HasFlag(ConditionMode.GreaterThan))
+                    {
+                        transitionBuilder(state).AddCondition(AnimatorConditionMode.Greater, name, condition.Parameter.Value);
+                    }
+                    else if (mode.HasFlag(ConditionMode.LessThan))
+                    {
+                        transitionBuilder(state).AddCondition(AnimatorConditionMode.Greater, name, condition.Parameter.Value);
+                    }
+                }
+                break;
+        }
     }
 
     public static VirtualLayer? GenerateBlinkController(BuildContext context)
     {
         var vcc = context.GetVirtualControllerContext();
         var modEmo = context.GetModEmoContext().Root;
-        if (modEmo.BlinkExpression == null)
+        if (modEmo.Settings.BlinkExpression == null)
             return default;
 
         var layer = VirtualLayer.Create(vcc.CloneContext, "[ModEmo] Blink");
@@ -245,7 +436,7 @@ internal static class ExpressionControllerGenerator
 
         // Motion
         {
-            var clip = MakeAnimationClip(modEmo.BlinkExpression);
+            var clip = MakeAnimationClip(modEmo.Settings.BlinkExpression);
             var settings = AnimationUtility.GetAnimationClipSettings(clip);
             settings.loopTime = true;
             AnimationUtility.SetAnimationClipSettings(clip, settings);
@@ -261,7 +452,7 @@ internal static class ExpressionControllerGenerator
         {
             var clip = new AnimationClip() { name = expression.Name };
 
-            var frames = expression.Frames.GroupBy(x => (x.Keyframe, Frame: x), x => x.BlendShapes, (x, y) => new ExpressionFrame(x.Keyframe, y.SelectMany(y => y), x.Frame), new Comparer()).ToArray();
+            var frames = expression.Frames.GroupBy(x => (x.Keyframe, Frame: x), x => x.BlendShapes, (x, y) => new ExpressionFrame(x.Keyframe, y.SelectMany(y => y), x.Frame.Publisher), new Comparer()).ToArray();
 
             List<KeyValuePair<EditorCurveBinding, Keyframe>> aaa = new();
 

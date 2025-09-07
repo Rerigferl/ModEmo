@@ -19,6 +19,21 @@ internal static class ComponentExt
         }
         return result.ToArray();
     }
+    public static ReadOnlySpan<T> GetComponentsInDirectChildren<T>(this GameObject go, List<T> result, bool includeInactive = false)
+    {
+        result ??= new();
+        result.Clear();
+        var temp = new List<T>(4);
+        foreach (var child in go)
+        {
+            if (!includeInactive && !child.activeInHierarchy)
+                continue;
+
+            child.GetComponents(temp);
+            result.AddRange(temp);
+        }
+        return result.AsSpan();
+    }
 
     public static T GetOrAddComponent<T>(this GameObject obj) where T : Component
     {
@@ -33,7 +48,8 @@ internal static class ComponentExt
 
     public static void RemoveComponents<T>(this GameObject obj)
     {
-        foreach(var component in obj.GetComponents<T>())
+#if UNITY_EDITOR
+        foreach (var component in obj.GetComponents<T>())
         {
             var x = component as MonoBehaviour;
             var so = new SerializedObject(x);
@@ -43,5 +59,6 @@ internal static class ComponentExt
         }
         GameObjectUtility.RemoveMonoBehavioursWithMissingScript(obj);
         return;
+        #endif
     }
 }

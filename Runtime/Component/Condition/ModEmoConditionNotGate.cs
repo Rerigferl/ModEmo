@@ -1,19 +1,28 @@
-﻿namespace Numeira
+﻿
+
+namespace Numeira
 {
     internal sealed class ModEmoConditionNotGate : ModEmoConditionGate
     {
-        public override ushort GetConditionMask()
+        public override IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> GetConditions()
         {
-            return (ushort)~base.GetConditionMask();
+            foreach(var child in Children)
+            {
+                foreach(var group in child.GetConditions())
+                {
+                    yield return Group.Create(this, group.Select(x => x.Reverse()));
+                }
+            }
         }
 
-        protected override uint Gate(uint x, uint y) => x;
-
+#if UNITY_EDITOR
 
         [MenuItem("CONTEXT/ModEmoConditionNotGate/Test")]
         public static void Test(MenuCommand command)
         {
-            Debug.LogError($"{Convert.ToString((long)((command.context as IModEmoCondition)?.GetConditionMask() ?? 0), 2),64}");
+
         }
+
+#endif
     }
 }

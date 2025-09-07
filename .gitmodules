@@ -1,0 +1,3 @@
+[submodule "Animator/animator-controller-builder"]
+	path = Animator/animator-controller-builder
+	url = https://github.com/Rerigferl/animator-controller-builder.git

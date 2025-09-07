@@ -79,7 +79,7 @@ internal static class PatternImporter
             var exp = expObj.AddComponent<ModEmoAnimationClipExpression>();
             exp.AnimationClip = item.State.motion as AnimationClip;
 
-            exp.Settings.ConditionFolder ??= ModEmoExpressionConditionFolder.New(exp.transform);
+            //exp.Settings.ConditionFolder ??= ModEmoConditionFolder.New(exp.transform);
 
             foreach(var bit in bits)
             {
@@ -87,7 +87,7 @@ internal static class PatternImporter
                     continue;
 
                 var conditionObj = new GameObject();
-                conditionObj.transform.parent = exp.Settings.ConditionFolder.transform;
+                //conditionObj.transform.parent = exp.Settings.ConditionFolder.transform;
                 var condition = conditionObj.AddComponent<ModEmoVRChatCondition>();
 
                 if (maskPattern.Left != null)

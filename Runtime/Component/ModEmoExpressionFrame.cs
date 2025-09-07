@@ -31,7 +31,12 @@
         Seconds = 1,
     }
 
-    internal interface IModEmoExpressionFrame : IModEmoComponent
+    internal interface IModEmoExpressionFrameProvider
+    {
+        public IEnumerable<(float Keyframe, BlendShape BlendShape)> Frames { get; }
+    }
+
+    internal interface IModEmoExpressionFrame
     {
         float Keyframe { get; }
         IEnumerable<BlendShape> BlendShapes { get; }
@@ -52,8 +57,6 @@
         public IEnumerable<BlendShape> BlendShapes { get; }
 
         public IModEmoComponent? Publisher { get; }
-
-        public Component? Component => Publisher as Component;
 
         public void Deconstruct(out float keyFrame, out IEnumerable<BlendShape> blendShapes) => (keyFrame, blendShapes) = (Keyframe, BlendShapes);
 

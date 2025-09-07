@@ -2,7 +2,7 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Blink Expression")]
-    internal sealed class ModEmoBlinkExpression : ModEmoExpression
+    internal sealed class ModEmoBlinkExpression : ModEmoExpression, IModEmoExpression
     {
         public BlendShape[] BlendShapes = { };
 
@@ -17,6 +17,6 @@ namespace Numeira
             yield return new ExpressionFrame(300 / 60f, zero, this);
         }
 
-        protected override bool IsLoop() => true;
+        bool IModEmoExpression.IsLoop => true;
     }
 }
