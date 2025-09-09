@@ -1,24 +1,12 @@
-﻿using Numeira.Animation;
-using static UnityEditor.VersionControl.Asset;
+﻿using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using Numeira.Animation;
+using Debug = UnityEngine.Debug;
 
 namespace Numeira;
 internal static class ExpressionControllerGenerator
 {
-    [MenuItem("Test/AsdWEQWEQe")]
-    public static void A()
-    {
-        var ac = new AnimatorController();
-        AssetDatabase.CreateAsset(ac, "Assets/_Test/A.controller");
-
-        ac.AddLayer("a");
-        var layer = ac.layers[0];
-        var s = layer.stateMachine;
-
-        var s2 = s.AddStateMachine("Hello");
-
-        s.AddStateMachineExitTransition(s2);
-    }
-
     public static VirtualLayer Generate(BuildContext context)
     {
         var vcc = context.GetVirtualControllerContext();
@@ -32,7 +20,7 @@ internal static class ExpressionControllerGenerator
         var usageMap = expressionPatterns
             .SelectMany(x => x)
             .SelectMany(x => x.Frames)
-            .SelectMany(x => x.BlendShapes)
+            .SelectMany(x => x.GetBlendShapes())
             .Where(x => data.BlendShapes.TryGetValue(x.Name, out var value) && value.Value != x.Value)
             .Select(x => x.Name)
             .ToHashSet();
@@ -239,6 +227,35 @@ internal static class ExpressionControllerGenerator
         return vcc.Clone(layer, 0);
     }
 
+    private static IntPtr GetNativePtr<T>(this T obj) where T : Object => Unsafe.As<Tuple<IntPtr, int>>(obj).Item1;
+
+    public unsafe static void Test()
+    {
+        var blendTree = AssetDatabase.LoadAssetAtPath<BlendTree>(AssetDatabase.GUIDToAssetPath("e6f0338b60cc8f84daf9f95ea5b7812b"));
+        blendTree.maxThreshold = float.Epsilon;
+        var pointer = Unsafe.As<Tuple<IntPtr, int>>(blendTree).Item1;
+        ref var nativeMotion = ref Unsafe.AsRef<NativeObjectLayout>(pointer.ToPointer());
+
+        var ptr = (byte*)Unsafe.AsPointer(ref nativeMotion.First);
+        int limit = 512;
+        var p = ptr;
+        while (limit > 0)
+        {
+            if (*(float*)p == blendTree.maxThreshold)
+            { break; }
+            p++;
+            limit--;
+        }
+        Debug.LogError(p - ptr);
+        return;
+        using var so = new SerializedObject(blendTree);
+        var normalizedBlendValues = so.FindProperty("m_NormalizedBlendValues");
+        var flag = normalizedBlendValues.boolValue;
+        Debug.LogError(flag);
+        normalizedBlendValues.boolValue = !flag;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
     public static void Generate(BuildContext context, AnimatorControllerBuilder animatorController)
     {
         var modEmo = context.GetModEmoContext().Root;
@@ -248,7 +265,7 @@ internal static class ExpressionControllerGenerator
         var usageMap = expressionPatterns
             .SelectMany(x => x)
             .SelectMany(x => x.Frames)
-            .SelectMany(x => x.BlendShapes)
+            .SelectMany(x => x.GetBlendShapes())
             .Where(x => data.BlendShapes.TryGetValue(x.Name, out var value) && value.Value != x.Value)
             .Select(x => x.Name)
             .ToHashSet();
@@ -268,51 +285,50 @@ internal static class ExpressionControllerGenerator
 
         const float Epsilon = 0.005f;
 
-        int expressionCount = 0;
+        var sw = new Stopwatch();
+
         foreach (var (pattern, patternIdx) in expressionPatterns.Index())
         {
             var patternTree = patternSwitch.AddDirectBlendTree(pattern.Key.Name, patternIdx);
-
-            var defM = new AnimationClip();
-            AnimationUtility.SetEditorCurve(defM, AnimationUtils.CreateAAPBinding(ParameterNames.Expression.Index), AnimationCurve.Constant(0, 0, expressionCount++));
-
-            IBlendTree? nextTree = null;
+                        
+            IBlendTree nextTree = patternTree;
 
             foreach(var (expression, expressionIdx) in pattern.Index())
             {
-                var expressionTree = (nextTree ?? patternTree).AddDirectBlendTree(expression.Name);
+                sw.Restart();
+                var expressionTree = nextTree.AddDirectBlendTree(expression.Name);
                 nextTree = expressionTree;
 
-                var expressionMotion = new AnimationClip();
-                AnimationUtility.SetEditorCurve(expressionMotion, AnimationUtils.CreateAAPBinding(ParameterNames.Expression.Index), AnimationCurve.Constant(0, 0, expressionCount++));
-                
+                var expressionMotion = expression.MakeDirectAnimationClip("Body");
+                var branch = new MotionBranch(expressionMotion);
                 foreach (var conditionsOr in expression.Conditions)
                 {
                     float? prevValue = null;
                     var fallbackTree = new DirectBlendTree() { Name = "Fallback" };
                     foreach(var conditionsAnd in conditionsOr)
                     {
-                        var conditionTree = nextTree.AddBlendTree(conditionsAnd.Parameter.Name, prevValue);
-                        conditionTree.BlendParameter = conditionsAnd.Parameter.Name;
                         animatorController.Parameters.AddFloat(conditionsAnd.Parameter.Name);
+
+                        var tree = nextTree.AddBlendTree(conditionsAnd.Parameter.Name, prevValue);
+                        tree.BlendParameter = conditionsAnd.Parameter.Name;
                         float value = conditionsAnd.Parameter.Value;
+
+                        tree.Append(fallbackTree, value - Epsilon);
+                        tree.Append(fallbackTree, value + Epsilon);
+
                         prevValue = value;
-
-                        conditionTree.Append(fallbackTree, value - Epsilon);
-                        conditionTree.Append(fallbackTree, value + Epsilon);
-                        nextTree = conditionTree;
+                        nextTree = tree;
                     }
-
-                    if (prevValue is { } x)
-                    {
-                        nextTree?.AddMotion(expressionMotion, x);
-                    }
+                    nextTree.Append(branch, prevValue);
 
                     nextTree = fallbackTree;
                 }
+
+                sw.Stop();
+                Debug.LogError($"{expression.Name} - {sw.ElapsedMilliseconds}ms");
             }
 
-            nextTree?.AddMotion(defM);
+            nextTree.AddMotion(null!);
         }
 
         var idleState = stateMachine.AddState("DBT (DO NOT OPEN IN EDITOR!) (WD On)");
@@ -405,105 +421,6 @@ internal static class ExpressionControllerGenerator
         }
     }
 
-    public static VirtualLayer? GenerateBlinkController(BuildContext context)
-    {
-        var vcc = context.GetVirtualControllerContext();
-        var modEmo = context.GetModEmoContext().Root;
-        if (modEmo.Settings.BlinkExpression == null)
-            return default;
-
-        var layer = VirtualLayer.Create(vcc.CloneContext, "[ModEmo] Blink");
-        var tree = new DirectBlendTree();
-
-        var data = context.GetData();
-        data.Parameters.Add(new($"{ParameterNames.Blink.Enable}", 1f));
-        data.Parameters.Add(new($"{ParameterNames.Blink.Disable}", 0f));
-        data.Parameters.Add(new($"{ParameterNames.Blink.Result}", 0f));
-
-        // Gate
-        {
-            var result_0 = AnimationUtils.CreateAAPClip(ParameterNames.Blink.Result, 0);
-            var result_1 = AnimationUtils.CreateAAPClip(ParameterNames.Blink.Result, 1);
-
-            var t = tree.AddBlendTree("Gate");
-            t.BlendParameter = ParameterNames.Blink.Enable;
-            t.AddMotion(result_0);
-            t = t.AddBlendTree("Gate 2");
-            t.BlendParameter = ParameterNames.Blink.Disable;
-            t.AddMotion(result_1);
-            t.AddMotion(result_0);
-        }
-
-        // Motion
-        {
-            var clip = MakeAnimationClip(modEmo.Settings.BlinkExpression);
-            var settings = AnimationUtility.GetAnimationClipSettings(clip);
-            settings.loopTime = true;
-            AnimationUtility.SetAnimationClipSettings(clip, settings);
-
-            var t = tree.AddBlendTree("Motion");
-            t.BlendParameter = ParameterNames.Blink.Result;
-            t.AddMotion(data.BlankClip, 0);
-            t.AddMotion(data.BlankClip, 0.9999f);
-            t.AddMotion(clip, 1);
-        }
-
-        static AnimationClip MakeAnimationClip(IModEmoExpression expression)
-        {
-            var clip = new AnimationClip() { name = expression.Name };
-
-            var frames = expression.Frames.GroupBy(x => (x.Keyframe, Frame: x), x => x.BlendShapes, (x, y) => new ExpressionFrame(x.Keyframe, y.SelectMany(y => y), x.Frame.Publisher), new Comparer()).ToArray();
-
-            List<KeyValuePair<EditorCurveBinding, Keyframe>> aaa = new();
-
-            foreach (var frame in frames)
-            {
-                var (key, blendshapes) = frame;
-                foreach (var blendShape in blendshapes)
-                {
-                    var bind = AnimationUtils.CreateAAPBinding($"{ParameterNames.BlendShapes.Prefix}{blendShape.Name}");
-                    if (blendShape.Cancel)
-                        bind = AnimationUtils.CreateAAPBinding($"{ParameterNames.Internal.BlendShapes.DisablePrefix}{blendShape.Name}");
-                    float x = blendShape.Value / 100f;
-                    aaa.Add(KeyValuePair.Create(bind, new Keyframe(key, x, 0, 0)));
-                }
-            }
-
-            foreach (var group in aaa.GroupBy(x => x.Key, x => x.Value))
-            {
-                var a = group.ToArray();
-                for (int i = 0; i < a.Length; i++)
-                {
-                    if (i > 0)
-                        a[i].inTangent = Tangent(a[i - 1].time, a[i].time, a[i - 1].value, a[i].value);
-                    if (i < a.Length - 1)
-                        a[i].outTangent = Tangent(a[i].time, a[i + 1].time, a[i].value, a[i + 1].value);
-                }
-                AnimationUtility.SetEditorCurve(clip, group.Key, new AnimationCurve(a));
-            }
-
-            return clip;
-
-            static float Tangent(float timeStart, float timeEnd, float valueStart, float valueEnd)
-            {
-                return (valueEnd - valueStart) / (timeEnd - timeStart);
-            }
-        }
-
-        layer.StateMachine!.AddState("DirectBlendTree (WD On)", vcc.Clone(tree.Build(context.AssetContainer)));
-
-        return layer;
-    }
-
-    private sealed class Comparer : IEqualityComparer<(float Keyframe, IModEmoExpressionFrame Frame)>
-    {
-        public bool Equals((float Keyframe, IModEmoExpressionFrame Frame) x, (float Keyframe, IModEmoExpressionFrame Frame) y)
-            => x.Keyframe == y.Keyframe;
-
-        public int GetHashCode((float Keyframe, IModEmoExpressionFrame Frame) obj)
-            => obj.Keyframe.GetHashCode();
-    }
-
     private struct AnimationData
     {
         public AnimationData(AnimationClip clip, string? timeParameterName = null)
@@ -523,5 +440,126 @@ internal static class ExpressionControllerGenerator
 
             int IEqualityComparer<AnimationData>.GetHashCode(AnimationData obj) => obj.Clip!.GetHashCode();
         }
+    }
+}
+
+
+
+[StructLayout(LayoutKind.Sequential)]
+internal record struct NativeObjectLayout
+{
+    private NamedObject Base;
+    public byte First;
+
+    public nint m_Childs; // 248
+    public nint m_BlendParameter; // 256
+    public nint m_BlendParameterY; // 264
+    public float m_MinThreshold; //272
+    public float m_MaxThreshold; // 276
+
+    public bool m_UseAutomaticThresholds; // <- 280...?
+    public bool m_NormalizedBlendValues;
+    public int m_BlendType;
+
+    [StructLayout(LayoutKind.Sequential, Size = 248)]
+    private struct Blackbox248Bytes
+    {
+
+    }
+
+    public struct NonCopyable
+    {
+        public IntPtr MethodTable;
+    }
+
+    public struct AllocationRootWithSalt
+    {
+        public uint m_Salt;
+        public uint m_RootReferenceIndex;
+    }
+
+    public struct MemLabelId
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public AllocationRootWithSalt m_RootReferenceWithSalt;
+#endif
+
+        public int identifier;
+    }
+
+    public struct ScriptingGCHandle
+    {
+        public IntPtr m_Handle;
+        public int m_Weakness;
+        public IntPtr m_Object;
+    }
+
+    public struct NativeObject
+    {
+        public NonCopyable Base;
+        public int m_InstanceID;
+
+        // This is represented on the C++ side as several bit-fields.
+        public int m_BitFields;
+
+        public IntPtr m_EventIndex;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public MemLabelId m_FullMemoryLabel;
+#endif
+
+        public ScriptingGCHandle m_MonoReference;
+
+#if UNITY_EDITOR
+        public uint m_DirtyIndex;
+        public ulong m_FileIDHint;
+        public bool m_IsPreviewSceneObject;
+#endif
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public int m_ObjectProfilerListIndex;
+#endif
+    }
+
+    public struct PPtr<T> where T : unmanaged
+    {
+        public int m_InstanceID;
+    }
+
+    public struct NativePrefab
+    {
+        public NativeObject Base;
+        // ...
+    }
+
+    public struct NativePrefabInstance
+    {
+        public NativeObject Base;
+        // ...
+    }
+
+    public struct EditorExtension
+    {
+        public NativeObject Base;
+
+#if UNITY_EDITOR
+        public PPtr<EditorExtension> m_CorrespondingSourceObject;
+        public PPtr<EditorExtension> m_DeprecatedExtensionPtr;
+        public PPtr<NativePrefab> m_PrefabAsset;
+        public PPtr<NativePrefabInstance> m_PrefabInstance;
+        public bool m_IsClonedFromPrefabObject;
+#endif
+    }
+
+    public struct ConstantString
+    {
+        public nint m_Buffer;
+    }
+
+    public struct NamedObject
+    {
+        public EditorExtension Base;
+        public ConstantString m_Name;
+
     }
 }
