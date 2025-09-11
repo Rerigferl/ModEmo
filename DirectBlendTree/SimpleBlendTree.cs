@@ -11,11 +11,9 @@ public sealed class SimpleBlendTree : BlendTreeBase
         tree.name = Name;
         tree.useAutomaticThresholds = false;
 
-        var children = Children.AsSpan();
-        for (int i = 0; i < children.Length; i++)
+        foreach (var child in Children.Select((x, i) => (x.BlendTree, threshold: x.threshold ?? (Children.Count <= 1 ? 0 : (i / (Children.Count - 1))))).OrderBy(x => x.threshold))
         {
-            float t = children[i].threshold ?? (children.Length <= 1 ? 0 : (i / (children.Length - 1)));
-            children[i].BlendTree.Build(tree, t);
+            child.BlendTree.Build(tree, child.threshold);
         }
 
         blendTree.AddChild(tree, threshold ?? 0);

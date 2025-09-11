@@ -1,8 +1,11 @@
 ﻿
 namespace Numeira
 {
+    [AddComponentMenu(ComponentMenuPrefix + "Condition Combiner")]
     internal sealed class ModEmoConditionAndGate : ModEmoConditionGate
     {
+        protected override int UniqueId => 1;
+
         public override IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> GetConditions()
         {
             yield return Group.Create(this, Factory);

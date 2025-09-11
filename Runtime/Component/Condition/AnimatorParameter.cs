@@ -1,10 +1,11 @@
-﻿namespace Numeira
+﻿
+namespace Numeira
 {
     [Serializable]
-    internal readonly struct AnimatorParameterCondition : IEquatable<AnimatorParameterCondition>
+    internal struct AnimatorParameterCondition : IEquatable<AnimatorParameterCondition>
     {
-        public readonly AnimatorParameter Parameter;
-        public readonly ConditionMode Mode;
+        public AnimatorParameter Parameter;
+        public ConditionMode Mode;
 
         public AnimatorParameterCondition(AnimatorParameter parameter, ConditionMode mode)
         {
@@ -12,12 +13,12 @@
             Mode = mode;
         }
 
-        public bool Equals(AnimatorParameterCondition other)
+        public readonly bool Equals(AnimatorParameterCondition other)
             => Parameter.Equals(other.Parameter) && Mode == other.Mode;
 
-        public override int GetHashCode() => HashCode.Combine(Parameter, Mode);
+        public readonly override int GetHashCode() => HashCode.Combine(Parameter, Mode);
 
-        public AnimatorParameterCondition Reverse()
+        public readonly AnimatorParameterCondition Reverse()
         {
             if (Mode == ConditionMode.Equals)
                 return new(Parameter, ConditionMode.NotEqual);
@@ -58,10 +59,10 @@
     }
 
     [Serializable]
-    internal readonly struct AnimatorParameter : IEquatable<AnimatorParameter>
+    internal struct AnimatorParameter : IEquatable<AnimatorParameter>
     {
-        public readonly string Name;
-        public readonly AnimatorParameterValue Value;
+        public string Name;
+        public AnimatorParameterValue Value;
 
         public AnimatorParameter(string name, AnimatorParameterValue value)
         {
@@ -69,9 +70,9 @@
             Value = value;
         }
 
-        public bool Equals(AnimatorParameter other) => Name == other.Name && Value.Equals(other.Value);
+        public readonly bool Equals(AnimatorParameter other) => Name == other.Name && Value.Equals(other.Value);
 
-        public override int GetHashCode() => HashCode.Combine(Name, Value);
+        public readonly override int GetHashCode() => HashCode.Combine(Name.GetFarmHash64(), Value);
 
         public sealed class EqualityComparer : IEqualityComparer<AnimatorParameter>
         {
@@ -82,10 +83,10 @@
     }
 
     [Serializable]
-    internal readonly struct AnimatorParameterValue : IEquatable<AnimatorParameterValue>
+    internal struct AnimatorParameterValue : IEquatable<AnimatorParameterValue>
     {
-        public readonly AnimatorControllerParameterType Type;
-        public readonly float Value;
+        public AnimatorControllerParameterType Type;
+        public float Value;
 
         public AnimatorParameterValue(float value, AnimatorControllerParameterType type)
         {
@@ -97,13 +98,13 @@
         public AnimatorParameterValue(int value) : this(value, AnimatorControllerParameterType.Int) { }
         public AnimatorParameterValue(bool value) : this(value ? 1f : 0f, AnimatorControllerParameterType.Bool) { }
 
-        public override bool Equals(object obj)
+        public readonly override bool Equals(object obj)
             => obj is AnimatorParameter x && Equals(x);
 
-        public bool Equals(AnimatorParameterValue other)
+        public readonly bool Equals(AnimatorParameterValue other)
             => this.Type == other.Type && this.Value == other.Value;
 
-        public override int GetHashCode() => HashCode.Combine(Type, Value);
+        public readonly override int GetHashCode() => HashCode.Combine(Type, Value);
 
         public static bool operator ==(AnimatorParameterValue left, AnimatorParameterValue right) => left.Equals(right);
         public static bool operator !=(AnimatorParameterValue left, AnimatorParameterValue right) => !left.Equals(right);
@@ -116,4 +117,15 @@
         public static implicit operator AnimatorParameterValue(bool value) => new(value);
 
     }
+
+#if UNITY_EDITOR
+    [CustomPropertyDrawer(typeof(AnimatorParameterCondition))]
+    internal sealed class AnimatorParameterConditionDrawer : PropertyDrawer
+    {
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.PropertyField(position, property.FindPropertyRelative(nameof(AnimatorParameterCondition.Parameter)).FindPropertyRelative("Name"));
+        }
+    }
+#endif
 }

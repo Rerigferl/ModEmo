@@ -1,11 +1,13 @@
 ﻿using System.Collections.Immutable;
 using System.Threading.Tasks;
 using nadena.dev.ndmf.preview;
+using Numeira.Animation;
 
 namespace Numeira;
 
 internal sealed class ExpressionPreview : IRenderFilter
 {
+    public static float PreviewTime { get; set; } = 0;
     public ImmutableList<RenderGroup> GetTargetGroups(ComputeContext context)
     {
         var result = Iterate(context).ToImmutableList();
@@ -55,9 +57,14 @@ internal sealed class ExpressionPreview : IRenderFilter
             blendShapeInfos = ModEmoData.GetBlendShapeInfos(renderGroup.Renderers[0] as SkinnedMeshRenderer);
             rootComponent = renderGroup.GetData<ModEmo>();
 
-            foreach (var x in context.GetComponentsInChildren<IModEmoExpressionFrame>(rootComponent.gameObject, true))
+            foreach (var x in context.GetComponentsInChildren<IModEmoExpressionFrameProvider>(rootComponent.gameObject, true))
             {
-                context.Observe(x as ModEmoTagComponent, x => x?.GetHashCode() ?? 0);
+                context.Observe(x.Component, x =>
+                {
+                    var hashCode = new DeterministicHashCode();
+                    (x as IModEmoComponent)?.CalculateContentHash(ref hashCode);
+                    return hashCode.ToHashCode();
+                });
             }
         }
 
@@ -67,9 +74,14 @@ internal sealed class ExpressionPreview : IRenderFilter
             blendShapeInfos = source.blendShapeInfos;
             rootComponent = source.rootComponent;
 
-            foreach (var x in context.GetComponentsInChildren<IModEmoExpressionFrame>(rootComponent.gameObject, true))
+            foreach (var x in context.GetComponentsInChildren<IModEmoExpressionFrameProvider>(rootComponent.gameObject, true))
             {
-                context.Observe(x as ModEmoTagComponent, x => x?.GetHashCode() ?? 0);
+                context.Observe(x.Component, x =>
+                {
+                    var hashCode = new DeterministicHashCode();
+                    (x as IModEmoComponent)?.CalculateContentHash(ref hashCode);
+                    return hashCode.ToHashCode();
+                });
             }
         }
 
@@ -100,14 +112,14 @@ internal sealed class ExpressionPreview : IRenderFilter
                 }
             }
 
-            var time = (DateTime.Now - selectionChangedTime).TotalSeconds;
+            float time = (float)(DateTime.Now - selectionChangedTime).TotalSeconds;
             if (selectedExpression.IsLoop)
             {
-                time = (time * 0.5) % 1;
+                time = (time * 0.5f) % 1;
             }
             else
             {
-                time = (Math.Clamp(Math.Sin(time), -0.2, 0.2) + 0.2) / 0.4;
+                time = (Math.Clamp((float)Math.Sin(time), -0.2f, 0.2f) + 0.2f) / 0.4f;
             }
 
             foreach (var (name, value) in Sample(clip, (float)time))
@@ -146,7 +158,8 @@ internal sealed class ExpressionPreview : IRenderFilter
 
                 if (selectedExpression != null)
                 {
-                    animaton = selectedExpression.MakeAnimationClip(blendShapeInfos, forPreviewMode: true);
+                    animaton = selectedExpression.MakeAnimationClip(blendShapeInfos, null, writeDefault: false, previewMode: true).ToMotion(AssetContainer.Empty) as AnimationClip;
+                    if (selectedExpression.Frames.Count() > 1)
                     sceneReflesher = SceneViewReflesher.BeginReflesh();
                 }
             }    

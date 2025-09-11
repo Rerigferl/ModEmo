@@ -1,4 +1,6 @@
-﻿namespace Numeira;
+﻿using UnityEngine.Assertions.Must;
+
+namespace Numeira;
 
 internal static class PatternImporter
 {
@@ -7,7 +9,66 @@ internal static class PatternImporter
     {
         var ac = Selection.activeObject as AnimatorController;
         if (ac != null )
-            ImportFromVRChatFX( ac );
+            ImportFromAnimatorController( ac );
+    }
+
+    public static GameObject? ImportFromAnimatorController(AnimatorController animatorController)
+    {
+        var layers = animatorController.layers;
+
+        Dictionary<AnimationClip, List<AnimatorStateTransition>> dict = new();
+
+        foreach(var layer in layers.AsSpan()[..3])
+        {
+            var stateMachine = layer.stateMachine;
+            if (stateMachine == null)
+                continue;
+
+            foreach (var transition in stateMachine.anyStateTransitions)
+            {
+                var dest = transition.destinationState;
+                if (dest == null || dest.motion is not AnimationClip clip) continue;
+
+                dict.GetOrAdd(clip, _ => new()).Add(transition);
+            }
+        }
+
+        if (dict.Count == 0)
+            return null;
+
+        var patternObj = new GameObject(animatorController.name);
+        patternObj.AddComponent<ModEmoExpressionPattern>();
+
+        foreach(var (clip, transitions) in dict)
+        {
+            var expressionObj = new GameObject(clip.name);
+            expressionObj.transform.parent = patternObj.transform;
+            var expression = expressionObj.AddComponent<ModEmoAnimationClipExpression>();
+            expression.AnimationClip = clip;
+
+            var conditionsObj = new GameObject("Conditions");
+            conditionsObj.AddComponent<ModEmoConditionFolder>();
+            conditionsObj.transform.parent = expressionObj.transform;
+
+            foreach(var (transition, index) in transitions.Index())
+            {
+                var conditionObj = new GameObject($"Condition {index}");
+                conditionObj.transform.parent = conditionsObj.transform;
+                var condition = conditionObj.AddComponent<ModEmoCondition>();
+                condition.Parameters = transition.conditions.Select(x => new AnimatorParameterCondition(
+                    new AnimatorParameter(x.parameter, x.threshold),
+                    x.mode switch
+                    {
+                        AnimatorConditionMode.If or AnimatorConditionMode.Equals => ConditionMode.Equals,
+                        AnimatorConditionMode.IfNot or AnimatorConditionMode.NotEqual => ConditionMode.NotEqual,
+                        AnimatorConditionMode.Greater => ConditionMode.GreaterThan,
+                        AnimatorConditionMode.Less => ConditionMode.LessThan,
+                        _ => throw new NotImplementedException(),
+                    })).ToArray();
+            }
+        }
+
+        return patternObj;
     }
 
     public static GameObject? ImportFromVRChatFX(AnimatorController animatorController)
@@ -53,7 +114,7 @@ internal static class PatternImporter
             return default;
 
         var patternObj = new GameObject(animatorController.name);
-        patternObj.AddComponent<ModEmoExpressionPatterns>();
+        patternObj.AddComponent<ModEmoExpressionPattern>();
 
         var span = (stackalloc ushort[16 /* sizeof(ushort) * 8 */]);
 

@@ -1,4 +1,5 @@
-﻿namespace Numeira
+﻿
+namespace Numeira
 {
     internal sealed class ModEmoGestureWeightMotionTime : ModEmoTagComponent, IModEmoMotionTimeProvider
     {
@@ -10,5 +11,10 @@
             Hand.Right => ModEmoConstants.Parameters.Internal.Input.RightWeight,
             _ => null,
         };
+
+        protected override void CalculateContentHash(ref HashCode hashCode)
+        {
+            hashCode.Add(Side);
+        }
     }
 }

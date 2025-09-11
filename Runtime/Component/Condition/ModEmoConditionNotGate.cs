@@ -2,8 +2,11 @@
 
 namespace Numeira
 {
+    [AddComponentMenu(ComponentMenuPrefix + "Condition Inverter")]
     internal sealed class ModEmoConditionNotGate : ModEmoConditionGate
     {
+        protected override int UniqueId => 3;
+
         public override IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> GetConditions()
         {
             foreach(var child in Children)

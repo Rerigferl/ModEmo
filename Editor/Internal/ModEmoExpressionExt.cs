@@ -1,109 +1,70 @@
 ﻿using System.Collections.Immutable;
-using static Numeira.ModEmoData;
+using Numeira.Animation;
 
 namespace Numeira;
 
 internal static class ModEmoExpressionExt
 {
-    public static AnimationClip MakeAnimationClip(this IModEmoExpression expression, ImmutableDictionary<string, BlendShapeInfo> blendShapes, AnimationClip? source = null, HashSet<string>? whiteList = null, bool forPreviewMode = false)
+    public static AnimationClipBuilder MakeAnimationClip<T>(this T expression, ModEmoData data, bool writeDefault = true, bool writeBlink = true) where T : IModEmoExpression
+        => expression.MakeAnimationClip(data.BlendShapes, data.UsageBlendShapeMap, writeDefault, writeBlink);
+
+    public static AnimationClipBuilder MakeAnimationClip<T>(
+        this T expression,
+        ImmutableDictionary<string, BlendShapeInfo> blendShapes,
+        ImmutableHashSet<string>? usageBlendShapes,
+        bool writeDefault = true,
+        bool writeBlink = true,
+        bool previewMode = false) where T : IModEmoExpression
     {
-        var generator = new AnimationClipGenerator() { Name = source == null ? expression.Name : $"{source.name} + {expression.Name}" };
-        if (source != null)
+        var anim = new AnimationClipBuilder
         {
-            foreach (var bind in AnimationUtility.GetCurveBindings(source))
+            Name = expression.Name,
+            IsLoop = expression.IsLoop
+        };
+
+        if (writeDefault)
+        {
+            foreach (var (name, blendShape) in blendShapes)
             {
-                if (!blendShapes.TryGetValue(bind.propertyName, out var value))
+                if (usageBlendShapes != null && !usageBlendShapes.Contains(name))
                     continue;
 
-                if (whiteList != null && !whiteList.Contains(bind.propertyName))
-                    continue;
+                float value = blendShape.Value;
+                if (!previewMode)
+                    value /= blendShape.Max;
 
-                var curve = AnimationUtility.GetEditorCurve(source, bind);
-                var keys = curve.keys;
-                if (!keys.Any(x => x.value != value.Value))
-                    continue;
+                anim.AddAnimatedParameter(previewMode ? name : $"{ParameterNames.Internal.BlendShapes.Prefix}{name}/Value", 0, value);
+            }
 
-                foreach (var x in keys)
-                {
-                    var bind2 = new EditorCurveBinding() { path = "", type = typeof(Animator), propertyName = forPreviewMode ? $"{bind.propertyName}" : $"{ParameterNames.BlendShapes.Prefix}{bind.propertyName}" };
-
-                    generator.Add(bind, x.time, x.value);
-                }
+            if (writeBlink && !previewMode)
+            {
+                anim.AddAnimatedParameter(ParameterNames.Blink.Value, 0, 1);
             }
         }
-        else
-        {
-            if (whiteList != null)
-            {
-                foreach (var blendShape in whiteList)
-                {
-                    var bind = new EditorCurveBinding() { path = "", type = typeof(Animator), propertyName = forPreviewMode ? $"{blendShape}" : $"{ParameterNames.BlendShapes.Prefix}{blendShape}" };
 
-                    if (!blendShapes.TryGetValue(blendShape, out var defaultValue))
-                        defaultValue = new BlendShapeInfo(0, 100);
-
-                    generator.Add(bind, 0, defaultValue.Value / defaultValue.Max);
-                }
-            }
-        }
 
         foreach (var frame in expression.Frames)
         {
-            foreach (var blendShape in frame.BlendShapes)
+            foreach (var blendShape in frame.GetBlendShapes())
             {
-                if (forPreviewMode)
+                var name = blendShape.Name;
+                if (!blendShapes.TryGetValue(name, out var defaultValue))
+                    defaultValue = new(0, 100);
+
+                float value = (previewMode, blendShape.Cancel) switch
                 {
-                    var bind = AnimationUtils.CreateAAPBinding($"{blendShape.Name}");
-                    if (!blendShapes.TryGetValue(blendShape.Name, out var defaultValue))
-                        defaultValue = new BlendShapeInfo(0, 100);
-
-                    float value;
-                    if (!blendShape.Cancel)
-                    {
-                        value = blendShape.Value;
-                    }
-                    else
-                    {
-                        value = MathF.Max(0, MathF.Min(defaultValue.Max, defaultValue.Value - (defaultValue.Value * (blendShape.Value / defaultValue.Max))));
-                    }
-
-                    generator.Add(bind, frame.Keyframe, value);
-                }
-                else
-                {
-                    var bind = AnimationUtils.CreateAAPBinding($"{ParameterNames.BlendShapes.Prefix}{blendShape.Name}");
-                    if (blendShape.Cancel)
-                        bind = AnimationUtils.CreateAAPBinding($"{ParameterNames.Internal.BlendShapes.DisablePrefix}{blendShape.Name}");
-                    if (!blendShapes.TryGetValue(blendShape.Name, out var defaultValue))
-                        defaultValue = new BlendShapeInfo(0, 100);
-
-                    generator.Add(bind, frame.Keyframe, blendShape.Value / defaultValue.Max);
-                }
+                    (true, false) => Mathf.Clamp(blendShape.Value, 0, defaultValue.Max),
+                    (true, true) => Mathf.Clamp(defaultValue.Value * (1 - blendShape.Value / defaultValue.Max), 0, defaultValue.Max),
+                    _ => blendShape.Value / defaultValue.Max,
+                };
+                
+                anim.AddAnimatedParameter(previewMode ? name : $"{ParameterNames.Internal.BlendShapes.Prefix}{name}{(blendShape.Cancel ? "/Cancel" : "/Value")}", frame.Time, value);
             }
 
-
-            if (frame.Publisher is { } publisher && publisher.GameObject?.GetComponent<IModEmoExpressionBlinkControl>() is { } blinkCtrl)
-            {
-                var bind = AnimationUtils.CreateAAPBinding(ParameterNames.Blink.Disable);
-                generator.Add(bind, frame.Keyframe, blinkCtrl.Enable ? 0 : 1);
-            }
+            if (writeBlink)
+            anim.AddAnimatedParameter(ParameterNames.Blink.Value, frame.Time, (expression.Blink ?? frame.Blink) ? 1 : 0);
         }
 
-        return generator.Export();
-    }
-
-    public static AnimationClip MakeDirectAnimationClip(this IModEmoExpression expression, string? path = null)
-    {
-        var generator = new AnimationClipGenerator() { Name = expression.Name };
-
-        foreach (var frame in expression.Frames)
-        {
-            foreach (var blendShape in frame.BlendShapes)
-            {
-                generator.Add(new EditorCurveBinding() { type = typeof(SkinnedMeshRenderer), path = path, propertyName = $"blendShape.{blendShape.Name}" }, frame.Keyframe, blendShape.Value);
-            }
-        }
-
-        return generator.Export();
+        return anim;
     }
 }

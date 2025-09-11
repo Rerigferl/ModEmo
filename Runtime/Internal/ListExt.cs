@@ -1,4 +1,6 @@
-﻿namespace Numeira;
+﻿using System.Collections.Generic;
+
+namespace Numeira;
 
 internal static class ListExt
 {

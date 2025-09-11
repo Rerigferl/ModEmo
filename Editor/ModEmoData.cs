@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 using nadena.dev.modular_avatar.core;
+using Numeira.Animation;
 using UnityEngine;
 
 namespace Numeira;
@@ -9,25 +10,29 @@ internal sealed class ModEmoData
 {
     private const string UncategorizedGroupName = "Uncategorized";
 
-
     public SkinnedMeshRenderer Face { get; }
 
     public ImmutableDictionary<string, ImmutableDictionary<string, BlendShapeInfo>> CategorizedBlendShapes { get; }
 
     public ImmutableDictionary<string, BlendShapeInfo> BlendShapes { get; }
 
-    public HashSet<AnimatorParameter> Parameters { get; } = new(AnimatorParameter.ParameterNameEqualityComparer.Instance);
+    public HashSet<AvatarParameter> Parameters { get; } = new(AvatarParameter.ParameterNameEqualityComparer.Instance);
 
-    public AnimationClip BlankClip { get; } = AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath("3107326e8ebb7da42981f107a7207199"));
+    public MotionBuilder BlankClip { get; } = AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath("3107326e8ebb7da42981f107a7207199"));
 
     public ImmutableHashSet<string>? GeneratedBlendshapeControls { get; set; }
 
-    internal static ModEmoData Init(BuildContext context) => new(context.GetModEmoContext().Root);
+    public ImmutableHashSet<string> UsageBlendShapeMap { get; }
 
-    private ModEmoData(ModEmo component)
+    internal static ModEmoData Init(BuildContext context) => new(context);
+
+    private ModEmoData(BuildContext context)
     {
+        var component = context.GetModEmoContext().Root;
+
         Face = 
-            component.Settings.Face.Get(component)?.GetComponent<SkinnedMeshRenderer>() 
+            component.Settings.Face.Get(component)?.GetComponent<SkinnedMeshRenderer>()
+            
             ?? throw new MissingReferenceException("Face object is missing");
 
         var mesh = Face.sharedMesh;
@@ -50,6 +55,24 @@ internal sealed class ModEmoData
         }
         BlendShapes = info.Values.SelectMany(x => x).ToImmutableDictionary(x => x.Key, x => x.Value);
         CategorizedBlendShapes = info.ToImmutableDictionary(x => x.Key, x => x.Value.ToImmutableDictionary());
+
+        List<IModEmoExpression> expressions = new();
+        foreach(var x in component.ExportExpressions())
+        {
+            expressions.Add(x.Key);
+            foreach(var y in x)
+            {
+                expressions.Add(y);
+            }
+        }
+        if (component.GetBlinkExpression() is { } blink)
+            expressions.Add(blink);
+
+        UsageBlendShapeMap = 
+            expressions.SelectMany(x => x.Frames.SelectMany(x => x.GetBlendShapes()))
+            .Where(x => BlendShapes.TryGetValue(x.Name, out var value) && value.Value != x.Value)
+            .Select(x => x.Name)
+            .ToImmutableHashSet();
     }
 
     public static ImmutableDictionary<string, BlendShapeInfo> GetBlendShapeInfos(SkinnedMeshRenderer? renderer)

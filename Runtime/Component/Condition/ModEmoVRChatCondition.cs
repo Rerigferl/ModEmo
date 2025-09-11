@@ -1,7 +1,6 @@
-﻿
-
-namespace Numeira
+﻿namespace Numeira
 {
+    [AddComponentMenu(ComponentMenuPrefix + "Gesture Condition")]
     internal sealed class ModEmoVRChatCondition : ModEmoConditionBase
     {
         public Hand Hand = Hand.Left;
@@ -22,6 +21,12 @@ namespace Numeira
                     yield return new AnimatorParameterCondition(new AnimatorParameter("GestureRight", (int)x.Gesture), ConditionMode.Equals);
                 }
             }
+        }
+
+        protected override void CalculateContentHash(ref HashCode hashCode)
+        {
+            hashCode.Add(Hand);
+            hashCode.Add(Gesture);
         }
     }
 }

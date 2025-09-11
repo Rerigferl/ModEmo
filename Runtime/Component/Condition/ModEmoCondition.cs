@@ -1,9 +1,7 @@
-﻿
-
-
-namespace Numeira
+﻿namespace Numeira
 {
     [DisallowMultipleComponent]
+    [AddComponentMenu(ComponentMenuPrefix + "Condition")]
     internal sealed class ModEmoCondition : ModEmoConditionBase
     {
         public AnimatorParameterCondition[] Parameters = Array.Empty<AnimatorParameterCondition>();
@@ -11,6 +9,14 @@ namespace Numeira
         public override IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> GetConditions()
         {
             yield return Group.Create(this, x => x.Parameters);
+        }
+
+        protected override void CalculateContentHash(ref HashCode hashCode)
+        {
+            foreach(var x in Parameters)
+            {
+                hashCode.Add(x);
+            }
         }
     }
 }

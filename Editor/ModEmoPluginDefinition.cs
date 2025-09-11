@@ -7,6 +7,7 @@ namespace Numeira;
 
 internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
 {
+    internal const string ArtifactCachePath = "Packages/numeira.mod-emo/__Generated/";
     protected override void Configure()
     {
         InPhase(BuildPhase.Transforming)
@@ -24,7 +25,9 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
     public sealed class ModEmoContext : IExtensionContext
     {
         private ModEmoTagComponent[]? components;
+
         public ReadOnlySpan<ModEmoTagComponent> Components => components;
+
         public ModEmo Root { get; private set; } = null!;
 
         public void OnActivate(BuildContext context)
@@ -40,7 +43,7 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
 
             foreach(var x in components.Select(x => x.gameObject).Distinct().ToArray())
             {
-                //x.RemoveComponents<ModEmoTagComponent>();
+                x.RemoveComponents<ModEmoTagComponent>();
             }
         }
 
@@ -54,40 +57,78 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             if (modEmo == null || !modEmo.gameObject.activeInHierarchy || !modEmo.enabled )
                 return;
 
-            var animatorController = new AnimatorControllerBuilder() { Name = "ModEmo" };
-            animatorController.Parameters
-                .AddFloat(ParameterNames.Internal.One, 1f)
-                .AddFloat(ParameterNames.Internal.SmoothAmount, 0.65f);
-
-            if (context.PlatformProvider.QualifiedName == WellKnownPlatforms.VRChatAvatar30)
+            int? modEmoHash = modEmo.Settings.UseCache ? modEmo.GetHashCode() : null;
+            AnimatorController? animatorController = null;
+            if (modEmoHash is not null)
             {
-
-            }
-            else
-            {
-                throw new NotImplementedException($"TargetPlatform `{context.PlatformProvider.DisplayName}` is not supported");
+                var cache = ModEmoGeneratedArtifactsCache.FindCache(modEmoHash.Value);
+                animatorController = cache == null ? null : AssetDatabase.LoadAssetAtPath<AnimatorController>(AssetDatabase.GetAssetPath(cache));
+                if (animatorController != null)
+                    Debug.LogError($"[ModEmo] Cache found, Hash: {modEmoHash}");
+                else
+                    Debug.LogError($"[ModEmo] Cache not found, Hash: {modEmoHash}");
             }
 
-            ExpressionControllerGenerator.Generate(context, animatorController);
+            if (animatorController == null)
+            {
+                var builder = new AnimatorControllerBuilder() { Name = "ModEmo" };
+                builder.Parameters
+                    .AddFloat(ParameterNames.Internal.One, 1f)
+                    .AddFloat(ParameterNames.Internal.SmoothAmount, 0.65f);
 
-            var assetContainer = new AssetContainer();
-            var compiledAnimatorController = animatorController.ToAnimatorController(assetContainer);
+                if (context.PlatformProvider.QualifiedName == WellKnownPlatforms.VRChatAvatar30)
+                {
+                    GestureWeightSmootherGenerator.Generate(context, builder);
+                }
+                else
+                {
+                    throw new NotImplementedException($"TargetPlatform `{context.PlatformProvider.DisplayName}` is not supported");
+                }
+
+                ExpressionControllerGenerator.Generate(context, builder);
+                BlendShapeControllerGenerator.Generate(context, builder);
+
+                var assetContainer = new AssetContainer();
+                animatorController = builder.ToAnimatorController(assetContainer);
+
+                if (modEmoHash is not null)
+                {
+                    AssetDatabase.StartAssetEditing();
+                    try
+                    {
+                        System.IO.Directory.CreateDirectory(ArtifactCachePath);
+                        var cache = ScriptableObject.CreateInstance<ModEmoGeneratedArtifactsCache>();
+                        cache.HashCode = modEmoHash.Value;
+                        cache.Expires = DateTime.Now.AddDays(2);
+                        var path = AssetDatabase.GenerateUniqueAssetPath($"{ArtifactCachePath}ModEmo-{context.AvatarRootObject.name}-{(uint)modEmoHash.Value}.asset");
+                        AssetDatabase.CreateAsset(cache, path);
+                        foreach (var x in assetContainer.Assets)
+                        {
+                            if (EditorUtility.IsPersistent(x))
+                                continue;
+
+                            if (x is not AnimatorController)
+                                x.hideFlags |= HideFlags.HideInHierarchy;
+                            AssetDatabase.AddObjectToAsset(x, cache);
+                        }
+                    }
+                    finally
+                    {
+                        AssetDatabase.StopAssetEditing();
+                    }
+                }
+                else
+                {
+                    context.AssetSaver.SaveAssets(assetContainer.Assets);
+                }
+            }
+
             var ma = modEmo.gameObject.AddComponent<ModularAvatarMergeAnimator>();
             ma.pathMode = MergeAnimatorPathMode.Absolute;
             ma.matchAvatarWriteDefaults = true;
             ma.layerType = VRC.SDK3.Avatars.Components.VRCAvatarDescriptor.AnimLayerType.FX;
-            ma.animator = compiledAnimatorController;
+            ma.animator = animatorController;
 
-            //modEmo.AnimatorController =
-
-            //avatarController.AddLayer(priority, InputConverterGenerator.Generate(context));
-            //avatarController.AddLayer(priority, GestureWeightSmootherGenerator.Generate(context));
-            //avatarController.AddLayer(priority, ExpressionControllerGenerator.Generate(context));
-            //if (ExpressionControllerGenerator.GenerateBlinkController(context) is { } blink)
-            //    avatarController.AddLayer(priority, blink);
-            //avatarController.AddLayer(priority, BlendShapeControllerGenerator.Generate(context));
-
-            //avatarController.Parameters = avatarController.Parameters.AddRange(data.Parameters.Select(x => (AnimatorControllerParameter)x).Select(x => KeyValuePair.Create(x.name, x)));
             new MenuGenerator(context).Generate();
         }
     }

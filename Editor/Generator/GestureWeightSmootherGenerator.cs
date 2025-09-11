@@ -1,4 +1,6 @@
-﻿namespace Numeira;
+﻿using Numeira.Animation;
+
+namespace Numeira;
 
 internal static class GestureWeightSmootherGenerator
 {
@@ -38,5 +40,38 @@ internal static class GestureWeightSmootherGenerator
 
         layer.StateMachine!.AddState("DirectBlendTree (WD On)", vcc.Clone(tree.Build(context.AssetContainer)));
         return layer;
+    }
+
+    public static void Generate(BuildContext context, AnimatorControllerBuilder animatorController)
+    {
+        var layer = animatorController.AddLayer("[ModEmo] Gesture Weight Smoother");
+        DirectBlendTreeBuilder tree = new DirectBlendTreeBuilder() { DefaultDirectBlendParameter = ParameterNames.Internal.One };
+        layer.StateMachine.WithDefaultMotion(tree).AddState("DirectBlendTree (WD On)");
+        
+        animatorController.Parameters.AddFloat("GestureLeftWeight", 0f);
+        animatorController.Parameters.AddFloat("GestureRightWeight", 0f);
+        animatorController.Parameters.AddFloat($"{ParameterNames.Internal.Input.LeftWeight}", 0f);
+        animatorController.Parameters.AddFloat($"{ParameterNames.Internal.Input.RightWeight}", 0f);
+
+        foreach (var side in new[] { "Left", "Right" })
+        {
+            var a = tree.AddBlendTree(side).Motion;
+            a.BlendParameter = ParameterNames.Internal.SmoothAmount;
+            var b1 = a.AddBlendTree("").Motion;
+            b1.BlendParameter = $"Gesture{side}Weight";
+            var b2 = a.AddBlendTree("").Motion;
+            b2.BlendParameter = $"{ParameterNames.Internal.Input.Prefix}{side}/Weight";
+
+            var min = new AnimationClipBuilder() { Name = "Min" };
+            var max = new AnimationClipBuilder() { Name = "Max" };
+            min.AddAnimatedParameter(b2.BlendParameter, 0, 0);
+            max.AddAnimatedParameter(b2.BlendParameter, 0, 1);
+
+            b1.Append(min);
+            b1.Append(max);
+            b2.Append(min);
+            b2.Append(max);
+        }
+
     }
 }

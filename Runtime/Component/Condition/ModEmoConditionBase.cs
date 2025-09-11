@@ -1,4 +1,5 @@
 ﻿
+
 namespace Numeira
 {
     [DisallowMultipleComponent]
@@ -10,7 +11,7 @@ namespace Numeira
     }
 
 
-    internal interface IModEmoConditionProvider : IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>>
+    internal interface IModEmoConditionProvider : IModEmoComponent, IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>>
     {
         IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> GetConditions();
 

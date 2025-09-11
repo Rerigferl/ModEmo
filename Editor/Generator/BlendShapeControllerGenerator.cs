@@ -1,112 +1,69 @@
 ﻿using System.Collections.Immutable;
+using nadena.dev.ndmf.util;
 using Numeira.Animation;
 
 namespace Numeira;
 
 internal static class BlendShapeControllerGenerator
 {
-    public static VirtualLayer Generate(BuildContext context)
+    public static void Generate(BuildContext context, AnimatorControllerBuilder animatorController)
     {
-        var rootTree = new DirectBlendTree();
-        var vcc = context.GetVirtualControllerContext();
-        var layer = VirtualLayer.Create(vcc.CloneContext, "[ModEmo] Face BlendShapes");
         var modEmo = context.GetModEmoContext().Root;
         var data = context.GetData();
 
-        var usageMap = modEmo.ExportExpressions().SelectMany(x => x).SelectMany(x => x.Frames).SelectMany(x => x.BlendShapes).Where(blendShape =>
+        var layer = animatorController.AddLayer("[ModEmo] BlendShape Control");
+        var stateMachine = layer.StateMachine.WithDefaultWriteDefaults(true);
+        var state = stateMachine.AddState("(WD On)");
+        var blendTree = new DirectBlendTreeBuilder
         {
-            foreach(var (_, x) in data.CategorizedBlendShapes)
-            {
-                if (!x.TryGetValue(blendShape.Name, out var info))
-                    continue;
+            Name = "BlendShapes",
+            DefaultDirectBlendParameter = ParameterNames.Internal.One
+        };
+        state.Motion = blendTree;
 
-                if (blendShape.Value != info.Value)
-                    return true;
-            }
-
-            return false;
-        }).Select(x => x.Name).ToHashSet();
-
-        List<string> generated = new();
-
-        foreach (var (key, shapes) in data.CategorizedBlendShapes.OrderBy(x => x.Key))
+        var facePath = data.Face.gameObject.AvatarRootPath();
+        
+        foreach (var (name, blendShape) in data.BlendShapes)
         {
-            foreach (var (name, blendShape) in shapes)
-            {
-                if (!usageMap.Contains(name))
-                    continue;
+            if (!data.UsageBlendShapeMap.Contains(name))
+                continue;
 
-                var categoryKey = key[key.IndexOf(" ")..];
-                var category = rootTree.Find<DirectBlendTree>(categoryKey);
-                category ??= rootTree.AddDirectBlendTree(categoryKey);
+            var min = new AnimationClipBuilder() { Name = $"{name} Min" };
+            var max = new AnimationClipBuilder() { Name = $"{name} Max" };
+            //var @default = new AnimationClipBuilder() { Name = $"{name} Default" };
+            var propertyName = $"blendShape.{name}";
 
-                var root = category.AddDirectBlendTree(name);
+            min.Add(new EditorCurveBinding() { path = facePath, propertyName = propertyName, type = typeof(SkinnedMeshRenderer) }, 0, 0);
+            max.Add(new EditorCurveBinding() { path = facePath, propertyName = propertyName, type = typeof(SkinnedMeshRenderer) }, 0, blendShape.Max);
+            //@default.Add(new() { path = facePath, propertyName = propertyName, type = typeof(SkinnedMeshRenderer) }, 0, blendShape.Value);
 
-                generated.Add(name);
-                var parameterName = $"{ParameterNames.BlendShapes.Prefix}{name}";
-                var overrideParameterName = $"{ParameterNames.Internal.BlendShapes.OverridePrefix}{name}";
-                var controlParameterName = $"{ParameterNames.Internal.BlendShapes.ControlPrefix}{name}";
-                var disableParameterName = $"{ParameterNames.Internal.BlendShapes.DisablePrefix}{name}";
-                
-                data.Parameters.Add(new(parameterName, 0f));
-                data.Parameters.Add(new(overrideParameterName, 0f, AnimatorParameterType.Float));
-                data.Parameters.Add(new(controlParameterName, 0f));
-                data.Parameters.Add(new(disableParameterName, 0f));
+            var paramNameBase = $"{ParameterNames.Internal.BlendShapes.Prefix}{name}";
+            
+            var enableSwitch = blendTree.AddBlendTree($"{name}").Motion;
+            enableSwitch.BlendParameter = $"{paramNameBase}/Enable";
+            enableSwitch.Append(data.BlankClip, threshold: 0);
+            
+            var overrideTree = enableSwitch.AddBlendTree("Override").WithThreshold(1).Motion;
+            overrideTree.BlendParameter = $"{paramNameBase}/Override";
+            
+            var cancelTree = overrideTree.AddBlendTree("Cancel").WithThreshold(0).Motion;
+            cancelTree.BlendParameter = $"{paramNameBase}/Cancel";
 
-                // ParameterMix
-                {
-                    var zero = new AnimationClip() { name = $"{name} Min" };
-                    var one = new AnimationClip() { name = $"{name} Max" };
+            var controlTree = cancelTree.AddBlendTree("Control").WithThreshold(0).Motion;
+            controlTree.BlendParameter = $"{paramNameBase}/Value";
 
-                    var bind = new EditorCurveBinding() { path = "", propertyName = $"{controlParameterName}", type = typeof(Animator) };
-                    AnimationUtility.SetEditorCurve(zero, bind, AnimationCurve.Constant(0, 0, 0));
-                    AnimationUtility.SetEditorCurve(one, bind, AnimationCurve.Constant(0, 0, 1));
+            controlTree.Append(min, threshold: 0);
+            controlTree.Append(max, threshold: 1);
 
-                    var gate = root.AddBlendTree("Gate");
-                    gate.BlendParameter = overrideParameterName;
+            cancelTree.Append(min, threshold: 1);
 
-                    var disableGate = gate.AddBlendTree("Disable Gate", 0);
-                    disableGate.BlendParameter = disableParameterName;
+            overrideTree.Append(min, threshold: float.Epsilon);
+            overrideTree.Append(max, threshold: 1);
 
-                    var normal = disableGate.AddBlendTree("Normal", 0);
-                    normal.BlendParameter = parameterName;
-                    normal.AddMotion(zero);
-                    normal.AddMotion(one);
-
-                    disableGate.AddMotion(zero, 1f);
-
-                    var @override = gate.AddBlendTree("Override", 0.0001f);
-                    @override.BlendParameter = gate.BlendParameter;
-                    @override.AddMotion(zero);
-                    @override.AddMotion(one);
-                }
-
-                // Control
-                {
-                    var zero = new AnimationClip() { name = $"{name} Min" };
-                    var one = new AnimationClip() { name = $"{name} Max" };
-
-                    var bind = new EditorCurveBinding() { path = modEmo.Settings.Face.referencePath, propertyName = $"blendShape.{name}", type = typeof(SkinnedMeshRenderer) };
-                    AnimationUtility.SetEditorCurve(zero, bind, AnimationCurve.Constant(0, 0, 0));
-                    AnimationUtility.SetEditorCurve(one, bind, AnimationCurve.Constant(0, 0, blendShape.Max));
-
-                    var tree = root.AddBlendTree("Control");
-                    tree.AddMotion(zero);
-                    tree.AddMotion(one);
-
-                    tree.BlendParameter = controlParameterName;
-                }
-            }
+            animatorController.Parameters.AddFloat(enableSwitch.BlendParameter, 1);
+            animatorController.Parameters.AddFloat(overrideTree.BlendParameter);
+            animatorController.Parameters.AddFloat(cancelTree.BlendParameter);
+            animatorController.Parameters.AddFloat(controlTree.BlendParameter);
         }
-
-        data.GeneratedBlendshapeControls = generated.ToImmutableHashSet();
-
-        layer.StateMachine!.AddState("DirectBlendTree (WD On)", vcc.Clone(rootTree.Build(context.AssetContainer)));
-        return layer;
-    }
-
-    public static void Generate(BuildContext context, AnimatorControllerBuilder builder)
-    {
-
     }
 }

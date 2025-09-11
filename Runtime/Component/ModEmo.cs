@@ -1,4 +1,5 @@
-﻿using nadena.dev.modular_avatar.core;
+﻿using System.Security.Policy;
+using nadena.dev.modular_avatar.core;
 using VRC.SDK3.Avatars.Components;
 
 namespace Numeira
@@ -8,8 +9,10 @@ namespace Numeira
     {
         public ModEmoSettings Settings = new();
 
-        public IEnumerable<IGrouping<IModEmoExpressionPatterns, IModEmoExpression>> ExportExpressions()
+        public IEnumerable<IGrouping<IModEmoExpressionPattern, IModEmoExpression>> ExportExpressions()
             => new ExpressionGroups(this);
+
+        public IModEmoExpression? GetBlinkExpression() => gameObject.GetComponentsInDirectChildren<IModEmoExpression>().Where(x => x is not IModEmoExpressionPattern).FirstOrDefault();
 
         private sealed class ExpressionGroups : IEnumerable<ExpressionGroup>
         {
@@ -24,7 +27,9 @@ namespace Numeira
             {
                 foreach (var x in root.gameObject)
                 {
-                    if (x.GetComponent<IModEmoExpressionPatterns>() != null)
+                    if (!x.activeInHierarchy)
+                        continue;
+                    if (x.GetComponent<IModEmoExpressionPattern>() != null)
                         yield return new(x);
                 }
             }
@@ -32,7 +37,7 @@ namespace Numeira
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
-        private sealed class ExpressionGroup : IGrouping<IModEmoExpressionPatterns, IModEmoExpression>
+        private sealed class ExpressionGroup : IGrouping<IModEmoExpressionPattern, IModEmoExpression>
         {
             private readonly GameObject expressionPatterns;
 
@@ -41,11 +46,26 @@ namespace Numeira
                 this.expressionPatterns = expressionPatterns;
             }
 
-            public IModEmoExpressionPatterns Key => expressionPatterns.GetComponent<IModEmoExpressionPatterns>();
+            public IModEmoExpressionPattern Key => expressionPatterns.GetComponent<IModEmoExpressionPattern>();
 
             public IEnumerator<IModEmoExpression> GetEnumerator() => Key.Expressions.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        public override int GetHashCode()
+        {
+            HashCode hash = new();
+            CalculateContentHash(ref hash);
+            return hash.ToHashCode();
+        }
+
+        protected override void CalculateContentHash(ref HashCode hashCode)
+        {
+            foreach (var x in gameObject.GetComponentsInDirectChildren<IModEmoExpressionPattern>())
+            {
+                x.CalculateContentHash(ref hashCode);
+            }
         }
     }
 
@@ -57,6 +77,14 @@ namespace Numeira
         // lang=regex 
         public string SeparatorStringRegEx = "[-=]{2,}";
 
-        public ModEmoExpression? BlinkExpression;
+        public bool UseCache = true;
+
+        public ModEmoDebugSettings DebugSettings = new();
+    }
+
+    [Serializable]
+    internal sealed class ModEmoDebugSettings
+    {
+        public bool SkipExpressionController = false;
     }
 }
