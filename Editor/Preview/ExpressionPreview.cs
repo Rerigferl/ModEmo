@@ -8,6 +8,8 @@ namespace Numeira;
 internal sealed class ExpressionPreview : IRenderFilter
 {
     public static float PreviewTime { get; set; } = 0;
+    public static PublishedValue<string?> TemporaryPreviewBlendShape { get; } = new(null);
+
     public ImmutableList<RenderGroup> GetTargetGroups(ComputeContext context)
     {
         var result = Iterate(context).ToImmutableList();
@@ -51,11 +53,15 @@ internal sealed class ExpressionPreview : IRenderFilter
         private AnimationClip? animaton;
         private IDisposable? sceneReflesher;
 
+        private Dictionary<string, int> blendShapeIndexCache = new();
+
         public Node(RenderGroup renderGroup, IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context)
         {
             originalRenderer = proxyPairs.FirstOrDefault().Item1;
             blendShapeInfos = ModEmoData.GetBlendShapeInfos(renderGroup.Renderers[0] as SkinnedMeshRenderer);
             rootComponent = renderGroup.GetData<ModEmo>();
+
+            context.Observe(TemporaryPreviewBlendShape);
 
             foreach (var x in context.GetComponentsInChildren<IModEmoExpressionFrameProvider>(rootComponent.gameObject, true))
             {
@@ -74,6 +80,8 @@ internal sealed class ExpressionPreview : IRenderFilter
             blendShapeInfos = source.blendShapeInfos;
             rootComponent = source.rootComponent;
 
+            context.Observe(TemporaryPreviewBlendShape);
+
             foreach (var x in context.GetComponentsInChildren<IModEmoExpressionFrameProvider>(rootComponent.gameObject, true))
             {
                 context.Observe(x.Component, x =>
@@ -85,15 +93,32 @@ internal sealed class ExpressionPreview : IRenderFilter
             }
         }
 
+        private int GetBlendShapeIndex(Mesh mesh, string name)
+        {
+            if (blendShapeIndexCache.TryGetValue(name, out var index)) return index;
+            index = mesh.GetBlendShapeIndex(name);
+            blendShapeIndexCache.Add(name, index);
+            return index;
+        }
+
         public void OnFrame(Renderer original, Renderer proxy)
         {
+            if (proxy is not SkinnedMeshRenderer smr || smr.sharedMesh is not { } mesh || mesh == null)
+                return;
+
+            if (TemporaryPreviewBlendShape.Value != null)
+            {
+                int index = GetBlendShapeIndex(mesh, TemporaryPreviewBlendShape.Value);
+                if (index != -1)
+                {
+                    smr.SetBlendShapeWeight(index, 100);
+                }
+            }
+
             if (selectedExpression is not { } expression)
                 return;
 
             if (animaton is not { } clip || clip == null)
-                return;
-
-            if (proxy is not SkinnedMeshRenderer smr || smr.sharedMesh is not { } mesh || mesh == null)
                 return;
 
             static IEnumerable<(string PropertyName, float Value)> Sample(AnimationClip clip, float normalizedTime)
@@ -124,11 +149,12 @@ internal sealed class ExpressionPreview : IRenderFilter
 
             foreach (var (name, value) in Sample(clip, (float)time))
             {
-                int index = mesh.GetBlendShapeIndex(name);
+                int index = GetBlendShapeIndex(mesh, name);
                 if (index == -1)
                     continue;
                 smr.SetBlendShapeWeight(index, value);
             }
+
         }
 
         public Task<IRenderFilterNode?> Refresh(IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context, RenderAspects updatedAspects)

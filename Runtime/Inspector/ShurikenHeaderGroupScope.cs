@@ -31,12 +31,12 @@ internal readonly ref struct ShurikenHeaderGroupScope
 
     }
 
-    public ShurikenHeaderGroupScope(ref bool expanded, string title, bool insertSpaceToEnd = true)
+    public ShurikenHeaderGroupScope(ref bool expanded, string title, bool insertSpaceToEnd = true, Action<GenericMenu>? menuCallback = null)
     {
         InsertSpaceToEnd = insertSpaceToEnd;
         Property = null;
         NeedEndLayoutGroup = false;
-        if (!(IsOpened = expanded = Foldout(title, expanded)))
+        if (!(IsOpened = expanded = Foldout(title, expanded, menuCallback)))
             return;
 
         Draw(out NeedEndLayoutGroup);

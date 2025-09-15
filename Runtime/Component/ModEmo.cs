@@ -1,6 +1,4 @@
-﻿using System.Security.Policy;
-using nadena.dev.modular_avatar.core;
-using VRC.SDK3.Avatars.Components;
+﻿using nadena.dev.modular_avatar.core;
 
 namespace Numeira
 {
@@ -12,7 +10,9 @@ namespace Numeira
         public IEnumerable<IGrouping<IModEmoExpressionPattern, IModEmoExpression>> ExportExpressions()
             => new ExpressionGroups(this);
 
-        public IModEmoExpression? GetBlinkExpression() => gameObject.GetComponentsInDirectChildren<IModEmoExpression>().Where(x => x is not IModEmoExpressionPattern).FirstOrDefault();
+        public IModEmoExpression? GetBlinkExpression() => this.GetComponentsInDirectChildren<IModEmoExpression>().Where(x => x is not IModEmoExpressionPattern).FirstOrDefault();
+
+        public IModEmoMouthMorphCanceller? MouthMorphCanceller => this.GetComponentInDirectChildren<IModEmoMouthMorphCanceller>();
 
         private sealed class ExpressionGroups : IEnumerable<ExpressionGroup>
         {
@@ -62,7 +62,7 @@ namespace Numeira
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            foreach (var x in gameObject.GetComponentsInDirectChildren<IModEmoExpressionPattern>())
+            foreach (var x in this.GetComponentsInDirectChildren<IModEmoExpressionPattern>())
             {
                 x.CalculateContentHash(ref hashCode);
             }

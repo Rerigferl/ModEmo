@@ -1,7 +1,7 @@
 ﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Gesture Condition")]
-    internal sealed class ModEmoVRChatCondition : ModEmoConditionBase
+    internal sealed class ModEmoGestureCondition : ModEmoConditionBase
     {
         public Hand Hand = Hand.Left;
         public Gesture Gesture = Gesture.Fist;
@@ -10,7 +10,7 @@
         {
             yield return Group.Create(this, Factory);
 
-            static IEnumerable<AnimatorParameterCondition> Factory(ModEmoVRChatCondition x)
+            static IEnumerable<AnimatorParameterCondition> Factory(ModEmoGestureCondition x)
             {
                 if (x.Hand.HasFlag(Hand.Left))
                 {

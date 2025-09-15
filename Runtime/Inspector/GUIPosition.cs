@@ -132,6 +132,25 @@ internal struct GUIPosition
         return (top, bottom);
     }
 
+    public readonly Span<GUIPosition> HorizontalSplit(Span<GUIPosition> buffer)
+    {
+        if (IsEmpty)
+            return buffer;
+
+        var width = Width / buffer.Length;
+
+        for (int i = 0; i < buffer.Length; i++)
+        {
+            ref var item = ref buffer[i];
+
+            item = this;
+            item.Width = width;
+            item.X += width * i;
+        }
+
+        return buffer;
+    }
+
     private ref float GetPinnableReference() => ref MemoryMarshal.GetReference(MemoryMarshal.CreateSpan(ref X, 4));
 
     public readonly bool IsEmpty => (X, Y, Width, Height) is (0, 0, 0, 0);

@@ -1,16 +1,17 @@
 ﻿
+using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
+using nadena.dev.ndmf.runtime;
+using nadena.dev.ndmf.util;
 using UnityEditor.SceneManagement;
+using VRC.SDK3.Avatars.Components;
 
 namespace Numeira;
 
 [InitializeOnLoad]
 internal static class CreationContextMenu
 {
-    public const string PathPrefix = "GameObject/";
-    public const string CreateNewPatternPath = PathPrefix + "Create New Pattern";
-
     private sealed class StaticExtension { }
 
     static CreationContextMenu()
@@ -20,6 +21,13 @@ internal static class CreationContextMenu
             SceneHierarchyHooks.addItemsToGameObjectContextMenu += default(StaticExtension).AddItemsToGameObjectContextMenu;
         };
     }
+
+    private static Type DefaultConditionType =>
+#if VRC_SDK_VRCSDK3
+        typeof(ModEmoGestureCondition);
+#else
+        typeof(ModEmoCondition);
+#endif
 
     private static void AddItemsToGameObjectContextMenu(this StaticExtension? __, GenericMenu menu, GameObject go)
     {
@@ -36,10 +44,43 @@ internal static class CreationContextMenu
                 menu.AddDisabledItem(content, false);
         }
 
-        AddMenu("ModEmo/Create Pattern", () => CreateNewObject("Expression Pattern", go, typeof(ModEmoExpressionPattern)), enabled: go.GetComponent<ModEmo>() != null);
+        AddMenu("ModEmo/Create Pattern", () => CreateNewObject("Expression Pattern (1)", go, typeof(ModEmoExpressionPattern)), enabled: go.GetComponent<ModEmo>() != null);
+        
         menu.AddSeparator("ModEmo/");
-        AddMenu("ModEmo/Create Expression", () => CreateNewExpression("Expression", go), enabled: go.GetComponent<IModEmoExpressionPattern>() != null);
-        AddMenu("ModEmo/Create Empty Expression", () => CreateNewExpression("Expression", go, empty: true), enabled: go.GetComponent<IModEmoExpressionPattern>() != null);
+        AddMenu("ModEmo/Create Expression", () => CreateNewExpression("Expression (1)", go), enabled: go.GetComponent<IModEmoExpressionPattern>() != null);
+        AddMenu("ModEmo/Create Empty Expression", () => CreateNewExpression("Expression (1)", go, empty: true), enabled: go.GetComponent<IModEmoExpressionPattern>() != null);
+        AddMenu("ModEmo/Create Simplify Expression", () => CreateNewObject("Expression (1)", go, typeof(ModEmoDefaultExpression), DefaultConditionType, typeof(ModEmoBlendShapeSelector)), enabled: go.GetComponent<IModEmoExpressionPattern>() != null);
+
+        menu.AddSeparator("ModEmo/");
+
+        AddMenu("ModEmo/Import Pattern from Avatar FX Layer ..", () => ImportPatternFromFXLayer(go), go.GetComponent<ModEmo>() != null);
+
+    }
+
+    private static void ImportPatternFromFXLayer(GameObject parent)
+    {
+        var avatar = RuntimeUtil.FindAvatarInParents(parent.transform);
+        string path;
+        if (avatar is not null && avatar.GetComponent<VRCAvatarDescriptor>() is { } desc && desc.baseAnimationLayers.FirstOrDefault(x => x.type == VRCAvatarDescriptor.AnimLayerType.FX).animatorController is { } fx)
+        {
+            path = Path.GetDirectoryName(AssetDatabase.GetAssetPath(fx));
+        }
+        else
+        {
+            path = "Assets";
+        }
+
+        path = EditorUtility.OpenFilePanel("Open animator controller", path, "controller");
+        if (string.IsNullOrEmpty(path))
+            return;
+        path = Path.GetRelativePath(Path.GetDirectoryName(Application.dataPath), path);
+        Debug.LogError(path);
+        var animatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+        if (animatorController == null)
+            return;
+
+        var go = PatternImporter.ImportFromAnimatorController(animatorController);
+        CreateNewObject(go, parent);
     }
 
     private static void CreateNewExpression(string name, GameObject parent, bool empty = false)
@@ -54,7 +95,7 @@ internal static class CreationContextMenu
         var conditions = ObjectFactory.CreateGameObject("Conditions", typeof(ModEmoConditionFolder));
         var motions = ObjectFactory.CreateGameObject("Frames", typeof(ModEmoExpressionFrameFolder));
 
-        var sampleCondition = ObjectFactory.CreateGameObject("Condition", typeof(ModEmoCondition));
+        var sampleCondition = ObjectFactory.CreateGameObject("Condition", DefaultConditionType);
         var sampleFrame = ObjectFactory.CreateGameObject("BlendShape", typeof(ModEmoBlendShapeSelector));
 
         ObjectFactory.PlaceGameObject(conditions, obj);

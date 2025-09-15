@@ -1,9 +1,11 @@
 ﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Expression Frame Folder")]
-    internal sealed class ModEmoExpressionFrameFolder : ModEmoTagComponent, IModEmoExpressionFrameProvider
+    internal class ModEmoExpressionFrameFolder : ModEmoTagComponent, IModEmoExpressionFrameProvider
     {
-        public IEnumerable<ExpressionFrame> GetFrames() => gameObject.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>().SelectMany(x => x.GetFrames());
+        protected virtual bool IncludeSelf => false;
+
+        public IEnumerable<ExpressionFrame> GetFrames() => this.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>(includeSelf: IncludeSelf).SelectMany(x => x.GetFrames());
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {

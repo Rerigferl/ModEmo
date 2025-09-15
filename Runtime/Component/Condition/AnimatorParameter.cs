@@ -124,7 +124,9 @@ namespace Numeira
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            EditorGUI.PropertyField(position, property.FindPropertyRelative(nameof(AnimatorParameterCondition.Parameter)).FindPropertyRelative("Name"));
+            var (left, right) = new GUIPosition(position).HorizontalSeparate(EditorGUIUtility.labelWidth, 2);
+            EditorGUI.PropertyField(left, property.FindPropertyRelative("Parameter").FindPropertyRelative("Name"), GUIContent.none);
+            EditorGUI.PropertyField(right, property.FindPropertyRelative("Parameter.Value.Value"), GUIContent.none);
         }
     }
 #endif

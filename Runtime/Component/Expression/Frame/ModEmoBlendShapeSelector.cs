@@ -3,7 +3,7 @@
     [AddComponentMenu(ComponentMenuPrefix + "BlendShape Selector")]
     internal sealed class ModEmoBlendShapeSelector : ModEmoTagComponent, IModEmoExpressionFrameProvider
     {
-        public BlendShape[] BlendShapes = Array.Empty<BlendShape>();
+        public List<BlendShape> BlendShapes = new();
 
         public IEnumerable<ExpressionFrame> GetFrames()
         {
@@ -12,7 +12,8 @@
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            foreach (var x in BlendShapes)
+            hashCode.Add(isActiveAndEnabled);
+            foreach (var x in BlendShapes.AsSpan())
             {
                 hashCode.Add(x);
             }

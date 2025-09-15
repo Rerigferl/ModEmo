@@ -42,6 +42,9 @@ internal static class ModEmoExpressionExt
             }
         }
 
+        if (!previewMode)
+            anim.AddAnimatedParameter(ParameterNames.MouthMorphCancel.Enable, 0, expression.EnableMouthMorphCancel ? 1 : 0);
+
 
         foreach (var frame in expression.Frames)
         {

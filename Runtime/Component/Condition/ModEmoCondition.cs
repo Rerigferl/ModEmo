@@ -4,7 +4,7 @@
     [AddComponentMenu(ComponentMenuPrefix + "Condition")]
     internal sealed class ModEmoCondition : ModEmoConditionBase
     {
-        public AnimatorParameterCondition[] Parameters = Array.Empty<AnimatorParameterCondition>();
+        public List<AnimatorParameterCondition> Parameters = new();
 
         public override IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> GetConditions()
         {
@@ -13,7 +13,7 @@
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            foreach(var x in Parameters)
+            foreach(var x in Parameters.AsSpan())
             {
                 hashCode.Add(x);
             }

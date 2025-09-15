@@ -7,5 +7,5 @@ internal struct BlendShape
     public float Value;
     public bool Cancel;
 
-    public override readonly int GetHashCode() => HashCode.Combine(Name, Value, Cancel);
+    public override readonly int GetHashCode() => HashCode.Combine(Name.GetFarmHash64(), Value, Cancel);
 }

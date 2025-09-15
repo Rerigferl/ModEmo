@@ -9,10 +9,13 @@ internal static class ExpressionControllerGenerator
     {
         animatorController.Parameters.AddFloat(ParameterNames.Expression.Pattern, 0);
         animatorController.Parameters.AddFloat(ParameterNames.Expression.Index, 0);
+        animatorController.Parameters.AddFloat(ParameterNames.Expression.Lock, 0);
 
         List<IModEmoExpression> expressions = new();
-        
         GenerateIndexSelectorBlendTree(context, animatorController, expressions);
+        context.GetData().Expressions = expressions;
+
+        GenerateMouthMorphCancellar(context, animatorController);
         GenerateExpressionSelector(context, animatorController, expressions.AsSpan());
         GenerateBlinkController(context, animatorController);
     }
@@ -36,11 +39,13 @@ internal static class ExpressionControllerGenerator
         var idleState = stateMachine.AddState("DBT (DO NOT OPEN IN EDITOR!) (WD On)");
         idleState.Motion = blendTree;
 
+        var lockTree = blendTree.AddBlendTree("Lock").Motion;
+        lockTree.BlendParameter = ParameterNames.Expression.Lock;
+
         if (!modEmo.Settings.DebugSettings.SkipExpressionController)
         {
-            var patternSwitch = blendTree.AddBlendTree("Pattern Switch").Motion;
+            var patternSwitch = lockTree.AddBlendTree("Pattern Switch").Motion;
             patternSwitch.BlendParameter = ParameterNames.Expression.Pattern;
-
 
             foreach (var (pattern, patternIdx) in expressionPatterns.Index())
             {
@@ -55,7 +60,7 @@ internal static class ExpressionControllerGenerator
 
                 foreach (var (expression, expressionIdx) in pattern.Index())
                 {
-                    var expressionTree = nextTree == fallback ? nextTree.WithName(expression.Name) : nextTree.AddDirectBlendTree(expression.Name).Motion;
+                    var expressionTree = nextTree == fallback ? nextTree.WithName($"Fallback: {expression.Name}") : nextTree.AddDirectBlendTree(expression.Name).Motion;
                     nextTree = expressionTree;
 
                     var expressionAnimation = new AnimationClipBuilder() { Name = expression.Name };
@@ -103,6 +108,14 @@ internal static class ExpressionControllerGenerator
             }
         }
 
+        {
+            var preserve = lockTree.AddBlendTree("").Motion;
+            preserve.BlendParameter = ParameterNames.Expression.Index;
+
+            preserve.AddAnimationClip("0").Motion.AddAnimatedParameter(ParameterNames.Expression.Index, 0, 0);
+            preserve.AddAnimationClip($"{expressions.Count}").WithThreshold(expressions.Count).Motion.AddAnimatedParameter(ParameterNames.Expression.Index, 0, expressions.Count);
+        }
+
         return expressions;
     }
 
@@ -128,7 +141,7 @@ internal static class ExpressionControllerGenerator
 
             var tr = state.AddTrackingControl();
             tr.Eyes = TrackingType.Animation;
-            tr.Mouth = TrackingType.Animation;
+            tr.Mouth = expression.LipSync ? TrackingType.Tracking : TrackingType.Animation;
         }
     }
 
@@ -140,6 +153,7 @@ internal static class ExpressionControllerGenerator
             return;
 
         animatorController.Parameters.AddFloat(ParameterNames.Blink.Value, 1);
+        animatorController.Parameters.AddFloat(ParameterNames.Blink.Sync, 1);
 
         var layer = animatorController.AddLayer("[ModEmo] Blink");
         var stateMachine = layer.StateMachine;
@@ -150,7 +164,47 @@ internal static class ExpressionControllerGenerator
         var on = stateMachine.AddState("ON");
         on.Motion = expression.MakeAnimationClip(context.GetData(), writeDefault: false, writeBlink: false);
 
-        off.AddTransition(on).AddCondition(AnimatorConditionMode.Greater, ParameterNames.Blink.Value, 1 - Epsilon);
+        off.AddTransition(on)
+            .AddCondition(AnimatorConditionMode.Greater, ParameterNames.Blink.Value, 1 - Epsilon)
+            .AddCondition(AnimatorConditionMode.Greater, ParameterNames.Blink.Sync, 1 - Epsilon);
+
         on.AddTransition(off).AddCondition(AnimatorConditionMode.Less, ParameterNames.Blink.Value, 1);
+        on.AddTransition(off).AddCondition(AnimatorConditionMode.Less, ParameterNames.Blink.Sync, 1);
+    }
+
+    private static void GenerateMouthMorphCancellar(BuildContext context, AnimatorControllerBuilder animatorController)
+    {
+        animatorController.Parameters.AddFloat(ParameterNames.MouthMorphCancel.Enable, 0);
+
+        var modEmo = context.GetModEmoContext().Root;
+        if (modEmo.MouthMorphCanceller is not { } cancellar)
+            return;
+
+        var blendTree = new OneDirectionBlendTreeBuilder() 
+        {
+            Name = "", 
+            DefaultDirectBlendParameter = ParameterNames.Internal.One,
+            BlendParameter = ParameterNames.MouthMorphCancel.Enable,
+        };
+
+        animatorController.Parameters.AddFloat("Voice", 0);
+
+        animatorController.AddLayer("[ModEmo] Morph Cancellar").StateMachine
+            .WithDefaultMotion(blendTree)
+            .AddState("(WD On)");
+
+        var disable = blendTree.AddAnimationClip("Disable").Motion;
+        var voiceSwitch = blendTree.AddBlendTree("Voice").Motion;
+        voiceSwitch.BlendParameter = "Voice";
+        voiceSwitch.Append(disable, threshold: 0);
+
+        var enable = voiceSwitch.AddAnimationClip("Enable").WithThreshold(float.Epsilon).Motion;
+
+        foreach(var blendShape in cancellar.GetFrames().SelectMany(x => x.GetBlendShapes()))
+        {
+            var name = $"{ParameterNames.Internal.BlendShapes.Prefix}{blendShape.Name}/Enable";
+            disable.AddAnimatedParameter(name, 0, 1);
+            enable.AddAnimatedParameter(name, 0, 0);
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace Numeira
     {
         public string Name = "";
 
-        public IEnumerable<ExpressionFrame> Frames => gameObject.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>().SelectMany(x => x.GetFrames());
+        public IEnumerable<ExpressionFrame> Frames => this.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>().Where(x => x.Component.GetComponent<IModEmoExpression>() == null).SelectMany(x => x.GetFrames());
 
         string IModEmoExpression.Name => !string.IsNullOrEmpty(Name) ? Name : name;
 
@@ -28,7 +28,7 @@ namespace Numeira
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
             hashCode.Add((this as IModEmoExpression).Name.GetFarmHash64());
-            foreach(var x in gameObject.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>())
+            foreach(var x in this.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>())
             {
                 x.CalculateContentHash(ref hashCode);
             }

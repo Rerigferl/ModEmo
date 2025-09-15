@@ -23,6 +23,13 @@ internal static partial class ModEmoConstants
         {
             public const string Prefix = $"{Parameters.Prefix}Blink/";
             public const string Value = $"{Prefix}Value";
+            public const string Sync = $"{Prefix}Sync";
+        }
+
+        public abstract class MouthMorphCancel
+        {
+            public const string Prefix = $"{Parameters.Prefix}MouthMorphCancel/";
+            public const string Enable = $"{Prefix}Enable";
         }
 
         public static class Internal

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using nadena.dev.modular_avatar.core;
 using Numeira.Animation;
@@ -12,7 +13,9 @@ internal sealed class ModEmoData
 
     public SkinnedMeshRenderer Face { get; }
 
-    public ImmutableDictionary<string, ImmutableDictionary<string, BlendShapeInfo>> CategorizedBlendShapes { get; }
+    public List<IModEmoExpression>? Expressions { get; set; }
+
+    public List<KeyValuePair<string, List<string>>> CategorizedBlendShapes { get; }
 
     public ImmutableDictionary<string, BlendShapeInfo> BlendShapes { get; }
 
@@ -24,37 +27,19 @@ internal sealed class ModEmoData
 
     public ImmutableHashSet<string> UsageBlendShapeMap { get; }
 
-    internal static ModEmoData Init(BuildContext context) => new(context);
+    internal static ModEmoData Init(BuildContext context) => new(context.GetModEmoContext().Root);
 
-    private ModEmoData(BuildContext context)
+    internal static ModEmoData Init(ModEmo component) => new(component);
+
+    private ModEmoData(ModEmo component)
     {
-        var component = context.GetModEmoContext().Root;
-
         Face = 
             component.Settings.Face.Get(component)?.GetComponent<SkinnedMeshRenderer>()
-            
             ?? throw new MissingReferenceException("Face object is missing");
 
         var mesh = Face.sharedMesh;
 
-        int count = mesh.blendShapeCount;
-        Dictionary<string, Dictionary<string, BlendShapeInfo>> info = new();
-        string currentGroup = $"0 {UncategorizedGroupName}";
-        var regex = new Regex(component.Settings.SeparatorStringRegEx, RegexOptions.CultureInvariant);
-        int groupCount = 1;
-        for (int i = 0; i < count; i++)
-        {
-            var name = mesh.GetBlendShapeName(i);
-            if (regex.IsMatch(name))
-            {
-                currentGroup = $"{groupCount++} {regex.Replace(name, "")}";
-                continue;
-            }
-
-            info.GetOrAdd(currentGroup, _ => new()).TryAdd(name, new(Face, i));
-        }
-        BlendShapes = info.Values.SelectMany(x => x).ToImmutableDictionary(x => x.Key, x => x.Value);
-        CategorizedBlendShapes = info.ToImmutableDictionary(x => x.Key, x => x.Value.ToImmutableDictionary());
+        (CategorizedBlendShapes, BlendShapes) = GetCategorizedBlendShapes(component) ?? default;
 
         List<IModEmoExpression> expressions = new();
         foreach(var x in component.ExportExpressions())
@@ -65,6 +50,7 @@ internal sealed class ModEmoData
                 expressions.Add(y);
             }
         }
+
         if (component.GetBlinkExpression() is { } blink)
             expressions.Add(blink);
 
@@ -90,5 +76,41 @@ internal sealed class ModEmoData
             info.TryAdd(name, new(renderer, i));
         }
         return info.ToImmutableDictionary();
+    }
+
+    public static (List<KeyValuePair<string, List<string>>> CategorizedBlendShapeNames, ImmutableDictionary<string, BlendShapeInfo> BlendShapeInfos)? GetCategorizedBlendShapes(ModEmo component)
+    {
+        var face = component.Settings.Face.Get(component)?.GetComponent<SkinnedMeshRenderer>();
+        var mesh = face?.sharedMesh;
+        if (face == null || mesh == null)
+            return default;
+
+        List<KeyValuePair<string, List<string>>> groups = new();
+        string currentGroup = $"{UncategorizedGroupName}";
+        List<string> currentGroupList = new();
+
+        groups.Add(KeyValuePair.Create(currentGroup, currentGroupList));
+
+        Dictionary<string, BlendShapeInfo> blendShapes = new();
+
+        var regex = new Regex(component.Settings.SeparatorStringRegEx, RegexOptions.CultureInvariant);
+        int count = mesh.blendShapeCount;
+        for (int i = 0; i < count; i++)
+        {
+            var name = mesh.GetBlendShapeName(i);
+            if (regex.IsMatch(name))
+            {
+                currentGroup = $"{regex.Replace(name, "")}";
+                currentGroupList = new();
+                groups.Add(KeyValuePair.Create(currentGroup, currentGroupList));
+                continue;
+            }
+
+            blendShapes.TryAdd(name, new(face, i));
+            currentGroupList.Add(name);
+        }
+
+        return (groups, blendShapes.ToImmutableDictionary());
+
     }
 }

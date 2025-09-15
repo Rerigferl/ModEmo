@@ -4,67 +4,91 @@ namespace Numeira;
 
 internal static class PatternImporter
 {
-    [MenuItem("Tests/Import animator")]
-    public static void Test()
-    {
-        var ac = Selection.activeObject as AnimatorController;
-        if (ac != null )
-            ImportFromAnimatorController( ac );
-    }
-
-    public static GameObject? ImportFromAnimatorController(AnimatorController animatorController)
+    public static GameObject ImportFromAnimatorController(AnimatorController animatorController)
     {
         var layers = animatorController.layers;
 
-        Dictionary<AnimationClip, List<AnimatorStateTransition>> dict = new();
+        Dictionary<AnimatorState, Vector3> positions = new();
+        Dictionary<AnimatorState, int> index = new();
+        Dictionary<AnimatorState, List<AnimatorStateTransition>> dict = new();
 
-        foreach(var layer in layers.AsSpan()[..3])
+        foreach (var layer in animatorController.layers)
         {
             var stateMachine = layer.stateMachine;
-            if (stateMachine == null)
-                continue;
-
-            foreach (var transition in stateMachine.anyStateTransitions)
+            foreach(var (state, position) in stateMachine.states.OrderBy(x => Vector3.Magnitude(x.position)))
             {
-                var dest = transition.destinationState;
-                if (dest == null || dest.motion is not AnimationClip clip) continue;
+                positions.TryAdd(state, position);
+                foreach(var transition in state.transitions)
+                {
+                    if (transition.destinationState is { } dest)
+                    {
+                        index.TryAdd(dest, index.Count);
+                        dict.GetOrAdd(dest, _ => new()).Add(transition);
+                    }
+                }
+            }
 
-                dict.GetOrAdd(clip, _ => new()).Add(transition);
+            foreach (var transition in stateMachine.anyStateTransitions.OrderBy(x => x.destinationState == null ? 0 : Vector3.Magnitude(positions[x.destinationState])))
+            {
+                if (transition.destinationState is { } dest)
+                {
+                    index.TryAdd(dest, index.Count);
+                    dict.GetOrAdd(dest, _ => new()).Add(transition);
+                }
             }
         }
-
-        if (dict.Count == 0)
-            return null;
 
         var patternObj = new GameObject(animatorController.name);
         patternObj.AddComponent<ModEmoExpressionPattern>();
 
-        foreach(var (clip, transitions) in dict)
+        foreach(var (state, transitions) in dict.OrderBy(x => index[x.Key]))
         {
-            var expressionObj = new GameObject(clip.name);
+            var motion = state.motion;
+            bool isFacialAnimation = false;
+            if (motion is not AnimationClip anim)
+                continue;
+
+            var bindings = AnimationUtility.GetCurveBindings(anim);
+            foreach (var binding in bindings)
+            {
+                var path = binding.path;
+                if (path is not "Body")
+                    continue;
+                isFacialAnimation = true;
+                break;
+            }
+
+            if (!isFacialAnimation)
+                continue;
+
+            var expressionObj = new GameObject(anim.name);
             expressionObj.transform.parent = patternObj.transform;
             var expression = expressionObj.AddComponent<ModEmoAnimationClipExpression>();
-            expression.AnimationClip = clip;
+            expression.AnimationClip = anim;
 
-            var conditionsObj = new GameObject("Conditions");
-            conditionsObj.AddComponent<ModEmoConditionFolder>();
-            conditionsObj.transform.parent = expressionObj.transform;
-
-            foreach(var (transition, index) in transitions.Index())
+            foreach(var (transition, idx) in transitions.Index())
             {
-                var conditionObj = new GameObject($"Condition {index}");
-                conditionObj.transform.parent = conditionsObj.transform;
-                var condition = conditionObj.AddComponent<ModEmoCondition>();
-                condition.Parameters = transition.conditions.Select(x => new AnimatorParameterCondition(
-                    new AnimatorParameter(x.parameter, x.threshold),
-                    x.mode switch
+                var conditions = transition.conditions;
+                if (conditions.Length == 0)
+                    continue;
+
+                if (conditions.Length == 1)
+                {
+                    var c = expressionObj.AddComponent<ModEmoCondition>();
+                    c.Parameters.Add(new() { Parameter = new(conditions[0].parameter, new(conditions[0].threshold)), Mode = ConditionMode.Equals });
+                }
+                else
+                {
+                    var conditionObj = new GameObject($"Condition ({idx + 1})");
+                    conditionObj.transform.parent = expressionObj.transform;
+                    var f = conditionObj.AddComponent<ModEmoConditionFolder>();
+                    foreach(var condition in conditions)
                     {
-                        AnimatorConditionMode.If or AnimatorConditionMode.Equals => ConditionMode.Equals,
-                        AnimatorConditionMode.IfNot or AnimatorConditionMode.NotEqual => ConditionMode.NotEqual,
-                        AnimatorConditionMode.Greater => ConditionMode.GreaterThan,
-                        AnimatorConditionMode.Less => ConditionMode.LessThan,
-                        _ => throw new NotImplementedException(),
-                    })).ToArray();
+                        var c = new GameObject(condition.parameter);
+                        c.transform.parent = conditionObj.transform;
+                        c.AddComponent<ModEmoCondition>().Parameters.Add(new() { Parameter = new(condition.parameter, new(condition.threshold)), Mode = ConditionMode.Equals });
+                    }
+                }
             }
         }
 
@@ -149,7 +173,7 @@ internal static class PatternImporter
 
                 var conditionObj = new GameObject();
                 //conditionObj.transform.parent = exp.Settings.ConditionFolder.transform;
-                var condition = conditionObj.AddComponent<ModEmoVRChatCondition>();
+                var condition = conditionObj.AddComponent<ModEmoGestureCondition>();
 
                 if (maskPattern.Left != null)
                 {

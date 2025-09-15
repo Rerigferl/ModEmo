@@ -1,5 +1,7 @@
-﻿using nadena.dev.modular_avatar.core;
+﻿using System.Diagnostics;
+using nadena.dev.modular_avatar.core;
 using Numeira.Animation;
+using Debug = UnityEngine.Debug;
 
 [assembly: ExportsPlugin(typeof(Numeira.ModEmoPluginDefinition))]
 
@@ -89,7 +91,10 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
                 BlendShapeControllerGenerator.Generate(context, builder);
 
                 var assetContainer = new AssetContainer();
+                Stopwatch sw = Stopwatch.StartNew();
                 animatorController = builder.ToAnimatorController(assetContainer);
+                sw.Stop();
+                Debug.LogError($"Build AC: {sw.ElapsedMilliseconds}ms");
 
                 if (modEmoHash is not null)
                 {

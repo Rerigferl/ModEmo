@@ -1,67 +1,62 @@
-﻿using nadena.dev.modular_avatar.core;
+﻿using System.Collections.Immutable;
+using nadena.dev.modular_avatar.core;
 using VRC.Core;
 using ExpressionsMenuControlType = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu.Control.ControlType;
+using MenuItem = nadena.dev.modular_avatar.core.ModularAvatarMenuItem;
 
 namespace Numeira;
 
 internal class MenuGenerator
 {
-    private BuildContext context;
+    private BuildContext Context { get; }
+    private ModEmo Component { get; }
+    
     public MenuGenerator(BuildContext context)
     {
-        this.context = context;
+        Context = context;
+        Component = context.GetModEmoContext().Root;
     }
 
     public void Generate()
     {
-        var rootObj = context.GetModEmoContext().Root.gameObject;
-        var menuRoot = rootObj.AddComponent<ModularAvatarMenuItem>();
-        menuRoot.MenuSource = SubmenuSource.Children;
-        menuRoot.Control.type = ExpressionsMenuControlType.SubMenu;
+        var menuRoot = AddMenu("ModEmo", PortableControlType.SubMenu);
+        menuRoot.gameObject.AddComponent<ModularAvatarMenuInstaller>();
 
-        GenerateBlendShapeControlMenu(menuRoot);
-    }
+        var parameters = menuRoot.gameObject.AddComponent<ModularAvatarParameters>();
 
-    private void GenerateBlendShapeControlMenu(ModularAvatarMenuItem menuRoot)
-    {
-        var generated = context.GetData().GeneratedBlendshapeControls;
-        if (generated is null)
-            return;
+        var expressionLock = AddMenu("Lock", PortableControlType.Toggle, menuRoot);
+        expressionLock.PortableControl.Parameter = ParameterNames.Expression.Lock;
 
-        var paramters = menuRoot.gameObject.GetOrAddComponent<ModularAvatarParameters>();
+        var blinkLock = AddMenu("Blink", PortableControlType.Toggle, menuRoot);
+        blinkLock.PortableControl.Parameter = ParameterNames.Blink.Sync;
 
-        var menuRootObj = new GameObject("BlendShapes");
-        menuRootObj.transform.parent = menuRoot.transform;
-        menuRoot = menuRootObj.AddComponent<ModularAvatarMenuItem>();
-        menuRoot.MenuSource = SubmenuSource.Children;
-        menuRoot.Control.type = ExpressionsMenuControlType.SubMenu;
-
-
-        foreach (var (group, shapes) in context.GetData().CategorizedBlendShapes)
+        var blendShapeMenu = AddMenu("BlendShapes", PortableControlType.SubMenu, menuRoot);
+        var data = Context.GetData();
+        string[] singleArray = new string[1];
+        foreach(var (key, values) in data.CategorizedBlendShapes)
         {
-            ModularAvatarMenuItem? menuGroup = null;
-            foreach (var shape in shapes)
+            MenuItem? menu = null;;
+            foreach (var value in values)
             {
-                if (!generated.Contains(shape.Key))
+                if (!data.UsageBlendShapeMap.Contains(value))
                     continue;
-
-                if (menuGroup is null)
-                {
-                    var menuObj = new GameObject(group);
-                    menuObj.transform.parent = menuRoot.transform;
-                    menuGroup = menuObj.AddComponent<ModularAvatarMenuItem>();
-                    menuGroup.MenuSource = SubmenuSource.Children;
-                    menuGroup.Control.type = ExpressionsMenuControlType.SubMenu;
-                }
-
-                var obj = new GameObject(shape.Key);
-                obj.transform.parent = menuGroup.transform;
-                var menu = obj.AddComponent<ModularAvatarMenuItem>();
-                menu.Control.type = ExpressionsMenuControlType.RadialPuppet;
-                var name = $"{ParameterNames.Internal.BlendShapes.OverridePrefix}{shape.Key}";
-                paramters.parameters.Add(new() { nameOrPrefix = name, syncType = ParameterSyncType.Float, localOnly = true, });
-                menu.Control.subParameters = new VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu.Control.Parameter[] { new() { name = name} };
+                menu ??= AddMenu(key, PortableControlType.SubMenu, blendShapeMenu);
+                var a = AddMenu(value, PortableControlType.RadialPuppet, menu);
+                var name = singleArray[0] = $"{ParameterNames.Internal.BlendShapes.Prefix}{value}/Override";
+                parameters.parameters.Add(new ParameterConfig() { nameOrPrefix = name, syncType = ParameterSyncType.Float, localOnly = true, saved = false });
+                a.PortableControl.SubParameters = singleArray.ToImmutableList();
             }
         }
+    }
+
+    private MenuItem AddMenu(string name, PortableControlType type, MenuItem? parent = null)
+    {
+        var go = new GameObject(name);
+        go.transform.parent = parent?.transform ?? Context.AvatarRootTransform;
+
+        var menuItem = go.AddComponent<MenuItem>();
+        menuItem.MenuSource = SubmenuSource.Children;
+        menuItem.PortableControl.Type = type;
+        return menuItem;
     }
 }

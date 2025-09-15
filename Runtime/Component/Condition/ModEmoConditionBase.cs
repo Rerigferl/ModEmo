@@ -7,7 +7,7 @@ namespace Numeira
     {
         public abstract IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> GetConditions();
 
-        protected IModEmoConditionProvider[] Children => gameObject.GetComponentsInDirectChildren<IModEmoConditionProvider>();
+        protected IModEmoConditionProvider[] Children => this.GetComponentsInDirectChildren<IModEmoConditionProvider>();
     }
 
 
