@@ -1,1 +1,2 @@
-# ModEmo (Work in progress)
+# ModEmo
+BlendTreeの操作がどうしても激重になるので未完成だけど終了
