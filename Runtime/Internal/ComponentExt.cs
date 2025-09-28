@@ -81,6 +81,9 @@ internal static class ComponentExt
         return x;
     }
 
+    public static T GetOrAddComponent<T>(this Component component) where T : Component
+        => component.gameObject.GetOrAddComponent<T>();
+
     public static void RemoveComponents<T>(this GameObject obj)
     {
 #if UNITY_EDITOR

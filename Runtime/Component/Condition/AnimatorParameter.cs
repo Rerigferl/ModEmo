@@ -124,9 +124,57 @@ namespace Numeira
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var (left, right) = new GUIPosition(position).HorizontalSeparate(EditorGUIUtility.labelWidth, 2);
-            EditorGUI.PropertyField(left, property.FindPropertyRelative("Parameter").FindPropertyRelative("Name"), GUIContent.none);
-            EditorGUI.PropertyField(right, property.FindPropertyRelative("Parameter.Value.Value"), GUIContent.none);
+            var paramerterProp = property.FindPropertyRelative("Parameter");
+            var modeProp = property.FindPropertyRelative("Mode");
+
+            var nameProp = paramerterProp.FindPropertyRelative("Name");
+            var valueProp = paramerterProp.FindPropertyRelative("Value");
+            var (left, right) = new GUIPosition(position).HorizontalSeparate(margin: 2);
+
+            var (left1, left2) = left.HorizontalSeparate(64, 2);
+
+            EditorGUI.PropertyField(left1, valueProp.FindPropertyRelative("Type"), GUIContent.none);
+            EditorGUI.PropertyField(left2, nameProp, GUIContent.none);
+
+            var (right1, right2) = right.HorizontalSeparate(right.Width * 0.6f, 2);
+
+            EditorGUI.PropertyField(right1, modeProp, GUIContent.none);
+            EditorGUI.PropertyField(right2, valueProp, GUIContent.none);
+        }
+    }
+
+    [CustomPropertyDrawer(typeof(AnimatorParameterValue))]
+    internal sealed class AnimatorParameterValueDrawer : PropertyDrawer
+    {
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            var pos = (GUIPosition)position;
+            var typeProp = property.FindPropertyRelative("Type");
+            var type = Enums<AnimatorControllerParameterType>.Default[typeProp.enumValueIndex];
+
+            var valueProp = property.FindPropertyRelative("Value");
+            var value = valueProp.floatValue;
+            EditorGUI.BeginChangeCheck();
+            switch (type)
+            {
+                case AnimatorControllerParameterType.Float:
+                    value = EditorGUI.FloatField(pos, GUIContent.none, value);
+                    break;
+                case AnimatorControllerParameterType.Int:
+                    value = EditorGUI.IntField(pos, GUIContent.none, Mathf.FloorToInt(value));
+                    break;
+                case AnimatorControllerParameterType.Bool:
+                case AnimatorControllerParameterType.Trigger:
+                    value = EditorGUI.Toggle(pos.Center(EditorStyles.toggle.CalcSize(GUIContent.none)), GUIContent.none, value != 0) ? 1 : 0;
+                    break;
+                default:
+                    EditorGUI.PropertyField(pos, valueProp, GUIContent.none);
+                    break;
+            }
+            if (EditorGUI.EndChangeCheck())
+            {
+                valueProp.floatValue = value;
+            }
         }
     }
 #endif

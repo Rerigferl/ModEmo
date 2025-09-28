@@ -3,13 +3,13 @@
     [AddComponentMenu(ComponentMenuPrefix + "Mouth Morph Cancel Control")]
     internal sealed class ModEmoMouthMorphCancelControl : ModEmoTagComponent, IModEmoMouthMorphCancelControl
     {
-        public bool Enable = false;
+        bool IModEmoMouthMorphCancelControl.Enable => enabled;
 
-        bool IModEmoMouthMorphCancelControl.Enable => Enable;
+        private void OnEnable() { }
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            hashCode.Add(Enable);
+            hashCode.Add(enabled);
         }
     }
     internal interface IModEmoMouthMorphCancelControl

@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Buffers.Text;
+using System.Collections.Immutable;
 using Numeira.Animation;
 
 namespace Numeira;
@@ -65,9 +66,14 @@ internal static class ModEmoExpressionExt
             }
 
             if (writeBlink)
-            anim.AddAnimatedParameter(ParameterNames.Blink.Value, frame.Time, (expression.Blink ?? frame.Blink) ? 1 : 0);
+            anim.AddAnimatedParameter(ParameterNames.Blink.Value, frame.Time, (expression.Blink && frame.Blink) ? 1 : 0);
         }
 
         return anim;
+    }
+
+    public static string GetID<T>(this T expression) where T : IModEmoExpression
+    {
+        return DeterministicHashCode.Combine(expression.Name).ToString();
     }
 }

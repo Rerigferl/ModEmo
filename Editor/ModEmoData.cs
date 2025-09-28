@@ -13,7 +13,7 @@ internal sealed class ModEmoData
 
     public SkinnedMeshRenderer Face { get; }
 
-    public List<IModEmoExpression>? Expressions { get; set; }
+    public List<ExpressionData>? Expressions { get; set; }
 
     public List<KeyValuePair<string, List<string>>> CategorizedBlendShapes { get; }
 
@@ -27,15 +27,12 @@ internal sealed class ModEmoData
 
     public ImmutableHashSet<string> UsageBlendShapeMap { get; }
 
-    internal static ModEmoData Init(BuildContext context) => new(context.GetModEmoContext().Root);
+    internal static ModEmoData Init(BuildContext context) => new(context);
 
-    internal static ModEmoData Init(ModEmo component) => new(component);
-
-    private ModEmoData(ModEmo component)
+    private ModEmoData(BuildContext context)
     {
-        Face = 
-            component.Settings.Face.Get(component)?.GetComponent<SkinnedMeshRenderer>()
-            ?? throw new MissingReferenceException("Face object is missing");
+        var component = context.GetModEmoContext().Root;
+        Face = component.GetFaceRenderer() ?? throw new MissingReferenceException("Face object is missing");
 
         var mesh = Face.sharedMesh;
 
@@ -80,7 +77,7 @@ internal sealed class ModEmoData
 
     public static (List<KeyValuePair<string, List<string>>> CategorizedBlendShapeNames, ImmutableDictionary<string, BlendShapeInfo> BlendShapeInfos)? GetCategorizedBlendShapes(ModEmo component)
     {
-        var face = component.Settings.Face.Get(component)?.GetComponent<SkinnedMeshRenderer>();
+        var face = component.GetFaceRenderer();
         var mesh = face?.sharedMesh;
         if (face == null || mesh == null)
             return default;

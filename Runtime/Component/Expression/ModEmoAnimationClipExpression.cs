@@ -4,9 +4,8 @@
     internal sealed class ModEmoAnimationClipExpression : ModEmoExpression
     {
         public AnimationClip? AnimationClip;
-        public bool NameFromAnimationClip = true;
 
-        protected override string GetName() => NameFromAnimationClip && AnimationClip != null ? AnimationClip.name : base.GetName();
+        protected override string GetName() => string.IsNullOrEmpty(Name) && AnimationClip != null ? AnimationClip.name : base.GetName();
 
         private IEnumerable<ExpressionFrame> GetFrames()
         {
@@ -40,4 +39,15 @@
 
         public override IEnumerable<ExpressionFrame> Frames => GetFrames().Concat(base.Frames);
     }
+
+#if UNITY_EDITOR
+    [CustomEditor(typeof(ModEmoAnimationClipExpression))]
+    internal sealed class ModEmoAnimationClipExpressionEditor : ModEmoExpressionEditorBase
+    {
+        protected override void OnInnerInspectorGUI()
+        {
+            EditorGUILayout.ObjectField(serializedObject.FindProperty("AnimationClip"), typeof(AnimationClip));
+        }
+    }
+#endif
 }

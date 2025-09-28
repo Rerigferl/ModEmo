@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 
 namespace Numeira;
@@ -270,10 +271,75 @@ internal static class GUIPositionExt
         EditorGUI.DrawRect(position, Color.white with { a = 0.2f });
     }
 
-    private static void DrawMarginLineForRect(this GUIPosition position, Color color)
+    public static void Slider(this GUIPosition position, string label, SerializedProperty property, float min, float max, float minLimit = float.MinValue, float maxLimit = float.MaxValue)
     {
-        typeof(EditorGUI).GetMethod("DrawMarginLineForRect", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { position.AsRect(), color });
+        var content = string.IsNullOrEmpty(label) ? GUIContent.none : new(label);
+        var method = InternalSliderMethod ??= CreateInternalSliderMethodProxy();
+
+        var value = property.floatValue;
+        EditorGUI.BeginChangeCheck();
+        value = method.Invoke(position, content, value, min, max, minLimit, maxLimit);
+        if (EditorGUI.EndChangeCheck())
+        {
+            property.floatValue = value;
+        }
     }
+
+    public static float Slider(this GUIPosition position, string label, float value, float min, float max, float minLimit = float.MinValue, float maxLimit = float.MaxValue)
+    {
+        var content = string.IsNullOrEmpty(label) ? GUIContent.none : new(label);
+        var method = InternalSliderMethod ??= CreateInternalSliderMethodProxy();
+
+        return method.Invoke(position, content, value, min, max, minLimit, maxLimit);
+    }
+
+    public static void IntSlider(this GUIPosition position, string label, SerializedProperty property, int min, int max, int minLimit = int.MinValue, int maxLimit = int.MaxValue)
+    {
+        var content = string.IsNullOrEmpty(label) ? GUIContent.none : new(label);
+        var method = InternalSliderMethod ??= CreateInternalSliderMethodProxy();
+
+        var value = property.intValue;
+        EditorGUI.BeginChangeCheck();
+        value = Mathf.RoundToInt(method.Invoke(position, content, value, min, max, minLimit, maxLimit));
+        if (EditorGUI.EndChangeCheck())
+        {
+            property.intValue = value;
+        }
+    }
+
+    public static int IntSlider(this GUIPosition position, string label, int value, int min, int max, int minLimit = int.MinValue, int maxLimit = int.MaxValue)
+    {
+        var content = string.IsNullOrEmpty(label) ? GUIContent.none : new(label);
+        var method = InternalSliderMethod ??= CreateInternalSliderMethodProxy();
+
+        EditorGUI.BeginChangeCheck();
+        return Mathf.RoundToInt(method.Invoke(position, content, value, min, max, minLimit, maxLimit));
+    }
+
+    private static InternalSliderMethodDelegate CreateInternalSliderMethodProxy()
+    {
+        var args = new[] { typeof(Rect), typeof(GUIContent), typeof(float), typeof(float), typeof(float), typeof(float), typeof(float), };
+        var a = new DynamicMethod("Slider", typeof(float), args);
+
+        var inner = typeof(EditorGUI).GetMethod("Slider", BindingFlags.Static | BindingFlags.NonPublic, null, args, null);
+
+        var il = a.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Ldarg_3);
+        il.Emit(OpCodes.Ldarg_S, 4);
+        il.Emit(OpCodes.Ldarg_S, 5);
+        il.Emit(OpCodes.Ldarg_S, 6);
+        il.Emit(OpCodes.Call, inner);
+        il.Emit(OpCodes.Ret);
+
+        return (a.CreateDelegate(typeof(InternalSliderMethodDelegate)) as InternalSliderMethodDelegate)!;
+    }
+
+    private delegate float InternalSliderMethodDelegate(Rect position, GUIContent label, float value, float sliderMin, float sliderMax, float textFieldMin, float textFieldMax);
+
+    private static InternalSliderMethodDelegate? InternalSliderMethod;
     
     private static GUIStyle PlaceholderStyle
     {

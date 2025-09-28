@@ -3,13 +3,13 @@
     [AddComponentMenu(ComponentMenuPrefix + "Blink Control")]
     internal sealed class ModEmoBlinkControl : ModEmoTagComponent, IModEmoBlinkControl
     {
-        public bool Enable = true;
+        bool IModEmoBlinkControl.Enable => enabled;
 
-        bool IModEmoBlinkControl.Enable => Enable;
+        private void OnEnable() { }
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            hashCode.Add(Enable);
+            hashCode.Add(enabled);
         }
     }
 

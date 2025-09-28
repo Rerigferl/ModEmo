@@ -10,8 +10,10 @@ internal static partial class ModEmoConstants
         {
             public const string Prefix = $"{Parameters.Prefix}{nameof(Expression)}/";
             public const string Pattern = $"{Prefix}Pattern";
+            public const string Page = $"{Prefix}Page";
             public const string Index = $"{Prefix}Index";
             public const string Lock = $"{Prefix}Lock";
+            public const string Bits = $"{Prefix}Bits";
         }
 
         public abstract class BlendShapes

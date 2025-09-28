@@ -26,7 +26,7 @@ internal sealed class ExpressionPreview : IRenderFilter
                 if (component == null)
                     continue;
 
-                var renderer = context.Observe(component, x => x.Settings.Face.Clone().Get(component)?.GetComponent<SkinnedMeshRenderer>());
+                var renderer = context.Observe(component, x => x.GetFaceRenderer());
                 if (renderer == null)
                     continue;
 

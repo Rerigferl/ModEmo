@@ -1,4 +1,6 @@
-﻿using nadena.dev.modular_avatar.core;
+﻿using System.Runtime.Remoting.Contexts;
+using nadena.dev.modular_avatar.core;
+using nadena.dev.ndmf.runtime;
 
 namespace Numeira
 {
@@ -53,6 +55,15 @@ namespace Numeira
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
+        public SkinnedMeshRenderer? GetFaceRenderer()
+        {
+            var avatarRoot = RuntimeUtil.FindAvatarInParents(transform);
+            if (avatarRoot == null)
+                return null;
+
+            return avatarRoot.GetComponentInChildren<ModEmoFaceObject>()?.Renderer ?? avatarRoot.Find("Body")?.GetComponent<SkinnedMeshRenderer>();
+        }
+
         public override int GetHashCode()
         {
             HashCode hash = new();
@@ -72,8 +83,6 @@ namespace Numeira
     [Serializable]
     internal sealed class ModEmoSettings
     {
-        public AvatarObjectReference Face = new() { referencePath = "Body" };
-
         // lang=regex 
         public string SeparatorStringRegEx = "[-=]{2,}";
 

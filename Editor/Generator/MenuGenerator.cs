@@ -24,11 +24,28 @@ internal class MenuGenerator
 
         var parameters = menuRoot.gameObject.AddComponent<ModularAvatarParameters>();
 
+        parameters.GetOrAdd(ParameterNames.Expression.Pattern).syncType = ParameterSyncType.Int;
+
         var expressionLock = AddMenu("Lock", PortableControlType.Toggle, menuRoot);
         expressionLock.PortableControl.Parameter = ParameterNames.Expression.Lock;
 
+        var patterns = Context.GetData().Expressions.GroupBy(x => x.PatternIndex).ToArray();
+        if (patterns.Length > 1)
+        {
+            var patternsFolder = AddMenu("Patterns", PortableControlType.SubMenu, menuRoot);
+            
+            foreach (var pattern in patterns)
+            {
+                var a = pattern.First();
+                var menu = AddMenu(a.Pattern.Name, PortableControlType.Toggle, patternsFolder);
+                menu.PortableControl.Parameter = ParameterNames.Expression.Pattern;
+                menu.PortableControl.Value = a.PatternIndex;
+            }
+        }
+
         var blinkLock = AddMenu("Blink", PortableControlType.Toggle, menuRoot);
         blinkLock.PortableControl.Parameter = ParameterNames.Blink.Sync;
+        blinkLock.isDefault = true;
 
         var blendShapeMenu = AddMenu("BlendShapes", PortableControlType.SubMenu, menuRoot);
         var data = Context.GetData();
@@ -58,5 +75,21 @@ internal class MenuGenerator
         menuItem.MenuSource = SubmenuSource.Children;
         menuItem.PortableControl.Type = type;
         return menuItem;
+    }
+}
+
+internal static partial class Ext
+{
+    public static ref ParameterConfig GetOrAdd(this ModularAvatarParameters parameters, string name)
+    {
+        var list = parameters.parameters;
+        foreach(ref var parameter in list.AsSpan())
+        {
+            if (parameter.nameOrPrefix == name)
+                return ref parameter;
+        }
+
+        list.Add(new ParameterConfig() { nameOrPrefix = name });
+        return ref list.AsSpan()[^1];
     }
 }

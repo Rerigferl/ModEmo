@@ -1,6 +1,5 @@
 ﻿namespace Numeira
 {
-    [DisallowMultipleComponent]
     [AddComponentMenu(ComponentMenuPrefix + "Condition")]
     internal sealed class ModEmoCondition : ModEmoConditionBase
     {

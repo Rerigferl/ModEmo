@@ -5,7 +5,9 @@ namespace Numeira
     [AddComponentMenu(ComponentMenuPrefix + "Loop Control")]
     internal sealed class ModEmoLoopControl : ModEmoTagComponent, IModEmoLoopControl
     {
-        public bool IsLoop => true;
+        public bool IsLoop => enabled;
+
+        public void OnEnable() { }
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {

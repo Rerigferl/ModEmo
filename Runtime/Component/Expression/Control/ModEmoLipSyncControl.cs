@@ -4,13 +4,13 @@
     [AddComponentMenu(ComponentMenuPrefix + "LipSync Control")]
     internal sealed class ModEmoLipSyncControl : ModEmoTagComponent, IModEmoLipSyncConttrol
     {
-        public bool Enable = true;
+        bool IModEmoLipSyncConttrol.Enable => enabled;
 
-        bool IModEmoLipSyncConttrol.Enable => Enable;
+        private void OnEnable() { }
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            hashCode.Add(Enable);
+            hashCode.Add(enabled);
         }
     }
 
