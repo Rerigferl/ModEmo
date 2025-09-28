@@ -94,6 +94,17 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
     private void MenuCallback(GenericMenu menu, KeyValuePair<string, List<string>> group)
     {
+        menu.AddItem(new("Add Existing Blendshapes"), false, () =>
+        {
+            Undo.RecordObject(Component, "Add Blendshapes");
+            foreach (var item in group.Value)
+            {
+                if (!BlendShapes.TryGetValue(item, out var blendShape) || blendShape.Value == 0)
+                    continue;
+                Component.BlendShapes.Add(new() { Name = item, Cancel = false, Value = blendShape.Value });
+            }
+        });
+
         menu.AddItem(new("Add Cancel BlendShapes"), false, () =>
         {
             Undo.RecordObject(Component, "Add Cancel Blendshapes");
