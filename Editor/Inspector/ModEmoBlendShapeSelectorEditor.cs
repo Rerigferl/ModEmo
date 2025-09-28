@@ -3,6 +3,7 @@
 namespace Numeira;
 
 [CustomEditor(typeof(ModEmoBlendShapeSelector), true)]
+[CanEditMultipleObjects]
 internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 {
     private SerializedProperty blendShapesProperty = null!;

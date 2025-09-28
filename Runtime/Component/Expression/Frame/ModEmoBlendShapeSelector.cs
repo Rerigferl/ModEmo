@@ -2,7 +2,6 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "BlendShape")]
-    [CanEditMultipleObjects]
     internal sealed class ModEmoBlendShapeSelector : ModEmoTagComponent, IModEmoExpressionFrameProvider
     {
         public List<BlendShape> BlendShapes = new();
