@@ -1,6 +1,7 @@
 ﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Gesture Condition")]
+    [CanEditMultipleObjects]
     internal sealed class ModEmoGestureCondition : ModEmoConditionBase
     {
         public Hand Hand = Hand.Left;

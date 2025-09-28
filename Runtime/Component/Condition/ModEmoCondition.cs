@@ -1,6 +1,7 @@
 ﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Condition")]
+    [CanEditMultipleObjects]
     internal sealed class ModEmoCondition : ModEmoConditionBase
     {
         public List<AnimatorParameterCondition> Parameters = new();
