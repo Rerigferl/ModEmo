@@ -50,7 +50,7 @@ internal sealed class ExpressionPreview : IRenderFilter
         private readonly Renderer originalRenderer;
         private IModEmoExpression? selectedExpression;
         private DateTime selectionChangedTime;
-        private AnimationClip? animaton;
+        private AnimationClipBuilder? animaton;
         private IDisposable? sceneReflesher;
 
         private Dictionary<string, int> blendShapeIndexCache = new();
@@ -121,16 +121,14 @@ internal sealed class ExpressionPreview : IRenderFilter
             if (animaton is not { } clip || clip == null)
                 return;
 
-            static IEnumerable<(string PropertyName, float Value)> Sample(AnimationClip clip, float normalizedTime)
+            static IEnumerable<(string PropertyName, float Value)> Sample(AnimationClipBuilder clip, float normalizedTime)
             {
-                float time = normalizedTime * clip.length;
+                float time = normalizedTime * clip.Length;
 
-                foreach (var bind in AnimationUtility.GetCurveBindings(clip))
+                foreach (var bind in clip.Bindings)
                 {
-                    AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, bind);
-                    if (curve == null)
+                    if (clip.Evaluate(bind, time) is not { } value)
                         continue;
-                    float value = curve.Evaluate(time);
 
                     var propertyName = bind.propertyName;
                     yield return ($"{propertyName}", value);
@@ -179,12 +177,9 @@ internal sealed class ExpressionPreview : IRenderFilter
                 sceneReflesher?.Dispose();
                 sceneReflesher = null;
 
-                if (animaton != null)
-                    Object.DestroyImmediate(animaton);
-
                 if (selectedExpression != null)
                 {
-                    animaton = selectedExpression.MakeAnimationClip(blendShapeInfos, null, writeDefault: false, previewMode: true).ToMotion(AssetContainer.Empty) as AnimationClip;
+                    animaton = selectedExpression.MakeAnimationClip(blendShapeInfos, null, writeDefault: false, previewMode: true);
                     if (selectedExpression.Frames.Count() > 1)
                     sceneReflesher = SceneViewReflesher.BeginReflesh();
                 }
@@ -210,9 +205,6 @@ internal sealed class ExpressionPreview : IRenderFilter
 
         public void Dispose()
         {
-            if (animaton != null)
-                Object.DestroyImmediate(animaton);
-
             sceneReflesher?.Dispose();
         }
     }
