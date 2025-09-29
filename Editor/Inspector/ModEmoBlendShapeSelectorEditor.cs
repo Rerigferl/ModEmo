@@ -12,7 +12,7 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
     private ModEmo? Root => Component.GetComponentInParent<ModEmo>(true);
 
-    private static List<bool> categoryOpenStatus = new();
+    private readonly List<bool> categoryOpenStatus = new();
 
     private List<KeyValuePair<string, List<string>>> CategorizedBlendShapes = null!;
 
@@ -29,6 +29,8 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
         categoryOpenStatus.Capacity = Math.Max(categoryOpenStatus.Capacity, CategorizedBlendShapes.Count);
     }
+
+    private static int previewingControlId = 0;
 
     public override void OnInspectorGUI()
     {
@@ -48,7 +50,7 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
             return;
 
         var categories = CategorizedBlendShapes.AsSpan();
-        string? preview = null;
+        var content = new GUIContent();
         for (int i = 0; i < categories.Length; i++)
         {
             var category = categories[i];
@@ -58,11 +60,19 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
             foreach (var x in category.Value.AsSpan())
             {
+                content.text = x;
+                var id = GUIUtility.GetControlID(content, FocusType.Passive);
                 var rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight * 1.25f);
 
                 if (rect.Contains(Event.current.mousePosition))
                 {
-                    preview ??= x;
+                    ExpressionPreview.TemporaryPreviewBlendShape.Value = x;
+                    previewingControlId = id;
+                }
+                else if (previewingControlId == id)
+                {
+                    ExpressionPreview.TemporaryPreviewBlendShape.Value = null;
+                    previewingControlId = 0;
                 }
 
                 if (GUI.Button(rect, x))
@@ -85,7 +95,7 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
             }
         }
 
-        ExpressionPreview.TemporaryPreviewBlendShape.Value = preview;
+
 
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
