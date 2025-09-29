@@ -3,7 +3,9 @@ using System.Reflection.Emit;
 
 namespace Numeira;
 
+#if UNITY_EDITOR
 [InitializeOnLoad]
+#endif
 internal static class AnimationUtils
 {
 #if UNITY_EDITOR

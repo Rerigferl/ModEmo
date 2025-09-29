@@ -1,7 +1,9 @@
 ﻿namespace Numeira
 {
-    [PreferBinarySerialization]
+#if UNITY_EDITOR
     [InitializeOnLoad]
+#endif
+    [PreferBinarySerialization]
     public sealed class ModEmoGeneratedArtifactsCache : ScriptableObject
     {
         internal const string ArtifactCachePath = "Packages/numeira.mod-emo/__Generated/";
@@ -11,6 +13,7 @@
         [SerializeField]
         private ulong ExpiresData;
 
+#if UNITY_EDITOR
         public ref DateTime Expires => ref Unsafe.As<ulong, DateTime>(ref ExpiresData);
 
         static ModEmoGeneratedArtifactsCache()
@@ -51,6 +54,7 @@
             }
             return null;
         }
+#endif
     }
 
 #if UNITY_EDITOR
