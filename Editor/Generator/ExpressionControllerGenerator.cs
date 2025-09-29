@@ -244,6 +244,8 @@ internal static class ExpressionControllerGenerator
 
         int stateCount = 0;
 
+        var defaultState = stateMachine.AddState("Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
+        
         foreach (var group in expressions.GroupBy(x => x.Pattern))
         {
             var pattern = group.Key;
@@ -254,7 +256,7 @@ internal static class ExpressionControllerGenerator
                 var expData = array[i];
                 var expression = expData.Expression;
 
-                var state = stateMachine.AddState(expression.Name, new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
+                var state = stateMachine.AddState(expression.Name, new Vector2(defaultState.Position!.Value.x, 120 + 70 * stateCount++));
 
                 if (i == 0)
                 {
@@ -274,6 +276,8 @@ internal static class ExpressionControllerGenerator
                 }
                 else
                 {
+                    defaultState.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
+
                     var t = stateMachine.AddEntryTransition(state).WithDuration(0.1f)
                         .AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon)
                         .AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex - Epsilon)
@@ -293,7 +297,9 @@ internal static class ExpressionControllerGenerator
                 }
 
 
+
                 state.Motion = expression.MakeAnimationClip(data);
+                defaultState.Motion ??= state.Motion;
                 state.MotionTime = expression.MotionTime;
 
                 var tr = state.AddTrackingControl();
