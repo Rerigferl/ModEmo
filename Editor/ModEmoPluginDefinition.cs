@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
 using nadena.dev.modular_avatar.core;
 using Numeira.Animation;
 using Debug = UnityEngine.Debug;
@@ -43,9 +44,9 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             if (components is null)
                 return;
 
-            foreach(var x in components.Select(x => x.gameObject).Distinct().ToArray())
+            foreach(var component in components.OrderByDescending(x => x.GetType().GetCustomAttribute<RequireComponent>(true) != null ? 1 : 0))
             {
-                x.RemoveComponents<ModEmoTagComponent>();
+                Object.DestroyImmediate(component);
             }
         }
 
