@@ -1,4 +1,6 @@
 ﻿using System.Collections.Immutable;
+using UnityEditor;
+using UnityEditorInternal;
 
 namespace Numeira;
 
@@ -17,11 +19,13 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
     private List<KeyValuePair<string, List<string>>> CategorizedBlendShapes = null!;
 
     private ImmutableDictionary<string, BlendShapeInfo> BlendShapes = null!;
-
+    private BlendShapeList? blendShapeList;
 
     public void OnEnable()
     {
         blendShapesProperty = serializedObject.FindProperty("BlendShapes");
+        blendShapeList = new(serializedObject, blendShapesProperty);
+
         if (Root == null)
             return;
 
@@ -40,7 +44,8 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
         EditorGUILayout.BeginVertical();
 
-        EditorGUILayout.PropertyField(blendShapesProperty, new GUIContent("BlendShapes"));
+        //EditorGUILayout.PropertyField(blendShapesProperty, new GUIContent("BlendShapes"));
+        blendShapeList?.DoLayoutList();
 
         EditorGUILayout.EndVertical();
 
@@ -126,6 +131,27 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
                 Component.BlendShapes.Add(new() { Name = item, Cancel = true, Value = blendShape.Max });
             }
         });
+    }
+
+    private sealed class BlendShapeList : ReorderableListWrapper
+    {
+        public BlendShapeList(SerializedObject serializedObject, SerializedProperty elements) : base(serializedObject, elements, "Blendshapes")
+        {
+        }
+
+        public override bool DisplayRemove => false;
+
+        protected override void OnItemGUI(Rect rect, int index, bool isActive, bool isFocused)
+        {
+            var position = (GUIPosition)rect;
+            var (left, right) = position.HorizontalSeparate(position.Width - 32, 4);
+            var property = Elements.GetArrayElementAtIndex(index);
+            EditorGUI.PropertyField(left, property);
+            if (GUI.Button(right.Center(new(24, 24)), EditorGUIUtility.TrIconContent("Toolbar Minus", "Remove selection from the list")))
+            {
+                RemoveIndicies.Add(index);
+            }
+        }
     }
 }
 
@@ -242,5 +268,84 @@ internal sealed class CurveBlendShapeDataDrawer : PropertyDrawer
 
         EditorGUI.EndProperty();
 
+    }
+}
+
+internal abstract class ReorderableListWrapper
+{
+    protected SerializedObject SerializedObject { get; }
+    protected SerializedProperty Elements { get; }
+
+    public string Title { get; set; }
+
+    private ReorderableList? list;
+    protected List<int> RemoveIndicies { get; } = new();
+
+    protected ReorderableList InnerList => list ??= InitializeList();
+
+    public virtual bool DisplayAdd { get; } = true;
+    public virtual bool DisplayRemove { get; } = true;
+
+    public ReorderableListWrapper(SerializedObject serializedObject, SerializedProperty elements, string? title = null)
+    {
+        SerializedObject = serializedObject;
+        Elements = elements;
+        Title = title ?? elements.displayName;
+    }
+
+    protected virtual ReorderableList InitializeList()
+    {
+        return new ReorderableList(SerializedObject, Elements)
+        {
+            headerHeight = 0,
+            displayAdd = DisplayAdd,
+            displayRemove = DisplayRemove,
+            draggable = true,
+            drawElementCallback = OnItemGUI,
+            elementHeightCallback = GetElementHeight,
+        };
+    }
+
+    protected virtual float GetElementHeight(int index) => EditorGUI.GetPropertyHeight(Elements.GetArrayElementAtIndex(index));
+
+    protected abstract void OnItemGUI(Rect rect, int index, bool isActive, bool isFocused);
+
+    public void DoLayoutList()
+    {
+        list ??= InitializeList();
+        var rect = (GUIPosition)EditorGUILayout.GetControlRect();
+        bool hasMultiple = Elements.hasMultipleDifferentValues;
+
+        if (!hasMultiple)
+            EditorGUI.BeginProperty(rect, GUIContent.none, Elements);
+
+        var (leftRect, rightRect) = rect.HorizontalSeparate(rect.Width - 48, 2);
+        bool foldout = Elements.isExpanded = EditorGUI.BeginFoldoutHeaderGroup(leftRect, Elements.isExpanded, Title);
+        EditorGUILayout.EndFoldoutHeaderGroup();
+        EditorGUI.PropertyField(rightRect, Elements.FindPropertyRelative("Array.size"), GUIContent.none);
+
+        if (!hasMultiple)
+            EditorGUI.EndProperty();
+
+        try
+        {
+            if (!foldout)
+                return;
+            RemoveIndicies.Clear();
+            list.DoLayoutList();
+
+            if (RemoveIndicies.Count == 0)
+                return;
+            Undo.SetCurrentGroupName("Remove Items");
+            var id = Undo.GetCurrentGroup();
+            foreach (var index in RemoveIndicies.OrderByDescending(x => x))
+            {
+                Elements.DeleteArrayElementAtIndex(index);
+            }
+            Undo.CollapseUndoOperations(id);
+        }
+        finally
+        {
+        }
     }
 }
