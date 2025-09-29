@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using nadena.dev.modular_avatar.core;
+using nadena.dev.ndmf.vrchat;
 using Numeira.Animation;
+using VRC.SDK3.Avatars.Components;
 using Debug = UnityEngine.Debug;
 
 [assembly: ExportsPlugin(typeof(Numeira.ModEmoPluginDefinition))]
@@ -127,6 +129,13 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
                 {
                     context.AssetSaver.SaveAssets(assetContainer.Assets);
                 }
+            }
+
+            // Disable default
+            if (context.PlatformProvider.QualifiedName == WellKnownPlatforms.VRChatAvatar30)
+            {
+                var descriptor = context.VRChatAvatarDescriptor();
+                descriptor.customEyeLookSettings.eyelidsBlendshapes[0] = -1;
             }
 
             var ma = modEmo.gameObject.AddComponent<ModularAvatarMergeAnimator>();

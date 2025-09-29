@@ -303,7 +303,7 @@ internal static class ExpressionControllerGenerator
                 state.MotionTime = expression.MotionTime;
 
                 var tr = state.AddTrackingControl();
-                tr.Eyes = TrackingType.Animation;
+                //tr.Eyes = TrackingType.Animation;
                 tr.Mouth = expression.LipSync ? TrackingType.Tracking : TrackingType.Animation;
             }
         }
