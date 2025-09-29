@@ -27,6 +27,7 @@ namespace Numeira
     {
         public override void OnInspectorGUI()
         {
+            serializedObject.Update();
             switch (target)
             {
                 case ModEmoCondition x:
@@ -41,6 +42,7 @@ namespace Numeira
                     }
                     break;
             }
+            serializedObject.ApplyModifiedProperties();
         }
     }
 #endif
