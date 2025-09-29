@@ -74,6 +74,6 @@ internal static class ModEmoExpressionExt
 
     public static string GetID<T>(this T expression) where T : IModEmoExpression
     {
-        return DeterministicHashCode.Combine(expression.Name).ToString();
+        return $"{expression.Name}-{expression.GetHashCode()}";
     }
 }
