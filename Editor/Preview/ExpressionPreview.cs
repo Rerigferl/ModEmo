@@ -106,15 +106,6 @@ internal sealed class ExpressionPreview : IRenderFilter
             if (proxy is not SkinnedMeshRenderer smr || smr.sharedMesh is not { } mesh || mesh == null)
                 return;
 
-            if (TemporaryPreviewBlendShape.Value != null)
-            {
-                int index = GetBlendShapeIndex(mesh, TemporaryPreviewBlendShape.Value);
-                if (index != -1)
-                {
-                    smr.SetBlendShapeWeight(index, 100);
-                }
-            }
-
             if (selectedExpression is not { } expression)
                 return;
 
@@ -153,6 +144,14 @@ internal sealed class ExpressionPreview : IRenderFilter
                 smr.SetBlendShapeWeight(index, value);
             }
 
+            if (TemporaryPreviewBlendShape.Value != null)
+            {
+                int index = GetBlendShapeIndex(mesh, TemporaryPreviewBlendShape.Value);
+                if (index != -1)
+                {
+                    smr.SetBlendShapeWeight(index, 100);
+                }
+            }
         }
 
         public Task<IRenderFilterNode?> Refresh(IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context, RenderAspects updatedAspects)
