@@ -12,6 +12,8 @@ namespace Numeira
         public IEnumerable<IGrouping<IModEmoExpressionPattern, IModEmoExpression>> ExportExpressions()
             => new ExpressionGroups(this);
 
+        public IModEmoExpressionPattern[] Patterns => this.GetComponentsInDirectChildren<IModEmoExpressionPattern>();
+
         public IModEmoExpression? GetBlinkExpression() => this.GetComponentsInDirectChildren<IModEmoExpression>().Where(x => x is not IModEmoExpressionPattern).FirstOrDefault();
 
         public IModEmoMouthMorphCanceller? MouthMorphCanceller => this.GetComponentInDirectChildren<IModEmoMouthMorphCanceller>();
@@ -86,7 +88,9 @@ namespace Numeira
         // lang=regex 
         public string SeparatorStringRegEx = "[-=]{2,}";
 
-        public bool UseCache = true;
+        // Broken...
+        [HideInInspector]
+        public bool UseCache = false;
 
         public ModEmoDebugSettings DebugSettings = new();
     }

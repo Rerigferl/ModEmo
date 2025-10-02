@@ -63,4 +63,11 @@ internal static partial class ModEmoConstants
             }
         }
     }
+
+    public abstract partial class ComponentPrefix
+    {
+        public const string Condition = "Condition/";
+        public const string Expression = "Expression/";
+
+    }
 }

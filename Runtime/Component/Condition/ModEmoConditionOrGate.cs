@@ -2,7 +2,7 @@
 
 namespace Numeira
 {
-    [AddComponentMenu(ComponentMenuPrefix + "Condition Splitter")]
+    [AddComponentMenu(ComponentMenuPrefix + "Condition Union")]
     internal sealed class ModEmoConditionOrGate : ModEmoConditionGate
     {
         protected override int UniqueId => 2;

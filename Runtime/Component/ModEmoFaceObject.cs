@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Numeira;
 
+[AddComponentMenu(ComponentMenuPrefix + "Face Object Marker")]
 [RequireComponent(typeof(SkinnedMeshRenderer))]
 internal sealed class ModEmoFaceObject : ModEmoTagComponent
 {

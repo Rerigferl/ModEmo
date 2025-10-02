@@ -11,7 +11,7 @@ internal static class PatternConverter
     [MenuItem("GameObject/Preferred to Right Hand", true, int.MaxValue)]
     internal static bool Selector()
     {
-        return Selection.activeGameObject.GetComponent<IModEmoExpressionPattern>() != null;
+        return Selection.activeGameObject?.GetComponent<IModEmoExpressionPattern>() != null;
     }
 
     [MenuItem("GameObject/Preferred to Right Hand", false, int.MaxValue)]

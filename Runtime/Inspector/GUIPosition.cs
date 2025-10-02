@@ -213,8 +213,14 @@ internal static class GUIPositionExt
 
         EditorGUI.EndProperty();
     }
+    
+    public static T? ObjectField<T>(this GUIPosition position, string label, T? obj, Type? objectType = null, bool allowSceneObjects = true, bool readOnly = false) where T : Object
+    {
+        ObjectField(position, label, ref obj, objectType, allowSceneObjects, readOnly);
+        return obj;
+    }
 
-    public static void ObjectField<T>(this GUIPosition position, string label, ref T? obj, bool allowSceneObjects = true) where T : Object
+    public static void ObjectField<T>(this GUIPosition position, string label, ref T? obj, Type? objectType = null, bool allowSceneObjects = true, bool readOnly = false) where T : Object
     {
         GUIPosition left, right;
         if (!string.IsNullOrEmpty(label))
@@ -227,7 +233,9 @@ internal static class GUIPositionExt
             (left, right) = (default, position);
         }
 
-        var result = EditorGUI.ObjectField(right, obj, typeof(T), allowSceneObjects);
+        EditorGUI.BeginDisabledGroup(readOnly);
+        var result = EditorGUI.ObjectField(right, obj, objectType ?? typeof(T), allowSceneObjects);
+        EditorGUI.EndDisabledGroup();
         obj = result as T;
     }
 

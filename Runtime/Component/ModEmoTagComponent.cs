@@ -16,5 +16,4 @@
 
         public void CalculateContentHash(ref HashCode hashCode);
     }
-
 }

@@ -179,7 +179,7 @@ internal sealed class ExpressionPreview : IRenderFilter
 
                 if (selectedExpression != null)
                 {
-                    animaton = selectedExpression.MakeAnimationClip(blendShapeInfos, null, writeDefault: false, previewMode: true);
+                    animaton = selectedExpression.MakeAnimationClip(blendShapeInfos, null, writeDefault: true, previewMode: true);
                     if (selectedExpression.Frames.Select(x => x.Time).Distinct().Count() > 1)
                     sceneReflesher = SceneViewReflesher.BeginReflesh();
                 }

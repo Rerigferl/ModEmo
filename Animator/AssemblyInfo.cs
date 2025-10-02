@@ -1,3 +1,1 @@
-﻿using System.Runtime.CompilerServices;
-
-[assembly:InternalsVisibleTo("numeira.mod-emo.editor")]
+﻿//[assembly:InternalsVisibleTo("numeira.mod-emo.editor")]

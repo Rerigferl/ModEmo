@@ -1,0 +1,1 @@
+﻿global using ComponentPrefix = Numeira.ModEmoConstants.ComponentPrefix;

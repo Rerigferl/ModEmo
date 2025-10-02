@@ -1,6 +1,7 @@
 ﻿
 namespace Numeira
 {
+    [AddComponentMenu(ComponentMenuPrefix + "Gesture Weight Motion Time")]
     internal sealed class ModEmoGestureWeightMotionTime : ModEmoTagComponent, IModEmoMotionTimeProvider
     {
         public Hand Side = Hand.Left;

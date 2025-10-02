@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using nadena.dev.ndmf.runtime;
+using nadena.dev.ndmf.runtime.components;
 using nadena.dev.ndmf.util;
 using UnityEditor.SceneManagement;
 using VRC.SDK3.Avatars.Components;
@@ -31,12 +32,69 @@ internal static class CreationContextMenu
         typeof(ModEmoCondition);
 #endif
 
+    private static bool IsAvatarRoot(GameObject go)
+    {
+        if (go == null) 
+            return false;
+
+#if VRC_SDK_VRCSDK3
+        if (go.GetComponent<VRC.SDK3.Avatars.Components.VRCAvatarDescriptor>() != null)
+            return true;
+#endif
+
+        return go.GetComponent<NDMFAvatarRoot>() != null;
+    }
+
     private static void AddItemsToGameObjectContextMenu(this StaticExtension? __, GenericMenu menu, GameObject go)
     {
+        if (IsAvatarRoot(go))
+        {
+            menu.AddSeparator("");
+            AddMenu("ModEmo/Create New", () =>
+            {
+                if (go.GetComponentInChildren<ModEmo>() is { } c)
+                {
+                    Selection.activeGameObject = c.gameObject;
+                    EditorGUIUtility.PingObject(c);
+                    return;
+                }
+
+                CreateNewObject("ModEmo", go, typeof(ModEmo));
+            });
+            return;
+        }
+
         if (go.GetComponentInParent<ModEmo>() == null)
             return;
 
         menu.AddSeparator("");
+
+        bool isRoot = go.GetComponent<ModEmo>() != null;
+        bool isPattern = go.GetComponent<IModEmoExpressionPattern>() != null;
+        bool isExpressionFolder = go.GetComponent<IModEmoExpressionFolder>() != null;
+        bool isExpression = go.GetComponentInParent<IModEmoExpression>() != null;
+        bool isFrameFolder = go.GetComponent<ModEmoExpressionFrameFolder>() != null;
+
+        AddMenu("ModEmo/Create Pattern", () => CreateNewObject("Expression Pattern (1)", go, typeof(ModEmoExpressionPattern)), enabled: isRoot);
+        
+        menu.AddSeparator("ModEmo/");
+        AddMenu("ModEmo/Expression/Create Expression", () => CreateNewExpression("Expression (1)", go), enabled: isExpressionFolder);
+        AddMenu("ModEmo/Expression/Create Empty Expression", () => CreateNewExpression("Expression (1)", go, empty: true), enabled: isExpressionFolder);
+        AddMenu("ModEmo/Expression/Create Simplify Expression", () => CreateNewObject("Expression (1)", go, typeof(ModEmoDefaultExpression), DefaultConditionType, typeof(ModEmoBlendShapeSelector)), enabled: isExpressionFolder);
+
+        menu.AddSeparator("ModEmo/Expression/");
+
+        AddMenu("ModEmo/Expression/Frame/Add Frame", () => CreateNewObject("Frame (1)", go, typeof(ModEmoExpressionFrame)), enabled: isExpression || isFrameFolder);
+
+        menu.AddSeparator("ModEmo/");
+
+        AddMenu("ModEmo/Folder/Create Expression Folder", () => CreateNewObject("Expression Folder", go, typeof(ModEmoExpressionFolder)), enabled: isExpressionFolder);
+        AddMenu("ModEmo/Folder/Create Expression Frame Folder", () => CreateNewObject("Expression Frame Folder", go, typeof(ModEmoExpressionFolder)), enabled: isExpression);
+
+        menu.AddSeparator("ModEmo/");
+
+        AddMenu("ModEmo/Import Pattern from Avatar FX Layer ..", () => ImportPatternFromFXLayer(go), isRoot);
+
         void AddMenu(string title, GenericMenu.MenuFunction callback, bool enabled = true)
         {
             var content = new GUIContent(title);
@@ -45,18 +103,6 @@ internal static class CreationContextMenu
             else
                 menu.AddDisabledItem(content, false);
         }
-
-        AddMenu("ModEmo/Create Pattern", () => CreateNewObject("Expression Pattern (1)", go, typeof(ModEmoExpressionPattern)), enabled: go.GetComponent<ModEmo>() != null);
-        
-        menu.AddSeparator("ModEmo/");
-        AddMenu("ModEmo/Create Expression", () => CreateNewExpression("Expression (1)", go), enabled: go.GetComponent<IModEmoExpressionPattern>() != null);
-        AddMenu("ModEmo/Create Empty Expression", () => CreateNewExpression("Expression (1)", go, empty: true), enabled: go.GetComponent<IModEmoExpressionPattern>() != null);
-        AddMenu("ModEmo/Create Simplify Expression", () => CreateNewObject("Expression (1)", go, typeof(ModEmoDefaultExpression), DefaultConditionType, typeof(ModEmoBlendShapeSelector)), enabled: go.GetComponent<IModEmoExpressionPattern>() != null);
-
-        menu.AddSeparator("ModEmo/");
-
-        AddMenu("ModEmo/Import Pattern from Avatar FX Layer ..", () => ImportPatternFromFXLayer(go), go.GetComponent<ModEmo>() != null);
-
     }
 
     private static void ImportPatternFromFXLayer(GameObject parent)
