@@ -47,6 +47,13 @@ internal class MenuGenerator
         blinkLock.PortableControl.Parameter = ParameterNames.Blink.Sync;
         blinkLock.isDefault = true;
 
+        if (Component.MouthMorphCanceller is not null)
+        {
+            var morph = AddMenu("Mouth Morph Cancellar", PortableControlType.Toggle, menuRoot);
+            morph.PortableControl.Parameter = ParameterNames.MouthMorphCancel.Enable;
+            morph.isDefault = true;
+        }
+
         var blendShapeMenu = AddMenu("BlendShapes", PortableControlType.SubMenu, menuRoot);
         var data = Context.GetData();
         string[] singleArray = new string[1];
