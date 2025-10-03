@@ -92,6 +92,9 @@ namespace Numeira
         [HideInInspector]
         public bool UseCache = false;
 
+        [Range(0, 1)]
+        public float SmoothFactor = 0.85f;
+
         public ModEmoDebugSettings DebugSettings = new();
     }
 

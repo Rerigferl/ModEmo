@@ -12,7 +12,6 @@ internal static class ExpressionControllerGenerator
     public static void Generate(BuildContext context, AnimatorControllerBuilder animatorController)
     {
         animatorController.Parameters.AddFloat(ParameterNames.Expression.Pattern, 0);
-        animatorController.Parameters.AddFloat(ParameterNames.Expression.Page, 0);
         animatorController.Parameters.AddFloat(ParameterNames.Expression.Index, 0);
         animatorController.Parameters.AddFloat(ParameterNames.Expression.Lock, 0);
 
