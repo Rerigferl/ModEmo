@@ -17,6 +17,7 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
     {
         InPhase(BuildPhase.Transforming)
             .BeforePlugin("nadena.dev.modular-avatar")
+            .AfterPlugin("net.rs64.tex-trans-tool")
             .WithRequiredExtensions(new[] { typeof(ModEmoContext) }, 
             sequence =>
             {

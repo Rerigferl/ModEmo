@@ -2,7 +2,6 @@
 
 namespace Numeira
 {
-    [DisallowMultipleComponent]
     internal abstract class ModEmoConditionBase : ModEmoTagComponent, IModEmoConditionProvider
     {
         public abstract IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> GetConditions();
