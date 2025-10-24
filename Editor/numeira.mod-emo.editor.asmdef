@@ -8,7 +8,9 @@
         "nadena.dev.ndmf",
         "nadena.dev.ndmf.runtime",
         "nadena.dev.ndmf.vrchat",
-        "nadena.dev.modular-avatar.core"
+        "nadena.dev.modular-avatar.core",
+        "jp.suzuryg.face-emo.components.Runtime",
+        "jp.suzuryg.face-emo.domain.Runtime"
     ],
     "includePlatforms": [
         "Editor"
@@ -24,6 +26,11 @@
             "name": "nadena.dev.ndmf",
             "expression": "0",
             "define": "NDMF"
+        },
+        {
+            "name": "jp.suzuryg.face-emo",
+            "expression": "0",
+            "define": "FACE_EMO"
         }
     ],
     "noEngineReferences": false

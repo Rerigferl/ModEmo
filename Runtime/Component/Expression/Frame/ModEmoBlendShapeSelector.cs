@@ -1,4 +1,5 @@
 ﻿
+
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "BlendShape")]

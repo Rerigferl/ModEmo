@@ -1,5 +1,4 @@
-﻿
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using nadena.dev.ndmf.runtime;
@@ -7,6 +6,9 @@ using nadena.dev.ndmf.runtime.components;
 using nadena.dev.ndmf.util;
 using UnityEditor.SceneManagement;
 using VRC.SDK3.Avatars.Components;
+#if FACE_EMO
+using Suzuryg.FaceEmo.Components;
+#endif
 
 namespace Numeira;
 
@@ -94,6 +96,27 @@ internal static class CreationContextMenu
         menu.AddSeparator("ModEmo/");
 
         AddMenu("ModEmo/Import Pattern from Avatar FX Layer ..", () => ImportPatternFromFXLayer(go), isRoot);
+
+#if FACE_EMO
+
+        var faceEmo = Selection.gameObjects?.FirstOrDefault(x => x.TryGetComponent<FaceEmoLauncherComponent>(out _));
+
+        AddMenu("ModEmo/Import Pattern from FaceEmo ..", () => 
+        {
+            if (faceEmo == null)
+                return;
+
+            var patterns = PatternImporter.ImportFromFaceEmo(faceEmo);
+            if (patterns is null)
+                return;
+
+            foreach(var pattern in patterns)
+            {
+                pattern.transform.parent = go.transform;
+            }
+
+        }, faceEmo != null);
+#endif
 
         void AddMenu(string title, GenericMenu.MenuFunction callback, bool enabled = true)
         {

@@ -1,8 +1,6 @@
-﻿using UnityEngine.Assertions.Must;
+﻿namespace Numeira;
 
-namespace Numeira;
-
-internal static class PatternImporter
+internal static partial class PatternImporter
 {
     public static GameObject ImportFromAnimatorController(AnimatorController animatorController)
     {
@@ -209,22 +207,5 @@ internal static class PatternImporter
     public static GameObject ImportFromFaceEmo()
     {
         throw new NotImplementedException();
-    }
-
-    private sealed class MaskGroupComparer : IComparer<uint>
-    {
-        public static readonly MaskGroupComparer Instance = new MaskGroupComparer();
-
-        public int Compare(uint x, uint y)
-        {
-            static bool IsRight(uint a) => (a & 0x1100) != 0;
-
-            return (IsRight(x), IsRight(y)) switch
-            {
-                (false, false) or (true, true) => 0,
-                (false, true) => -1,
-                (true, false) => 1,
-            };
-        }
     }
 }
