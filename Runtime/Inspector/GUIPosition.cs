@@ -213,7 +213,26 @@ internal static class GUIPositionExt
 
         EditorGUI.EndProperty();
     }
-    
+
+    public static void SearchField(this GUIPosition position, string label, ref string contents)
+    {
+        if (position.IsEmpty)
+            return;
+
+        GUIPosition left, right;
+        if (!string.IsNullOrEmpty(label))
+        {
+            (left, right) = position.HorizontalSeparate(EditorGUIUtility.labelWidth, 2);
+            EditorGUI.LabelField(left, label);
+        }
+        else
+        {
+            (left, right) = (default, position);
+        }
+
+        contents = EditorGUI.TextField(right, "", contents, SearchTextAreaStyle);
+    }
+
     public static T? ObjectField<T>(this GUIPosition position, string label, T? obj, Type? objectType = null, bool allowSceneObjects = true, bool readOnly = false) where T : Object
     {
         ObjectField(position, label, ref obj, objectType, allowSceneObjects, readOnly);
@@ -369,8 +388,14 @@ internal static class GUIPositionExt
         padding = new RectOffset(2, 2, 0, 0),
         alignment = TextAnchor.MiddleLeft,
     };
+    private static GUIStyle SearchTextAreaStyle => searchTextAreaStyle ??= new(EditorStyles.toolbarSearchField)
+    {
+        padding = new RectOffset(16, 2, 0, 0),
+        alignment = TextAnchor.MiddleLeft,
+    };
 
     private static GUIStyle? placeholderTextAreaStyle;
+    private static GUIStyle? searchTextAreaStyle;
 }
 
 #endif

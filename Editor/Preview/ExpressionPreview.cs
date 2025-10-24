@@ -8,7 +8,9 @@ namespace Numeira;
 internal sealed class ExpressionPreview : IRenderFilter
 {
     public static float PreviewTime { get; set; } = 0;
-    public static PublishedValue<string?> TemporaryPreviewBlendShape { get; } = new(null);
+    public static bool AutoPlay { get; set; } = false;
+
+    public static string? TemporaryPreviewBlendShape { get; set; } = null;
 
     public ImmutableList<RenderGroup> GetTargetGroups(ComputeContext context)
     {
@@ -53,15 +55,13 @@ internal sealed class ExpressionPreview : IRenderFilter
         private AnimationClipBuilder? animaton;
         private IDisposable? sceneReflesher;
 
-        private Dictionary<string, int> blendShapeIndexCache = new();
+        private readonly Dictionary<string, int> blendShapeIndexCache = new();
 
         public Node(RenderGroup renderGroup, IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context)
         {
             originalRenderer = proxyPairs.FirstOrDefault().Item1;
             blendShapeInfos = ModEmoData.GetBlendShapeInfos(renderGroup.Renderers[0] as SkinnedMeshRenderer);
             rootComponent = renderGroup.GetData<ModEmo>();
-
-            context.Observe(TemporaryPreviewBlendShape);
 
             foreach (var x in context.GetComponentsInChildren<IModEmoExpressionFrameProvider>(rootComponent.gameObject, true))
             {
@@ -79,8 +79,6 @@ internal sealed class ExpressionPreview : IRenderFilter
             originalRenderer = source.originalRenderer;
             blendShapeInfos = source.blendShapeInfos;
             rootComponent = source.rootComponent;
-
-            context.Observe(TemporaryPreviewBlendShape);
 
             foreach (var x in context.GetComponentsInChildren<IModEmoExpressionFrameProvider>(rootComponent.gameObject, true))
             {
@@ -136,6 +134,9 @@ internal sealed class ExpressionPreview : IRenderFilter
                 time = (Math.Clamp((float)Math.Sin(time), -0.2f, 0.2f) + 0.2f) / 0.4f;
             }
 
+            if (!AutoPlay)
+                time = PreviewTime;
+
             foreach (var (name, value) in Sample(clip, (float)time))
             {
                 int index = GetBlendShapeIndex(mesh, name);
@@ -144,9 +145,9 @@ internal sealed class ExpressionPreview : IRenderFilter
                 smr.SetBlendShapeWeight(index, value);
             }
 
-            if (TemporaryPreviewBlendShape.Value != null)
+            if (TemporaryPreviewBlendShape != null)
             {
-                int index = GetBlendShapeIndex(mesh, TemporaryPreviewBlendShape.Value);
+                int index = GetBlendShapeIndex(mesh, TemporaryPreviewBlendShape);
                 if (index != -1)
                 {
                     smr.SetBlendShapeWeight(index, 100);
@@ -175,6 +176,7 @@ internal sealed class ExpressionPreview : IRenderFilter
                 selectionChangedTime = DateTime.Now;
                 sceneReflesher?.Dispose();
                 sceneReflesher = null;
+                TemporaryPreviewBlendShape = null;
 
                 if (selectedExpression != null)
                 {

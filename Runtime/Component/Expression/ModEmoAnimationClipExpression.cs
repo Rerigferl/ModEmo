@@ -39,15 +39,4 @@
 
         public override IEnumerable<ExpressionFrame> Frames => GetFrames().Concat(base.Frames);
     }
-
-#if UNITY_EDITOR
-    [CustomEditor(typeof(ModEmoAnimationClipExpression))]
-    internal sealed class ModEmoAnimationClipExpressionEditor : ModEmoExpressionEditorBase
-    {
-        protected override void OnInnerInspectorGUI()
-        {
-            EditorGUILayout.ObjectField(serializedObject.FindProperty("AnimationClip"), typeof(AnimationClip));
-        }
-    }
-#endif
 }

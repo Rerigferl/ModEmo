@@ -47,7 +47,7 @@ namespace Numeira
             base.CalculateContentHash(ref hashCode);
         }
 
-
+#if UNITY_EDITOR
 
         public void OnBeforeSerialize() => OnValidate();
 
@@ -65,5 +65,6 @@ namespace Numeira
             BlendShapes = Array.Empty<BlendShape>();
         }
 #pragma warning restore CS0612
+#endif
     }
 }
