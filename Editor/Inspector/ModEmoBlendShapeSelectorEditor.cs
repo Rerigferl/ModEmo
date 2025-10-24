@@ -123,12 +123,12 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
                     if (rect.Contains(Event.current.mousePosition))
                     {
-                        ExpressionPreview.TemporaryPreviewBlendShape = blendShapeName;
+                        ExpressionPreview.TemporaryPreviewBlendShape.Value = blendShapeName;
                         previewingControlId = id;
                     }
                     else if (previewingControlId == id)
                     {
-                        ExpressionPreview.TemporaryPreviewBlendShape = null;
+                        ExpressionPreview.TemporaryPreviewBlendShape.Value = null;
                         previewingControlId = 0;
                     }
 

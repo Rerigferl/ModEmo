@@ -1,20 +1,14 @@
 ﻿using System.Collections.Immutable;
 using System.Threading.Tasks;
 using nadena.dev.ndmf.preview;
-using Numeira.Animation;
 
 namespace Numeira;
 
-internal sealed class ExpressionPreview : IRenderFilter
+internal sealed class BlendShapeModifierPreview : IRenderFilter
 {
-    static ExpressionPreview()
-    {
-        TemporaryPreviewBlendShape.OnChange += _ => SceneView.RepaintAll();
-    }
-
     static TogglablePreviewNode EnableNode = TogglablePreviewNode.Create(
-        () => "Expression",
-        qualifiedName: "numeira.mod-emo/ExpressionPreview",
+        () => "Existing Blendshape Modifier",
+        qualifiedName: "numeira.mod-emo/BlendShapeModifierPreview",
         true
     );
 
@@ -28,19 +22,14 @@ internal sealed class ExpressionPreview : IRenderFilter
         return context.Observe(EnableNode.IsEnabled);
     }
 
-    public static float PreviewTime { get; set; } = 0;
-    public static bool AutoPlay { get; set; } = false;
-
-    public static PublishedValue<string?> TemporaryPreviewBlendShape { get; } = new(null);
-
     public ImmutableList<RenderGroup> GetTargetGroups(ComputeContext context)
     {
         var result = Iterate(context).ToImmutableList();
-        
+
         return result;
         static IEnumerable<RenderGroup> Iterate(ComputeContext context)
         {
-            foreach(var root in context.GetAvatarRoots())
+            foreach (var root in context.GetAvatarRoots())
             {
                 if (!context.ActiveInHierarchy(root))
                     continue;
@@ -71,10 +60,7 @@ internal sealed class ExpressionPreview : IRenderFilter
         private readonly ModEmo rootComponent;
         private readonly ImmutableDictionary<string, BlendShapeInfo> blendShapeInfos;
         private readonly Renderer originalRenderer;
-        private IModEmoExpression? selectedExpression;
-        private DateTime selectionChangedTime;
-        private AnimationClipBuilder? animaton;
-        private IDisposable? sceneReflesher;
+        private ModEmoExistingBlendShapeModifier? selectedExpression;
 
         private readonly Dictionary<string, int> blendShapeIndexCache = new();
 
@@ -105,50 +91,29 @@ internal sealed class ExpressionPreview : IRenderFilter
             if (proxy is not SkinnedMeshRenderer smr || smr.sharedMesh is not { } mesh || mesh == null)
                 return;
 
-            if (selectedExpression is not { } expression)
+            if (selectedExpression is not { } modifier)
                 return;
 
-            if (animaton is not { } clip || clip == null)
-                return;
-
-            static IEnumerable<(string PropertyName, float Value)> Sample(AnimationClipBuilder clip, float normalizedTime)
+            foreach(var x in modifier.GetBlendShapes())
             {
-                float time = normalizedTime * clip.Length;
-
-                foreach (var bind in clip.Bindings)
-                {
-                    if (clip.Evaluate(bind, time) is not { } value)
-                        continue;
-
-                    var propertyName = bind.propertyName;
-                    yield return ($"{propertyName}", value);
-                }
-            }
-
-            float time = (float)(DateTime.Now - selectionChangedTime).TotalSeconds;
-            if (selectedExpression.IsLoop)
-            {
-                time = (time * 0.5f) % 1;
-            }
-            else
-            {
-                time = (Math.Clamp((float)Math.Sin(time), -0.2f, 0.2f) + 0.2f) / 0.4f;
-            }
-
-            if (!AutoPlay)
-                time = PreviewTime;
-
-            foreach (var (name, value) in Sample(clip, (float)time))
-            {
-                int index = GetBlendShapeIndex(mesh, name);
+                int index = GetBlendShapeIndex(mesh, x.Name);
                 if (index == -1)
                     continue;
+
+                float value = x.Value;
+                if (x.Cancel)
+                {
+                    float orig = smr.GetBlendShapeWeight(index);
+                    var weight = value / 100f;
+                    value *= (1 - orig * weight);
+                }
+
                 smr.SetBlendShapeWeight(index, value);
             }
 
-            if (TemporaryPreviewBlendShape.Value != null)
+            if (ExpressionPreview.TemporaryPreviewBlendShape.Value != null)
             {
-                int index = GetBlendShapeIndex(mesh, TemporaryPreviewBlendShape.Value);
+                int index = GetBlendShapeIndex(mesh, ExpressionPreview.TemporaryPreviewBlendShape.Value);
                 if (index != -1)
                 {
                     smr.SetBlendShapeWeight(index, 100);
@@ -160,8 +125,6 @@ internal sealed class ExpressionPreview : IRenderFilter
         {
             if (originalRenderer == proxyPairs.FirstOrDefault().Item1)
             {
-                sceneReflesher?.Dispose();
-                sceneReflesher = null;
                 return Task.FromResult<IRenderFilterNode?>(new Node(this, context));
             }
 
@@ -174,30 +137,24 @@ internal sealed class ExpressionPreview : IRenderFilter
 
             if (selectedExpression != this.selectedExpression)
             {
-                selectionChangedTime = DateTime.Now;
-                sceneReflesher?.Dispose();
-                sceneReflesher = null;
-
                 if (selectedExpression != null)
                 {
-                    animaton = selectedExpression.MakeAnimationClip(blendShapeInfos, null, writeDefault: true, previewMode: true);
-                    if (selectedExpression.Frames.Select(x => x.Time).Distinct().Count() > 1)
-                    sceneReflesher = SceneViewReflesher.BeginReflesh();
+
                 }
-            }    
-            
+            }
+
             this.selectedExpression = selectedExpression;
 
-            IModEmoExpression? GetSelectedExpression()
+            ModEmoExistingBlendShapeModifier? GetSelectedExpression()
             {
                 var active = Selection.activeGameObject;
-                if (active == null) 
+                if (active == null)
                     return null;
 
-                if (active.GetComponentInParent<IModEmoExpression>() is not { } expression)
+                if (active.GetComponentInParent<ModEmoExistingBlendShapeModifier>() is not { } expression)
                     return null;
 
-                if (expression.Component!.GetComponentInParent<ModEmo>() != rootComponent)
+                if (expression.GetComponentInParent<ModEmo>() != rootComponent)
                     return null;
 
                 return expression;
@@ -206,7 +163,7 @@ internal sealed class ExpressionPreview : IRenderFilter
 
         public void Dispose()
         {
-            sceneReflesher?.Dispose();
+
         }
     }
 }

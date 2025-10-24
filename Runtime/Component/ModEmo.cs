@@ -57,15 +57,6 @@ namespace Numeira
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
-        public SkinnedMeshRenderer? GetFaceRenderer()
-        {
-            var avatarRoot = RuntimeUtil.FindAvatarInParents(transform);
-            if (avatarRoot == null)
-                return null;
-
-            return avatarRoot.GetComponentInChildren<ModEmoFaceObject>()?.Renderer ?? avatarRoot.Find("Body")?.GetComponent<SkinnedMeshRenderer>();
-        }
-
         public override int GetHashCode()
         {
             HashCode hash = new();

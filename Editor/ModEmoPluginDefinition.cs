@@ -3,18 +3,26 @@ using System.Reflection;
 using nadena.dev.modular_avatar.core;
 using nadena.dev.ndmf.vrchat;
 using Numeira.Animation;
-using VRC.SDK3.Avatars.Components;
 using Debug = UnityEngine.Debug;
 
 [assembly: ExportsPlugin(typeof(Numeira.ModEmoPluginDefinition))]
 
 namespace Numeira;
 
-internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
+internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
 {
+    public override string DisplayName => "ModEmo";
+    public override string QualifiedName => "numeira.mod-emo";
+
     internal const string ArtifactCachePath = "Packages/numeira.mod-emo/__Generated/";
     protected override void Configure()
     {
+#if ZATOOLS
+        InPhase(BuildPhase.Transforming)
+            .BeforePlugin("org.kb10uy.zatools")
+            .Run(ExistingBlendshapeModifierPass.Instance)
+            .PreviewingWith(new BlendShapeModifierPreview());
+#endif
         InPhase(BuildPhase.Transforming)
             .BeforePlugin("nadena.dev.modular-avatar")
             .AfterPlugin("net.rs64.tex-trans-tool")
@@ -146,17 +154,6 @@ internal sealed class ModEmoPluginDefinition : Plugin<ModEmoPluginDefinition>
             ma.animator = animatorController;
 
             new MenuGenerator(context).Generate();
-        }
-    }
-}
-
-static partial class Ext
-{
-    public static void AddLayers(this VirtualAnimatorController controller, LayerPriority priority, params VirtualLayer[] layers)
-    {
-        foreach (var layer in layers)
-        {
-            controller.AddLayer(priority, layer);
         }
     }
 }

@@ -15,8 +15,13 @@
     "versionDefines": [
         {
             "name": "nadena.dev.ndmf",
-            "expression": "",
+            "expression": "0",
             "define": "NDMF"
+        },
+        {
+            "name": "org.kb10uy.zatools",
+            "expression": "0",
+            "define": "ZATOOLS"
         }
     ],
     "noEngineReferences": false
