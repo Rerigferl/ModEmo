@@ -3,9 +3,9 @@ using System.Reflection;
 using System.Reflection.Emit;
 using nadena.dev.ndmf.runtime;
 using nadena.dev.ndmf.runtime.components;
-using nadena.dev.ndmf.util;
 using UnityEditor.SceneManagement;
 using VRC.SDK3.Avatars.Components;
+
 #if FACE_EMO
 using Suzuryg.FaceEmo.Components;
 #endif
@@ -47,6 +47,21 @@ internal static class CreationContextMenu
         return go.GetComponent<NDMFAvatarRoot>() != null;
     }
 
+    private const string TemplateFolderGUID = "0f457f05098743c41bde843320e8d2c3";
+    private static string TemplateFolderPath => AssetDatabase.GUIDToAssetPath(TemplateFolderGUID);
+
+    private static IEnumerable<(string Name, GameObject Object)> GetTemplates()
+    {
+        foreach(var path in Directory.EnumerateFiles(TemplateFolderPath, "*.prefab"))
+        {
+            var obj = AssetDatabase.LoadAssetAtPath<ModEmo>(path);
+            if (obj == null)
+                continue;
+
+            yield return (obj.name, obj.gameObject);
+        }
+    }
+
     private static void AddItemsToGameObjectContextMenu(this StaticExtension? __, GenericMenu menu, GameObject go)
     {
         if (IsAvatarRoot(go))
@@ -63,6 +78,25 @@ internal static class CreationContextMenu
 
                 CreateNewObject("ModEmo", go, typeof(ModEmo));
             });
+
+            var templates = GetTemplates();
+            foreach (var template in GetTemplates())
+            {
+                AddMenu($"ModEmo/Template/{template.Name}", () =>
+                {
+                    var obj = (PrefabUtility.InstantiatePrefab(template.Object, go.transform) as GameObject)!;
+                    obj.name = "ModEmo";
+
+                    Selection.activeGameObject = obj;
+                    SceneHierarchyWindow.FrameAndRenameNewGameObject();
+                });
+            }
+
+            if (templates.Any())
+                menu.AddSeparator("ModEmo/Template/");
+
+            AddMenu($"ModEmo/Template/Hint: Add prefabs to '{TemplateFolderPath.Replace("/", "\\")}' to display them here.", () => { }, false);
+
             return;
         }
 

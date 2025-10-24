@@ -66,98 +66,99 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
         EditorGUILayout.EndVertical();
 
-        EditorGUILayout.BeginVertical(GUILayout.Width(200));
 
-        if (Root == null || CategorizedBlendShapes is null)
-            return;
-
-        EditorGUI.BeginChangeCheck();
-        ((GUIPosition)EditorGUILayout.GetControlRect()).SearchField("", ref searchText);
-        if (EditorGUI.EndChangeCheck())
+        if (Root != null && CategorizedBlendShapes is not null)
         {
-            if (string.IsNullOrEmpty(searchText))
-                searchTextRegEx = null;
-            else
-                searchTextRegEx = new Regex(searchText, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-        }
+            EditorGUILayout.BeginVertical(GUILayout.Width(200));
 
-        float lineHeight = EditorGUIUtility.singleLineHeight * 1.25f;
-
-        var categories = CategorizedBlendShapes.AsSpan();
-        var content = new GUIContent();
-        var stack = temporaryItemStack;
-        for (int i = 0; i < categories.Length; i++)
-        {
-            stack.Clear();
-            var category = categories[i];
-            var blendShapes = category.Value.AsSpan();
-
-            foreach (var blendShape in blendShapes)
+            EditorGUI.BeginChangeCheck();
+            ((GUIPosition)EditorGUILayout.GetControlRect()).SearchField("", ref searchText);
+            if (EditorGUI.EndChangeCheck())
             {
-                if (searchTextRegEx is { } regex && !regex.IsMatch(blendShape))
+                if (string.IsNullOrEmpty(searchText))
+                    searchTextRegEx = null;
+                else
+                    searchTextRegEx = new Regex(searchText, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            }
+
+            float lineHeight = EditorGUIUtility.singleLineHeight * 1.25f;
+
+            var categories = CategorizedBlendShapes.AsSpan();
+            var content = new GUIContent();
+            var stack = temporaryItemStack;
+            for (int i = 0; i < categories.Length; i++)
+            {
+                stack.Clear();
+                var category = categories[i];
+                var blendShapes = category.Value.AsSpan();
+
+                foreach (var blendShape in blendShapes)
+                {
+                    if (searchTextRegEx is { } regex && !regex.IsMatch(blendShape))
+                        continue;
+                    stack.Add(blendShape);
+                }
+
+                if (stack.Count == 0)
                     continue;
-                stack.Add(blendShape);
+
+                using var scope = new ShurikenHeaderGroupScope(ref categoryOpenStatus.AsSpan()[i], category.Key, menuCallback: menu => MenuCallback(menu, category));
+                if (!scope.IsOpened)
+                    continue;
+
+                bool needScroll = stack.Count > 16;
+
+                var maxHeight = lineHeight * Math.Min(24, stack.Count);
+
+                ref var scroll = ref categoryScrolls.AsSpan()[i];
+
+                if (needScroll)
+                    scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.MaxHeight(maxHeight));
+
+                foreach (var blendShapeName in stack.AsSpan())
+                {
+                    content.text = blendShapeName;
+                    var id = GUIUtility.GetControlID(content, FocusType.Passive);
+                    var rect = EditorGUILayout.GetControlRect(false, lineHeight);
+
+                    if (rect.Contains(Event.current.mousePosition))
+                    {
+                        ExpressionPreview.TemporaryPreviewBlendShape = blendShapeName;
+                        previewingControlId = id;
+                    }
+                    else if (previewingControlId == id)
+                    {
+                        ExpressionPreview.TemporaryPreviewBlendShape = null;
+                        previewingControlId = 0;
+                    }
+
+                    if (GUI.Button(rect, blendShapeName))
+                    {
+                        var blendShapeValue = BlendShapes.TryGetValue(blendShapeName, out var value) ? value.Max : 100;
+                        Undo.RecordObject(Component, "Modify BlendShapes");
+                        if (Event.current.shift)
+                        {
+                            Component.BlendShapes.RemoveAll(y => y.Name == blendShapeName);
+                        }
+                        else if (Event.current.button == 1)
+                        {
+                            Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = true, Value = blendShapeValue });
+                        }
+                        else
+                        {
+                            Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = false, Value = blendShapeValue });
+                        }
+                    }
+                }
+
+                if (needScroll)
+                    EditorGUILayout.EndScrollView();
             }
 
-            if (stack.Count == 0)
-                continue;
-
-            using var scope = new ShurikenHeaderGroupScope(ref categoryOpenStatus.AsSpan()[i], category.Key, menuCallback: menu => MenuCallback(menu, category));
-            if (!scope.IsOpened)
-                continue;
-
-            bool needScroll = stack.Count > 16;
-
-            var maxHeight = lineHeight * Math.Min(24, stack.Count);
-
-            ref var scroll = ref categoryScrolls.AsSpan()[i];
-
-            if (needScroll)
-                scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.MaxHeight(maxHeight));
-
-            foreach(var blendShapeName in stack.AsSpan())
-            {
-                content.text = blendShapeName;
-                var id = GUIUtility.GetControlID(content, FocusType.Passive);
-                var rect = EditorGUILayout.GetControlRect(false, lineHeight);
-
-                if (rect.Contains(Event.current.mousePosition))
-                {
-                    ExpressionPreview.TemporaryPreviewBlendShape = blendShapeName;
-                    previewingControlId = id;
-                }
-                else if (previewingControlId == id)
-                {
-                    ExpressionPreview.TemporaryPreviewBlendShape = null;
-                    previewingControlId = 0;
-                }
-
-                if (GUI.Button(rect, blendShapeName))
-                {
-                    var blendShapeValue = BlendShapes.TryGetValue(blendShapeName, out var value) ? value.Max : 100;
-                    Undo.RecordObject(Component, "Modify BlendShapes");
-                    if (Event.current.shift)
-                    {
-                        Component.BlendShapes.RemoveAll(y => y.Name == blendShapeName);
-                    }
-                    else if (Event.current.button == 1)
-                    {
-                        Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = true, Value = blendShapeValue });
-                    }
-                    else
-                    {
-                        Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = false, Value = blendShapeValue });
-                    }
-                }
-            }
-
-            if (needScroll)
-                EditorGUILayout.EndScrollView();
-        }
+            EditorGUILayout.EndVertical();
+        }    
 
 
-
-        EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
 
         serializedObject.ApplyModifiedProperties();
