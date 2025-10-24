@@ -105,7 +105,7 @@ internal sealed class BlendShapeModifierPreview : IRenderFilter
                 {
                     float orig = smr.GetBlendShapeWeight(index);
                     var weight = value / 100f;
-                    value *= (1 - orig * weight);
+                    value = orig * (1 - weight);
                 }
 
                 smr.SetBlendShapeWeight(index, value);
