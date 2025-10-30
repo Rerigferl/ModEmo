@@ -17,6 +17,7 @@ namespace Numeira
 
         private static IEnumerable<BlendShape> GetBlendShapes(AnimationClip animationClip)
         {
+            #if UNITY_EDITOR
             var bindings = AnimationUtility.GetCurveBindings(animationClip);
             foreach (var binding in bindings)
             {
@@ -28,6 +29,9 @@ namespace Numeira
 
                 yield return new BlendShape() { Name = binding.propertyName["blendShape.".Length..], Value = value };
             }
+            #else
+            yield break;
+            #endif
         }
 
         protected override void CalculateContentHash(ref HashCode hashCode)

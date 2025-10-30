@@ -68,6 +68,7 @@ internal sealed class ExpressionPreview : IRenderFilter
     {
         public RenderAspects WhatChanged => RenderAspects.Shapes;
 
+        private readonly ComputeContext context;
         private readonly ModEmo rootComponent;
         private readonly ImmutableDictionary<string, BlendShapeInfo> blendShapeInfos;
         private readonly Renderer originalRenderer;
@@ -80,16 +81,38 @@ internal sealed class ExpressionPreview : IRenderFilter
 
         public Node(RenderGroup renderGroup, IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context)
         {
+            this.context = context;
             originalRenderer = proxyPairs.FirstOrDefault().Item1;
             blendShapeInfos = ModEmoData.GetBlendShapeInfos(renderGroup.Renderers[0] as SkinnedMeshRenderer);
             rootComponent = renderGroup.GetData<ModEmo>();
+
+            foreach (var x in context.GetComponentsInChildren<IModEmoExpression>(rootComponent.gameObject, true))
+            {
+                context.Observe(x.Component, x =>
+                {
+                    var hashCode = new DeterministicHashCode();
+                    (x as IModEmoComponent)?.CalculateContentHash(ref hashCode);
+                    return hashCode.ToHashCode();
+                });
+            }
         }
 
         public Node(Node source, ComputeContext context)
         {
+            this.context = context;
             originalRenderer = source.originalRenderer;
             blendShapeInfos = source.blendShapeInfos;
             rootComponent = source.rootComponent;
+
+            foreach (var x in context.GetComponentsInChildren<IModEmoExpression>(rootComponent.gameObject, true))
+            {
+                context.Observe(x.Component, x =>
+                {
+                    var hashCode = new DeterministicHashCode();
+                    (x as IModEmoComponent)?.CalculateContentHash(ref hashCode);
+                    return hashCode.ToHashCode();
+                });
+            }
         }
 
         private int GetBlendShapeIndex(Mesh mesh, string name)

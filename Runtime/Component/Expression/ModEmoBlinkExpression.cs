@@ -2,7 +2,10 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Blink Expression")]
-    internal sealed class ModEmoBlinkExpression : ModEmoExpression, IModEmoLoopControl, ISerializationCallbackReceiver
+    internal sealed class ModEmoBlinkExpression : ModEmoExpression, IModEmoLoopControl
+#if UNITY_EDITOR
+    , ISerializationCallbackReceiver
+#endif
     {
         [HideInInspector]
         [Obsolete]
