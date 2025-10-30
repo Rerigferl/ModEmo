@@ -25,6 +25,7 @@ internal class MenuGenerator
         var parameters = menuRoot.gameObject.AddComponent<ModularAvatarParameters>();
 
         parameters.GetOrAdd(ParameterNames.Expression.Pattern).syncType = ParameterSyncType.Int;
+        parameters.GetOrAdd(ParameterNames.Expression.Index).syncType = ParameterSyncType.Int;
 
         var expressionLock = AddMenu("Lock", PortableControlType.Toggle, menuRoot);
         expressionLock.PortableControl.Parameter = ParameterNames.Expression.Lock;
@@ -47,8 +48,18 @@ internal class MenuGenerator
         blinkLock.PortableControl.Parameter = ParameterNames.Blink.Sync;
         blinkLock.isDefault = true;
 
-        var blendShapeMenu = AddMenu("BlendShapes", PortableControlType.SubMenu, menuRoot);
         var data = Context.GetData();
+        var expressionMenu = AddMenu("Expressions", PortableControlType.SubMenu, menuRoot);
+        {
+            foreach(var x in data.Expressions!)
+            {
+                var m = AddMenu(x.Expression.Name, PortableControlType.Toggle, expressionMenu);
+                m.PortableControl.Parameter = ParameterNames.Expression.Index;
+                m.PortableControl.Value = x.Index;
+            }
+        }
+
+        var blendShapeMenu = AddMenu("BlendShapes", PortableControlType.SubMenu, menuRoot);
         string[] singleArray = new string[1];
         foreach(var (key, values) in data.CategorizedBlendShapes)
         {

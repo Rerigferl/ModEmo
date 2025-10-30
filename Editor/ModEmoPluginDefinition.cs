@@ -88,6 +88,7 @@ internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefini
                 var builder = new AnimatorControllerBuilder() { Name = "ModEmo" };
                 builder.Parameters
                     .AddFloat(ParameterNames.Internal.One, 1f)
+                    .AddFloat(ParameterNames.IsLocal, 1f)
                     .AddFloat(ParameterNames.Internal.SmoothAmount, modEmo.Settings.SmoothFactor);
 
                 if (context.PlatformProvider.QualifiedName == WellKnownPlatforms.VRChatAvatar30)

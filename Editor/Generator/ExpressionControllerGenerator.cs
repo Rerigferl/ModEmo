@@ -12,115 +12,25 @@ internal static class ExpressionControllerGenerator
     public static void Generate(BuildContext context, AnimatorControllerBuilder animatorController)
     {
         animatorController.Parameters.AddFloat(ParameterNames.Expression.Pattern, 0);
-        animatorController.Parameters.AddFloat(ParameterNames.Expression.Index, 0);
+        animatorController.Parameters.AddInt(ParameterNames.Expression.Index, 0);
         animatorController.Parameters.AddFloat(ParameterNames.Expression.Lock, 0);
 
         List<ExpressionData> expressions = new();
         //GenerateIndexSelectorBlendTree(context, animatorController, expressions);
         GenerateIndexSelectorStates(context, animatorController, expressions);
+        int count = 1;
+        foreach (var expression in expressions.AsSpan())
+        {
+            expression.Index = count++;
+        }
+
         context.GetData().Expressions = expressions;
 
         GenerateMouthMorphCancellar(context, animatorController);
         GenerateExpressionSelector(context, animatorController, expressions);
+        GenerateExpressionLayer(context, animatorController, expressions);
         GenerateBlinkController(context, animatorController);
     }
-
-    //private static void GenerateIndexSelectorBlendTree(BuildContext context, AnimatorControllerBuilder animatorController, List<ExpressionData> expressions)
-    //{
-    //    var modEmo = context.GetModEmoContext().Root;
-    //    var data = context.GetData();
-
-    //    var expressionPatterns = modEmo.ExportExpressions();
-
-    //    var layer = animatorController.AddLayer("[ModEmo] Conditions");
-    //    var stateMachine = layer.StateMachine.WithDefaultMotion(data.BlankClip);
-
-    //    var blendTree = new DirectBlendTreeBuilder
-    //    {
-    //        Name = "ModEmo Expression Controlller",
-    //        DefaultDirectBlendParameter = ParameterNames.Internal.One
-    //    };
-
-    //    var idleState = stateMachine.AddState("DBT (DO NOT OPEN IN EDITOR!) (WD On)");
-    //    idleState.Motion = blendTree;
-
-    //    var lockTree = blendTree.AddBlendTree("Lock").Motion;
-    //    lockTree.BlendParameter = ParameterNames.Expression.Lock;
-
-    //    if (!modEmo.Settings.DebugSettings.SkipExpressionController)
-    //    {
-    //        var patternSwitch = lockTree.AddBlendTree("Pattern Switch").Motion;
-    //        patternSwitch.BlendParameter = ParameterNames.Expression.Pattern;
-
-    //        foreach (var (pattern, patternIdx) in expressionPatterns.Index())
-    //        {
-    //            var patternTree = patternSwitch.AddDirectBlendTree(pattern.Key.Name).WithThreshold(patternIdx).Motion;
-
-    //            var patternAnimation = new AnimationClipBuilder() { Name = pattern.Key.Name };
-    //            patternAnimation.AddAnimatedParameter(ParameterNames.Expression.Index, 0, expressions.Count);
-    //            expressions.Add(new(pattern.Key, patternIdx, 0, 0));
-
-    //            BlendTreeBuilder nextTree = patternTree;
-    //            BlendTreeBuilder? fallback = null;
-
-    //            foreach (var (expression, expressionIdx) in pattern.Index())
-    //            {
-    //                var expressionTree = nextTree == fallback ? nextTree.WithName($"Fallback: {expression.Name}") : nextTree.AddDirectBlendTree(expression.Name).Motion;
-    //                nextTree = expressionTree;
-
-    //                var expressionAnimation = new AnimationClipBuilder() { Name = expression.Name };
-    //                expressionAnimation.AddAnimatedParameter(ParameterNames.Expression.Index, 0, expressions.Count);
-    //                expressions.Add(new());
-
-    //                foreach (var conditionsOr in expression.Conditions)
-    //                {
-    //                    float? prevValue = null;
-    //                    var fallbackTree = new DirectBlendTreeBuilder() { Name = "Fallback" };
-    //                    foreach (var conditionsAnd in conditionsOr)
-    //                    {
-    //                        animatorController.Parameters.AddFloat(conditionsAnd.Parameter.Name);
-
-    //                        var tree = nextTree.AddBlendTree(conditionsAnd.Parameter.Name).WithThreshold(prevValue ?? 0).Motion;
-
-    //                        tree.BlendParameter = conditionsAnd.Parameter.Name;
-    //                        float value = conditionsAnd.Parameter.Value;
-
-    //                        tree.Append(fallbackTree).WithThreshold(value - Epsilon);
-    //                        tree.Append(fallbackTree).WithThreshold(value + Epsilon);
-
-    //                        prevValue = value;
-    //                        nextTree = tree;
-    //                    }
-    //                    nextTree.Append(expressionAnimation).WithThreshold(prevValue ?? 0);
-
-    //                    nextTree = fallbackTree;
-    //                    fallback = fallbackTree;
-    //                }
-    //            }
-
-    //            nextTree.Append(patternAnimation);
-    //        }
-    //    }
-    //    else
-    //    {
-    //        foreach (var (pattern, patternIdx) in expressionPatterns.Index())
-    //        {
-    //            expressions.Add(pattern.Key);
-    //            foreach (var (expression, expressionIdx) in pattern.Index())
-    //            {
-    //                expressions.Add(expression);
-    //            }
-    //        }
-    //    }
-
-    //    {
-    //        var preserve = lockTree.AddBlendTree("").Motion;
-    //        preserve.BlendParameter = ParameterNames.Expression.Index;
-
-    //        preserve.AddAnimationClip("0").Motion.AddAnimatedParameter(ParameterNames.Expression.Index, 0, 0);
-    //        preserve.AddAnimationClip($"{expressions.Count}").WithThreshold(expressions.Count).Motion.AddAnimatedParameter(ParameterNames.Expression.Index, 0, expressions.Count);
-    //    }
-    //}
 
     private static void GenerateIndexSelectorStates(BuildContext context, AnimatorControllerBuilder animatorController, List<ExpressionData> expressions)
     {
@@ -142,7 +52,11 @@ internal static class ExpressionControllerGenerator
         var idleState = stateMachine.AddState("DBT (DO NOT OPEN IN EDITOR!) (WD On)");
         idleState.Motion = blendTree;
 
-        var lockTree = blendTree.AddBlendTree("Lock").Motion;
+        var localOnly = blendTree.AddBlendTree("Local Switch").Motion;
+        localOnly.BlendParameter = ParameterNames.IsLocal;
+        localOnly.Append(data.BlankClip, 0);
+
+        var lockTree = localOnly.AddBlendTree("Lock").WithThreshold(1).Motion;
         lockTree.BlendParameter = ParameterNames.Expression.Lock;
 
         if (!modEmo.Settings.DebugSettings.SkipExpressionController)
@@ -238,13 +152,14 @@ internal static class ExpressionControllerGenerator
     {
         var data = context.GetData();
 
-        var layer = animatorController.AddLayer("[ModEmo] Expressions");
-        var stateMachine = layer.StateMachine;
+        var layer = animatorController.AddLayer("[ModEmo] Expressions Selector");
+        var stateMachine = layer.StateMachine.WithDefaultMotion(data.BlankClip);
 
         int stateCount = 0;
 
         var defaultState = stateMachine.AddState("Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
-        
+        defaultState.AddAvatarParameterDriver().Set(ParameterNames.Expression.Index, 0);
+
         foreach (var group in expressions.GroupBy(x => x.Pattern))
         {
             var pattern = group.Key;
@@ -259,52 +174,77 @@ internal static class ExpressionControllerGenerator
 
                 if (i == 0)
                 {
-                    var t = stateMachine.AddEntryTransition(state).WithDuration(0.1f);
+                    var t = stateMachine.AddEntryTransition(state);
+                    t.AddCondition(AnimatorConditionMode.Greater, ParameterNames.IsLocal, 0);
                     t.AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon);
                     t.AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex - Epsilon);
                     for (int i2 = 1; i2 < array.Length; i2++)
                     {
                         t.AddCondition(AnimatorConditionMode.Less, $"{ParameterNames.Expression.Index}/{array[i2].Id}", 1);
 
-                        state.AddExitTransition().WithDuration(0.1f)
-                            .AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{array[i2].Id}", 0);
+                        state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{array[i2].Id}", 0);
 
-                        state.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex);
-                        state.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex);
+                        state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex);
+                        state.AddExitTransition().AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex);
                     }
                 }
                 else
                 {
                     defaultState.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
 
-                    var t = stateMachine.AddEntryTransition(state).WithDuration(0.1f)
+                    var t = stateMachine.AddEntryTransition(state)
                         .AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon)
                         .AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex - Epsilon)
                         .AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
 
-                    state.AddExitTransition().AddCondition(AnimatorConditionMode.Less, $"{ParameterNames.Expression.Index}/{expData.Id}", 1).WithDuration(0.1f);
-                    state.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex);
-                    state.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex);
+                    t.AddCondition(AnimatorConditionMode.Greater, ParameterNames.IsLocal, 0);
+
+                    state.AddExitTransition().AddCondition(AnimatorConditionMode.Less, $"{ParameterNames.Expression.Index}/{expData.Id}", 1);
+                    state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex);
+                    state.AddExitTransition().AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex);
 
                     for (int i2 = i - 1; i2 >= 1; i2--)
                     {
                         t.AddCondition(AnimatorConditionMode.Less, $"{ParameterNames.Expression.Index}/{array[i2].Id}", 1);
 
-                        state.AddExitTransition().WithDuration(0.1f)
-                            .AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{array[i2].Id}", 0);
+                        state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{array[i2].Id}", 0);
                     }
                 }
 
-
-
-                state.Motion = expression.MakeAnimationClip(data);
-                defaultState.Motion ??= state.Motion;
-                state.MotionTime = expression.MotionTime;
-
-                var tr = state.AddTrackingControl();
-                //tr.Eyes = TrackingType.Animation;
-                tr.Mouth = expression.LipSync ? TrackingType.Tracking : TrackingType.Animation;
+                state.AddAvatarParameterDriver().Set(ParameterNames.Expression.Index, expData.Index);
             }
+        }
+    }
+
+    private static void GenerateExpressionLayer(BuildContext context, AnimatorControllerBuilder animatorController, List<ExpressionData> expressions)
+    {
+        var data = context.GetData();
+
+        var layer = animatorController.AddLayer("[ModEmo] Expressions");
+        var stateMachine = layer.StateMachine;
+
+        int stateCount = 0;
+
+        var defaultState = stateMachine.AddState("Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
+        stateMachine.AddAnyStateTransition(defaultState).WithDuration(0.1f).AddCondition(AnimatorConditionMode.Equals, ParameterNames.Expression.Index, 0);
+
+        var span = expressions.AsSpan();
+        for (int i = 0; i < span.Length; i++)
+        {
+            var expressionData = span[i];
+            var expression = expressionData.Expression;
+            var state = stateMachine.AddState(expression.Name, new Vector2(defaultState.Position!.Value.x, 120 + 70 * stateCount++));
+
+            var t = stateMachine.AddAnyStateTransition(state).WithDuration(0.1f);
+            t.AddCondition(AnimatorConditionMode.Equals, ParameterNames.Expression.Index, expressionData.Index);
+
+            state.Motion = expression.MakeAnimationClip(data);
+            defaultState.Motion ??= state.Motion;
+            state.MotionTime = expression.MotionTime;
+
+            var tr = state.AddTrackingControl();
+            //tr.Eyes = TrackingType.Animation;
+            tr.Mouth = expression.LipSync ? TrackingType.Tracking : TrackingType.Animation;
         }
     }
 

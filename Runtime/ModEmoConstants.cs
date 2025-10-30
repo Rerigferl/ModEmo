@@ -6,6 +6,8 @@ internal static partial class ModEmoConstants
     {
         public const string Prefix = "ME/";
 
+        public const string IsLocal = "IsLocal";
+
         public static class Expression
         {
             public const string Prefix = $"{Parameters.Prefix}{nameof(Expression)}/";

@@ -13,13 +13,12 @@
             get
             {
                 Dictionary<(string, bool), AnimationCurve> dict = new();
-                var timeMax = Frames.Any() ? Frames.Max(x => x.Time) : 1f;
                 foreach (var frame in Frames)
                 {
                     foreach (var blendShape in frame.GetBlendShapes())
                     {
                         var curve = dict.GetOrAdd((blendShape.Name, blendShape.Cancel), _ => new());
-                        curve.AddKey(new Keyframe(frame.Time / timeMax, blendShape.Value, 0, 0));
+                        curve.AddKey(new Keyframe(frame.Time, blendShape.Value, 0, 0));
                     }
                 }
 
