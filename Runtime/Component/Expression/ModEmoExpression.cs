@@ -11,6 +11,19 @@ namespace Numeira
 
         public virtual IEnumerable<ExpressionFrame> Frames => this.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>(includeSelf: true).SelectMany(x => x.GetFrames());
 
+        public virtual IEnumerable<CurveBlendShape> BlendShapes
+        {
+            get
+            {
+                var writer = BlendShapeCurveWriter.Create();
+                foreach (var provider in this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
+                {
+                    provider.CollectBlendShapes(writer);
+                }
+                return writer.Export();
+            }
+        }
+
         protected virtual string GetName() => !string.IsNullOrEmpty(Name) ? Name : name;
 
         protected virtual ExpressionMode GetMode() => ExpressionMode.Default;

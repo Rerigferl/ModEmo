@@ -3,14 +3,23 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "BlendShape")]
-    internal sealed class ModEmoBlendShapeSelector : ModEmoTagComponent, IModEmoExpressionFrameProvider
+    internal sealed class ModEmoBlendShapeSelector : ModEmoTagComponent, IModEmoExpressionFrameProvider, IModEmoBlendShapeProvider
     {
         public float Keyframe = 0;
         public List<BlendShape> BlendShapes = new();
 
+
         public IEnumerable<ExpressionFrame> GetFrames()
         {
             yield return ExpressionFrame.Create(this, Keyframe, BlendShapes);
+        }
+
+        public void CollectBlendShapes(in BlendShapeCurveWriter writer)
+        {
+            foreach (var blendShape in BlendShapes)
+            {
+                writer.Write(Keyframe, blendShape);
+            }
         }
 
         protected override void CalculateContentHash(ref HashCode hashCode)

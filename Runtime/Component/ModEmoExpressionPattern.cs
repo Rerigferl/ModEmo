@@ -9,6 +9,23 @@ namespace Numeira
 
         public IEnumerable<ExpressionFrame> Frames => this.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>().Where(x => x.Component.GetComponent<IModEmoExpression>() == null).SelectMany(x => x.GetFrames());
 
+        public IEnumerable<CurveBlendShape> BlendShapes
+        {
+            get
+            {
+                var writer = BlendShapeCurveWriter.Create();
+                foreach (var myself in this.GetComponents<IModEmoBlendShapeProvider>())
+                {
+                    myself.CollectBlendShapes(writer);
+                }
+                foreach (var child in this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>().Where(x => x.Component.GetComponent<IModEmoExpression>() == null))
+                {
+                    child.CollectBlendShapes(writer);
+                }
+                return writer.Export();
+            }
+        }
+
         string IModEmoExpression.Name => !string.IsNullOrEmpty(Name) ? Name : name;
 
         ExpressionMode IModEmoExpression.Mode => ExpressionMode.Default;

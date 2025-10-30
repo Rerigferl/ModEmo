@@ -3,14 +3,7 @@ namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Blink Expression")]
     internal sealed class ModEmoBlinkExpression : ModEmoExpression, IModEmoLoopControl
-#if UNITY_EDITOR
-    , ISerializationCallbackReceiver
-#endif
     {
-        [HideInInspector]
-        [Obsolete]
-        public BlendShape[] BlendShapes = { };
-
         public IEnumerable<BlendShape> GetBlendShapes()
         {
             foreach(var x in this.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>(includeSelf: true))
@@ -40,6 +33,28 @@ namespace Numeira
             }
         }
 
+        private static readonly Keyframe[] SharedKeyframes = new Keyframe[6];
+
+        public override IEnumerable<CurveBlendShape> BlendShapes
+        {
+            get
+            {
+                var blendShapes = GetBlendShapes();
+                var keyframes = SharedKeyframes;
+
+                foreach (var blendShape in blendShapes)
+                {
+                    keyframes[0] = new(0 / 60f, 0);
+                    keyframes[1] = new(60 / 60f, 0);
+                    keyframes[2] = new(65 / 60f, blendShape.Value);
+                    keyframes[3] = new(67 / 60f, blendShape.Value);
+                    keyframes[4] = new(80 / 60f, 0);
+                    keyframes[5] = new(300 / 60f, 0);
+                    yield return new CurveBlendShape(blendShape.Name, new AnimationCurve(keyframes), blendShape.Cancel);
+                }
+            }
+        }
+
         public bool IsLoop => true;
 
         protected override void CalculateContentHash(ref HashCode hashCode)
@@ -49,25 +64,5 @@ namespace Numeira
 
             base.CalculateContentHash(ref hashCode);
         }
-
-#if UNITY_EDITOR
-
-        public void OnBeforeSerialize() => OnValidate();
-
-        public void OnAfterDeserialize() => OnValidate();
-
-#pragma warning disable CS0612
-        public void OnValidate()
-        {
-            if ((BlendShapes?.Length ?? 0) == 0)
-                return;
-
-            var component = this.gameObject.AddComponent<ModEmoBlendShapeSelector>();
-            component.BlendShapes.AddRange(BlendShapes);
-
-            BlendShapes = Array.Empty<BlendShape>();
-        }
-#pragma warning restore CS0612
-#endif
     }
 }

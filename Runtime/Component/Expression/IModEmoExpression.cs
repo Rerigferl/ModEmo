@@ -6,29 +6,10 @@
 
         ExpressionMode Mode { get; }
 
+        [Obsolete("Use BlendShapes property.")]
         IEnumerable<ExpressionFrame> Frames { get; }
 
-        IEnumerable<CurveBlendShape> BlendShapes
-        {
-            get
-            {
-                Dictionary<(string, bool), AnimationCurve> dict = new();
-                foreach (var frame in Frames)
-                {
-                    foreach (var blendShape in frame.GetBlendShapes())
-                    {
-                        var curve = dict.GetOrAdd((blendShape.Name, blendShape.Cancel), _ => new());
-                        curve.AddKey(new Keyframe(frame.Time, blendShape.Value, 0, 0));
-                    }
-                }
-
-                return dict.Select(x => new CurveBlendShape(x.Key.Item1, x.Value, x.Key.Item2));
-            }
-        }
-        private static float Tangent(float timeStart, float timeEnd, float valueStart, float valueEnd)
-        {
-            return (valueEnd - valueStart) / (timeEnd - timeStart);
-        }
+        IEnumerable<CurveBlendShape> BlendShapes { get; }
 
         IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> Conditions => GetConditions();
 

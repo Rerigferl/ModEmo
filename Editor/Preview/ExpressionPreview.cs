@@ -177,7 +177,7 @@ internal sealed class ExpressionPreview : IRenderFilter
 
                 if (selectedExpression != null)
                 {
-                    if (selectedExpression.Frames.Select(x => x.Time).Distinct().Count() > 1)
+                    if (selectedExpression.BlendShapes.Select(x => x.Value.length).MaxOrDefault() > 1)
                     sceneReflesher = SceneViewReflesher.BeginReflesh();
                 }
             }    

@@ -14,4 +14,18 @@ internal static class EnumerableExt
             prev = x;
         }
     }
+
+    public static T? MaxOrDefault<T>(this IEnumerable<T> enumerable)
+    {
+        if (!enumerable.Any())
+            return default;
+
+        if (typeof(T) == typeof(int))
+        {
+            var val = Unsafe.As<IEnumerable<int>>(enumerable).Max();
+            return Unsafe.As<int, T>(ref val);
+        }
+
+        return enumerable.Max();
+    }
 }

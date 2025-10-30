@@ -52,8 +52,8 @@ internal sealed class ModEmoData
             expressions.Add(blink);
 
         UsageBlendShapeMap = 
-            expressions.SelectMany(x => x.Frames.SelectMany(x => x.GetBlendShapes()))
-            .Where(x => BlendShapes.TryGetValue(x.Name, out var value) && value.Value != x.Value)
+            expressions.SelectMany(x => x.BlendShapes)
+            .Where(x => BlendShapes.TryGetValue(x.Name, out var value) && x.Value.length != 0 && !x.Value.Equals(value.Value))
             .Select(x => x.Name)
             .ToImmutableHashSet();
     }
