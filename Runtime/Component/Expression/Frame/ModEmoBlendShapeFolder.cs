@@ -1,9 +1,11 @@
 ﻿
 namespace Numeira
 {
-    internal sealed class ModEmoBlendShapeFolder : ModEmoTagComponent, IModEmoBlendShapeProvider
+    internal class ModEmoBlendShapeFolder : ModEmoTagComponent, IModEmoBlendShapeProvider
     {
-        public IModEmoBlendShapeProvider[] Children => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: false);
+        protected virtual bool IncludeSelf => false;
+
+        public IModEmoBlendShapeProvider[] Children => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: IncludeSelf);
 
         public void CollectBlendShapes(in BlendShapeCurveWriter writer)
         {

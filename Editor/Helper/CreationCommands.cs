@@ -109,7 +109,6 @@ internal static class CreationContextMenu
         bool isPattern = go.GetComponent<IModEmoExpressionPattern>() != null;
         bool isExpressionFolder = go.GetComponent<IModEmoExpressionFolder>() != null;
         bool isExpression = go.GetComponentInParent<IModEmoExpression>() != null;
-        bool isFrameFolder = go.GetComponent<ModEmoExpressionFrameFolder>() != null;
 
         AddMenu("ModEmo/Create Pattern", () => CreateNewObject("Expression Pattern (1)", go, typeof(ModEmoExpressionPattern)), enabled: isRoot);
         
@@ -117,10 +116,6 @@ internal static class CreationContextMenu
         AddMenu("ModEmo/Expression/Create Expression", () => CreateNewExpression("Expression (1)", go), enabled: isExpressionFolder);
         AddMenu("ModEmo/Expression/Create Empty Expression", () => CreateNewExpression("Expression (1)", go, empty: true), enabled: isExpressionFolder);
         AddMenu("ModEmo/Expression/Create Simplify Expression", () => CreateNewObject("Expression (1)", go, typeof(ModEmoDefaultExpression), DefaultConditionType, typeof(ModEmoBlendShapeSelector)), enabled: isExpressionFolder);
-
-        menu.AddSeparator("ModEmo/Expression/");
-
-        AddMenu("ModEmo/Expression/Frame/Add Frame", () => CreateNewObject("Frame (1)", go, typeof(ModEmoExpressionFrame)), enabled: isExpression || isFrameFolder);
 
         menu.AddSeparator("ModEmo/");
 
@@ -198,7 +193,7 @@ internal static class CreationContextMenu
         }
 
         var conditions = ObjectFactory.CreateGameObject("Conditions", typeof(ModEmoConditionFolder));
-        var motions = ObjectFactory.CreateGameObject("Frames", typeof(ModEmoExpressionFrameFolder));
+        var motions = ObjectFactory.CreateGameObject("BlendShapes", typeof(ModEmoBlendShapeFolder));
 
         var sampleCondition = ObjectFactory.CreateGameObject("Condition", DefaultConditionType);
         var sampleFrame = ObjectFactory.CreateGameObject("BlendShape", typeof(ModEmoBlendShapeSelector));

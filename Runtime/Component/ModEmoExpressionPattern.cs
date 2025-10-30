@@ -7,8 +7,6 @@ namespace Numeira
     {
         public string Name = "";
 
-        public IEnumerable<ExpressionFrame> Frames => this.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>().Where(x => x.Component.GetComponent<IModEmoExpression>() == null).SelectMany(x => x.GetFrames());
-
         public IEnumerable<CurveBlendShape> BlendShapes
         {
             get
@@ -30,22 +28,10 @@ namespace Numeira
 
         ExpressionMode IModEmoExpression.Mode => ExpressionMode.Default;
 
-        public override int GetHashCode()
-        {
-            HashCode hash = new();
-            hash.Add(Name);
-            foreach(var frame in Frames)
-            {
-                hash.Add(frame);
-            }
-            hash.Add(base.GetHashCode());
-            return hash.ToHashCode();
-        }
-
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
             hashCode.Add((this as IModEmoExpression).Name.GetFarmHash64());
-            foreach(var x in this.GetComponentsInDirectChildren<IModEmoExpressionFrameProvider>())
+            foreach(var x in this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
             {
                 x.CalculateContentHash(ref hashCode);
             }

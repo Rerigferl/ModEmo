@@ -6,9 +6,6 @@
 
         ExpressionMode Mode { get; }
 
-        [Obsolete("Use BlendShapes property.")]
-        IEnumerable<ExpressionFrame> Frames { get; }
-
         IEnumerable<CurveBlendShape> BlendShapes { get; }
 
         IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> Conditions => GetConditions();

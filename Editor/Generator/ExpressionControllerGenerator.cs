@@ -303,7 +303,7 @@ internal static class ExpressionControllerGenerator
 
         var enable = voiceSwitch.AddAnimationClip("Enable").WithThreshold(float.Epsilon).Motion;
 
-        foreach(var blendShape in cancellar.GetFrames().SelectMany(x => x.GetBlendShapes()))
+        foreach(var blendShape in cancellar.GetBlendShapes())
         {
             var name = $"{ParameterNames.Internal.BlendShapes.Prefix}{blendShape.Name}/Enable";
             disable.AddAnimatedParameter(name, 0, 1);
