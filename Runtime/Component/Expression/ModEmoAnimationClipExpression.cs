@@ -26,7 +26,7 @@
                     if (curve.length == 0)
                         continue;
                     
-                    yield return new CurveBlendShape(propertyName, curve);
+                    yield return new CurveBlendShape(propertyName, (Curve)curve);
                 }
 #endif
                 yield break;

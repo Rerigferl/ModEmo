@@ -14,10 +14,10 @@
 
     internal readonly struct BlendShapeCurveWriter
     {
-        private static readonly Dictionary<(string Name, bool Cancel), List<Keyframe>> sharedDictionary = new();
-        private readonly Dictionary<(string Name, bool Cancel), List<Keyframe>> innerDictionary;
+        private static readonly Dictionary<(string Name, bool Cancel), List<Curve.Keyframe>> sharedDictionary = new();
+        private readonly Dictionary<(string Name, bool Cancel), List<Curve.Keyframe>> innerDictionary;
 
-        private BlendShapeCurveWriter(Dictionary<(string Name, bool Cancel), List<Keyframe>> innerDictionary)
+        private BlendShapeCurveWriter(Dictionary<(string Name, bool Cancel), List<Curve.Keyframe>> innerDictionary)
         {
             this.innerDictionary = innerDictionary;
         }
@@ -41,7 +41,7 @@
         public readonly void Write(float time, string name, float value, bool cancel = false)
         {
             var list = innerDictionary.GetOrAdd((name, cancel), _ => new());
-            list.Add(new(time, value, 0, 0));
+            list.Add(new(time, value));
         }
         
         public readonly void ModifyCurveTimes(ModifyCurveTimeDelegate factory)
@@ -50,7 +50,7 @@
             {
                 foreach(ref var x in list.AsSpan())
                 {
-                    x.time = factory(key.Name, key.Cancel, x.time);
+                    x.Time = factory(key.Name, key.Cancel, x.Time);
                 }
             }
         }
@@ -62,7 +62,7 @@
                 if (value.Count == 0)
                     continue;
 
-                yield return new CurveBlendShape(key.Name, new AnimationCurve(value.ToArray()), key.Cancel);
+                yield return new CurveBlendShape(key.Name, new (value), key.Cancel);
             }
         }
 

@@ -15,7 +15,7 @@ namespace Numeira
             return writer.Export();
         }
 
-        private static readonly Keyframe[] SharedKeyframes = new Keyframe[6];
+        private static readonly Curve.Keyframe[] SharedKeyframes = new Curve.Keyframe[6];
 
         public override IEnumerable<CurveBlendShape> BlendShapes
         {
@@ -33,7 +33,7 @@ namespace Numeira
                     keyframes[3] = new(67 / 60f, value);
                     keyframes[4] = new(80 / 60f, 0);
                     keyframes[5] = new(300 / 60f, 0);
-                    yield return new CurveBlendShape(blendShape.Name, new AnimationCurve(keyframes), blendShape.Cancel);
+                    yield return new CurveBlendShape(blendShape.Name, new(keyframes), blendShape.Cancel);
                 }
             }
         }

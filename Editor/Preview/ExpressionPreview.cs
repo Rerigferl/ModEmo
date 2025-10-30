@@ -130,7 +130,7 @@ internal sealed class ExpressionPreview : IRenderFilter
                 if (index == -1)
                     continue;
 
-                var lastTime = shape.Value.keys[shape.Value.length - 1].time;
+                var lastTime = shape.Value[shape.Value.Length - 1].Time;
                 var value = shape.Value.Evaluate(time * lastTime);
 
                 if (shape.Cancel)
@@ -177,7 +177,7 @@ internal sealed class ExpressionPreview : IRenderFilter
 
                 if (selectedExpression != null)
                 {
-                    if (selectedExpression.BlendShapes.Select(x => x.Value.length).MaxOrDefault() > 1)
+                    if (selectedExpression.BlendShapes.Select(x => x.Value.Length).MaxOrDefault() > 1)
                     sceneReflesher = SceneViewReflesher.BeginReflesh();
                 }
             }    

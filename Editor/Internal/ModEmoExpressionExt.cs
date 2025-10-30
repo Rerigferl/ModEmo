@@ -52,16 +52,16 @@ internal static class ModEmoExpressionExt
             if (!blendShapes.TryGetValue(name, out var defaultValue))
                 defaultValue = new(0, 100);
 
-            foreach(var key in blendShape.Value.keys)
+            foreach(var key in blendShape.Value.Keys)
             {
                 float value = (previewMode, blendShape.Cancel) switch
                 {
-                    (true, false) => Mathf.Clamp(key.value, 0, defaultValue.Max),
-                    (true, true) => Mathf.Clamp(defaultValue.Value * (1 - key.value / defaultValue.Max), 0, defaultValue.Max),
-                    _ => key.value / defaultValue.Max,
+                    (true, false) => Mathf.Clamp(key.Value, 0, defaultValue.Max),
+                    (true, true) => Mathf.Clamp(defaultValue.Value * (1 - key.Value / defaultValue.Max), 0, defaultValue.Max),
+                    _ => key.Value / defaultValue.Max,
                 };
 
-                anim.AddAnimatedParameter(previewMode ? name : $"{ParameterNames.Internal.BlendShapes.Prefix}{name}{(blendShape.Cancel ? "/Cancel" : "/Value")}", key.time, value);
+                anim.AddAnimatedParameter(previewMode ? name : $"{ParameterNames.Internal.BlendShapes.Prefix}{name}{(blendShape.Cancel ? "/Cancel" : "/Value")}", key.Time, value);
             }
 
         }

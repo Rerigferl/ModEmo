@@ -14,10 +14,10 @@ internal struct BlendShape
 internal struct CurveBlendShape
 {
     public string Name;
-    public AnimationCurve Value;
+    public Curve Value;
     public bool Cancel;
 
-    public CurveBlendShape(string name, AnimationCurve value, bool cancel = false)
+    public CurveBlendShape(string name, Curve value, bool cancel = false)
     {
         Name = name;
         Value = value;
