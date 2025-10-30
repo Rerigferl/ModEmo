@@ -74,7 +74,6 @@ internal sealed class ExpressionPreview : IRenderFilter
         private readonly Renderer originalRenderer;
         private IModEmoExpression? selectedExpression;
         private DateTime selectionChangedTime;
-        private AnimationClipBuilder? animaton;
         private IDisposable? sceneReflesher;
 
         private readonly Dictionary<string, int> blendShapeIndexCache = new();
@@ -85,16 +84,6 @@ internal sealed class ExpressionPreview : IRenderFilter
             originalRenderer = proxyPairs.FirstOrDefault().Item1;
             blendShapeInfos = ModEmoData.GetBlendShapeInfos(renderGroup.Renderers[0] as SkinnedMeshRenderer);
             rootComponent = renderGroup.GetData<ModEmo>();
-
-            foreach (var x in context.GetComponentsInChildren<IModEmoExpression>(rootComponent.gameObject, true))
-            {
-                context.Observe(x.Component, x =>
-                {
-                    var hashCode = new DeterministicHashCode();
-                    (x as IModEmoComponent)?.CalculateContentHash(ref hashCode);
-                    return hashCode.ToHashCode();
-                });
-            }
         }
 
         public Node(Node source, ComputeContext context)
@@ -103,16 +92,6 @@ internal sealed class ExpressionPreview : IRenderFilter
             originalRenderer = source.originalRenderer;
             blendShapeInfos = source.blendShapeInfos;
             rootComponent = source.rootComponent;
-
-            foreach (var x in context.GetComponentsInChildren<IModEmoExpression>(rootComponent.gameObject, true))
-            {
-                context.Observe(x.Component, x =>
-                {
-                    var hashCode = new DeterministicHashCode();
-                    (x as IModEmoComponent)?.CalculateContentHash(ref hashCode);
-                    return hashCode.ToHashCode();
-                });
-            }
         }
 
         private int GetBlendShapeIndex(Mesh mesh, string name)
@@ -125,28 +104,11 @@ internal sealed class ExpressionPreview : IRenderFilter
 
         public void OnFrame(Renderer original, Renderer proxy)
         {
-            if (proxy is not SkinnedMeshRenderer smr || smr.sharedMesh is not { } mesh || mesh == null)
+            if (proxy is not SkinnedMeshRenderer smr || original is not SkinnedMeshRenderer origSmr || smr.sharedMesh is not { } mesh || mesh == null)
                 return;
 
             if (selectedExpression is not { } expression)
                 return;
-
-            if (animaton is not { } clip || clip == null)
-                return;
-
-            static IEnumerable<(string PropertyName, float Value)> Sample(AnimationClipBuilder clip, float normalizedTime)
-            {
-                float time = normalizedTime * clip.Length;
-
-                foreach (var bind in clip.Bindings)
-                {
-                    if (clip.Evaluate(bind, time) is not { } value)
-                        continue;
-
-                    var propertyName = bind.propertyName;
-                    yield return ($"{propertyName}", value);
-                }
-            }
 
             float time = (float)(DateTime.Now - selectionChangedTime).TotalSeconds;
             if (selectedExpression.IsLoop)
@@ -161,11 +123,22 @@ internal sealed class ExpressionPreview : IRenderFilter
             if (!AutoPlay)
                 time = PreviewTime;
 
-            foreach (var (name, value) in Sample(clip, (float)time))
+            var blendShapes = selectedExpression.BlendShapes;
+            foreach(var shape in blendShapes)
             {
-                int index = GetBlendShapeIndex(mesh, name);
+                int index = GetBlendShapeIndex(mesh, shape.Name);
                 if (index == -1)
                     continue;
+
+                var value = shape.Value.Evaluate(time);
+
+                if (shape.Cancel)
+                {
+                    float orig = origSmr.GetBlendShapeWeight(index);
+                    var weight = value / 100f;
+                    value = orig * (1 - weight);
+                }
+
                 smr.SetBlendShapeWeight(index, value);
             }
 
@@ -203,7 +176,6 @@ internal sealed class ExpressionPreview : IRenderFilter
 
                 if (selectedExpression != null)
                 {
-                    animaton = selectedExpression.MakeAnimationClip(blendShapeInfos, null, writeDefault: true, previewMode: true);
                     if (selectedExpression.Frames.Select(x => x.Time).Distinct().Count() > 1)
                     sceneReflesher = SceneViewReflesher.BeginReflesh();
                 }

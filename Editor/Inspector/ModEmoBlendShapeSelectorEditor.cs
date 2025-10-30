@@ -269,64 +269,6 @@ internal sealed class BlendShapeDataDrawer : PropertyDrawer
     }
 }
 
-[CustomPropertyDrawer(typeof(CurveBlendShape))]
-internal sealed class CurveBlendShapeDataDrawer : PropertyDrawer
-{
-    private static bool Multiline => true;// EditorGUIUtility.currentViewWidth < 600;
-
-    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-        => Multiline ? EditorGUIUtility.singleLineHeight * 2.2f : EditorGUIUtility.singleLineHeight * 1.2f;
-
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-    {
-        var totalLineHeight = Multiline ? EditorGUIUtility.singleLineHeight * 2 : EditorGUIUtility.singleLineHeight;
-        position.y += (position.height - totalLineHeight) / 2;
-        position.height = totalLineHeight;
-        EditorGUI.BeginProperty(position, label, property);
-
-        GUIPosition labelRect, toggleRect, sliderRect;
-        var toggleWidth = EditorStyles.toggle.CalcSize(GUIContent.none).x;
-        if (Multiline)
-        {
-            var pos = new GUIPosition(position);
-            labelRect = pos.SingleLine();
-            var line2 = labelRect.NewLine();
-
-            (sliderRect, toggleRect) = line2.HorizontalSeparate(line2.Width - toggleWidth, 4);
-        }
-        else
-        {
-            labelRect = new GUIPosition(position);
-            labelRect.Width = EditorGUIUtility.labelWidth;
-
-            toggleRect = new GUIPosition(position);
-            toggleRect.Width = EditorStyles.toggle.CalcSize(GUIContent.none).x;
-
-            sliderRect = new GUIPosition(position);
-            sliderRect.Width -= labelRect.Width + 8 + toggleRect.Width;
-            sliderRect.X += labelRect.Width + 4;
-            toggleRect.X = sliderRect.X + sliderRect.Width + 4;
-
-        }
-
-        labelRect.TextField("", property.FindPropertyRelative("Name"), "BlendShape");
-
-        EditorGUI.CurveField(sliderRect, property.FindPropertyRelative("Value"), Color.cyan, new Rect(0, 0, 1, 100), GUIContent.none);
-
-        var cancelProp = property.FindPropertyRelative("Cancel");
-        bool cancelValue = cancelProp.boolValue;
-        EditorGUI.BeginChangeCheck();
-        cancelValue = EditorGUI.ToggleLeft(toggleRect, GUIContent.none, cancelValue);
-        if (EditorGUI.EndChangeCheck())
-        {
-            cancelProp.boolValue = cancelValue;
-        }
-
-        EditorGUI.EndProperty();
-
-    }
-}
-
 internal abstract class ReorderableListWrapper
 {
     protected SerializedObject SerializedObject { get; }

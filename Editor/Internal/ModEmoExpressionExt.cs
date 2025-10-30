@@ -46,27 +46,24 @@ internal static class ModEmoExpressionExt
         if (!previewMode)
             anim.AddAnimatedParameter(ParameterNames.MouthMorphCancel.Enable, 0, expression.EnableMouthMorphCancel ? 1 : 0);
 
-
-        foreach (var frame in expression.Frames)
+        foreach(var blendShape in expression.BlendShapes)
         {
-            foreach (var blendShape in frame.GetBlendShapes())
-            {
-                var name = blendShape.Name;
-                if (!blendShapes.TryGetValue(name, out var defaultValue))
-                    defaultValue = new(0, 100);
+            var name = blendShape.Name;
+            if (!blendShapes.TryGetValue(name, out var defaultValue))
+                defaultValue = new(0, 100);
 
+            foreach(var key in blendShape.Value.keys)
+            {
                 float value = (previewMode, blendShape.Cancel) switch
                 {
-                    (true, false) => Mathf.Clamp(blendShape.Value, 0, defaultValue.Max),
-                    (true, true) => Mathf.Clamp(defaultValue.Value * (1 - blendShape.Value / defaultValue.Max), 0, defaultValue.Max),
-                    _ => blendShape.Value / defaultValue.Max,
+                    (true, false) => Mathf.Clamp(key.value, 0, defaultValue.Max),
+                    (true, true) => Mathf.Clamp(defaultValue.Value * (1 - key.value / defaultValue.Max), 0, defaultValue.Max),
+                    _ => key.value / defaultValue.Max,
                 };
-                
-                anim.AddAnimatedParameter(previewMode ? name : $"{ParameterNames.Internal.BlendShapes.Prefix}{name}{(blendShape.Cancel ? "/Cancel" : "/Value")}", frame.Time, value);
+
+                anim.AddAnimatedParameter(previewMode ? name : $"{ParameterNames.Internal.BlendShapes.Prefix}{name}{(blendShape.Cancel ? "/Cancel" : "/Value")}", key.time, value);
             }
 
-            if (writeBlink)
-            anim.AddAnimatedParameter(ParameterNames.Blink.Value, frame.Time, (expression.Blink && frame.Blink) ? 1 : 0);
         }
 
         return anim;
