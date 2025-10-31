@@ -14,26 +14,26 @@
 
     internal readonly struct BlendShapeCurveWriter
     {
-        private static readonly Dictionary<(string Name, bool Cancel), List<Curve.Keyframe>> sharedDictionary = new();
         private readonly Dictionary<(string Name, bool Cancel), List<Curve.Keyframe>> innerDictionary;
+        private readonly Stack<Func<KeyframeInfo, float>> keyframeFactories;
 
         private BlendShapeCurveWriter(Dictionary<(string Name, bool Cancel), List<Curve.Keyframe>> innerDictionary)
         {
             this.innerDictionary = innerDictionary;
+            this.keyframeFactories = new();
         }
 
-        internal static BlendShapeCurveWriter Create(bool useSharedDictionary = true)
+        internal static BlendShapeCurveWriter Create()
         {
-            if (useSharedDictionary)
-            {
-                var dict = sharedDictionary;
-                foreach (var value in dict.Values)
-                {
-                    value.Clear();
-                }
-                return new BlendShapeCurveWriter(dict);
-            }
             return new BlendShapeCurveWriter(new());
+        }
+
+        public readonly void Clear()
+        {
+            foreach (var (_, list) in innerDictionary)
+            {
+                list.Clear();
+            }
         }
 
         public readonly void Write(float time, BlendShape blendShape) => Write(time, blendShape.Name, blendShape.Value, blendShape.Cancel);
@@ -41,20 +41,20 @@
         public readonly void Write(float time, string name, float value, bool cancel = false)
         {
             var list = innerDictionary.GetOrAdd((name, cancel), _ => new());
+            foreach (var factory in keyframeFactories)
+            {
+                time = factory(new(name, cancel, time));
+            }
             list.Add(new(time, value));
         }
-        
-        public readonly void ModifyCurveTimes(ModifyCurveTimeDelegate factory)
+
+        public readonly void BeginModifyCurveTime(Func<KeyframeInfo, float> factory)
         {
-            foreach(var (key, list) in innerDictionary)
-            {
-                foreach(ref var x in list.AsSpan())
-                {
-                    x.Time = factory(key.Name, key.Cancel, x.Time);
-                }
-            }
+            keyframeFactories.Push(factory);
         }
 
+        public readonly void EndModifyCurveTime() => keyframeFactories.TryPop(out _);
+        
         internal readonly IEnumerable<CurveBlendShape> Export()
         {
             foreach (var (key, value) in innerDictionary)
@@ -66,6 +66,18 @@
             }
         }
 
-        public delegate float ModifyCurveTimeDelegate(string blendShapeName, bool isCancelBlendShape, float time);
+        public readonly struct KeyframeInfo
+        {
+            public readonly string BlendShapeName;
+            public readonly bool IsCancelBlendShape;
+            public readonly float Time;
+
+            public KeyframeInfo(string blendShapeName, bool isCancelBlendShape, float time)
+            {
+                BlendShapeName = blendShapeName;
+                IsCancelBlendShape = isCancelBlendShape;
+                Time = time;
+            }
+        }
     }
 }
