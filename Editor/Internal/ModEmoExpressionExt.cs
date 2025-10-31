@@ -1,5 +1,4 @@
-﻿using System.Buffers.Text;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Numeira.Animation;
 
 namespace Numeira;
@@ -43,12 +42,18 @@ internal static class ModEmoExpressionExt
             }
         }
 
+        if (writeBlink)
+        {
+            anim.AddAnimatedParameter(ParameterNames.Blink.Value, 0, expression.Blink ? 1 : 0);
+        }
+
         if (!previewMode)
             anim.AddAnimatedParameter(ParameterNames.MouthMorphCancel.Enable, 0, expression.EnableMouthMorphCancel ? 1 : 0);
 
         foreach(var blendShape in expression.BlendShapes)
         {
             var name = blendShape.Name;
+
             if (!blendShapes.TryGetValue(name, out var defaultValue))
                 defaultValue = new(0, 100);
 
