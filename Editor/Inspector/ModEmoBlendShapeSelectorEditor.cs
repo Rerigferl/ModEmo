@@ -148,6 +148,7 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
                         {
                             Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = false, Value = blendShapeValue });
                         }
+                        EditorUtility.SetDirty(Component);
                     }
                 }
 
@@ -345,5 +346,13 @@ internal abstract class ReorderableListWrapper
         finally
         {
         }
+    }
+
+    public virtual int AddItem()
+    {
+        int index = Elements.arraySize;
+        Elements.InsertArrayElementAtIndex(index);
+
+        return index;
     }
 }
