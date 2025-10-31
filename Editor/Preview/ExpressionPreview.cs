@@ -130,7 +130,7 @@ internal sealed class ExpressionPreview : IRenderFilter
                 if (index == -1)
                     continue;
 
-                var lastTime = shape.Value[shape.Value.Length - 1].Time;
+                var lastTime = shape.Value[^1].Time;
                 var value = shape.Value.Evaluate(time * lastTime);
 
                 if (shape.Cancel)
