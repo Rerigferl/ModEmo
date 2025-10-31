@@ -157,7 +157,7 @@ internal static class ExpressionControllerGenerator
 
         int stateCount = 0;
 
-        var defaultState = stateMachine.AddState("Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
+        var defaultState = stateMachine.AddState("0 Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
         defaultState.AddAvatarParameterDriver().Set(ParameterNames.Expression.Index, 0);
 
         foreach (var group in expressions.GroupBy(x => x.Pattern))
@@ -170,7 +170,7 @@ internal static class ExpressionControllerGenerator
                 var expData = array[i];
                 var expression = expData.Expression;
 
-                var state = stateMachine.AddState(expression.Name, new Vector2(defaultState.Position!.Value.x, 120 + 70 * stateCount++));
+                var state = stateMachine.AddState($"{expData.Index} {expression.Name}", new Vector2(defaultState.Position!.Value.x, 120 + 70 * stateCount++));
 
                 if (i == 0)
                 {
@@ -225,7 +225,7 @@ internal static class ExpressionControllerGenerator
 
         int stateCount = 0;
 
-        var defaultState = stateMachine.AddState("Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
+        var defaultState = stateMachine.AddState("0 Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
         stateMachine.AddAnyStateTransition(defaultState).WithDuration(0.1f).AddCondition(AnimatorConditionMode.Equals, ParameterNames.Expression.Index, 0);
 
         var span = expressions.AsSpan();
@@ -233,7 +233,7 @@ internal static class ExpressionControllerGenerator
         {
             var expressionData = span[i];
             var expression = expressionData.Expression;
-            var state = stateMachine.AddState(expression.Name, new Vector2(defaultState.Position!.Value.x, 120 + 70 * stateCount++));
+            var state = stateMachine.AddState($"{expressionData.Index} {expression.Name}", new Vector2(defaultState.Position!.Value.x, 120 + 70 * stateCount++));
 
             var t = stateMachine.AddAnyStateTransition(state).WithDuration(0.1f);
             t.AddCondition(AnimatorConditionMode.Equals, ParameterNames.Expression.Index, expressionData.Index);
