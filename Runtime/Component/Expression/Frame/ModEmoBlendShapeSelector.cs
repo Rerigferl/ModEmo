@@ -12,6 +12,8 @@ namespace Numeira
         {
             foreach (var blendShape in BlendShapes)
             {
+                if (Keyframe != 0)
+                    writer.Write(0, blendShape with { Value = 0 });
                 writer.Write(Keyframe, blendShape);
             }
         }

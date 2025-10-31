@@ -14,10 +14,10 @@
 
     internal readonly struct BlendShapeCurveWriter
     {
-        private readonly Dictionary<(string Name, bool Cancel), List<Curve.Keyframe>> innerDictionary;
+        private readonly Dictionary<(string Name, bool Cancel), HashSet<Curve.Keyframe>> innerDictionary;
         private readonly Stack<Func<KeyframeInfo, float>> keyframeFactories;
 
-        private BlendShapeCurveWriter(Dictionary<(string Name, bool Cancel), List<Curve.Keyframe>> innerDictionary)
+        private BlendShapeCurveWriter(Dictionary<(string Name, bool Cancel), HashSet<Curve.Keyframe>> innerDictionary)
         {
             this.innerDictionary = innerDictionary;
             this.keyframeFactories = new();
@@ -40,7 +40,7 @@
 
         public readonly void Write(float time, string name, float value, bool cancel = false)
         {
-            var list = innerDictionary.GetOrAdd((name, cancel), _ => new());
+            var list = innerDictionary.GetOrAdd((name, cancel), _ => new(Curve.TimeEqualityComparer.Default));
             foreach (var factory in keyframeFactories)
             {
                 time = factory(new(name, cancel, time));

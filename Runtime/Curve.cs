@@ -108,4 +108,13 @@ internal sealed class Curve
             Value = value;
         }
     }
+
+    public sealed class TimeEqualityComparer : IEqualityComparer<Keyframe>
+    {
+        public static TimeEqualityComparer Default { get; } = new();
+
+        bool IEqualityComparer<Keyframe>.Equals(Keyframe x, Keyframe y) => x.Time.Equals(y.Time);
+
+        int IEqualityComparer<Keyframe>.GetHashCode(Keyframe obj) => obj.Time.GetHashCode();
+    }
 }
