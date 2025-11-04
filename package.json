@@ -1,7 +1,14 @@
 {
   "name": "numeira.mod-emo",
-  "version": "0.0.0",
   "displayName": "ModEmo",
+  "description": "Modular facial expression creation tool for NDMF"
+  "version": "0.1.0-alpha.1",
+  "unity": "2022.3",
+  "author": "Numeira",
   "url": "https://github.com/Rerigferl/ModEmo",
-  "vpmDependencies": {}
+  "vpmDependencies": {
+    "com.vrchat.avatars" : ">=3.7.0",
+    "nadena.dev.modular-avatar" : "^1.14.3",
+    "nadena.dev.ndmf" : "^1.9.4"
+  }
 }
