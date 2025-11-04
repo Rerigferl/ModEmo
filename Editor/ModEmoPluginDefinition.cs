@@ -107,7 +107,6 @@ internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefini
                 Stopwatch sw = Stopwatch.StartNew();
                 animatorController = builder.ToAnimatorController(assetContainer);
                 sw.Stop();
-                Debug.LogError($"Build AC: {sw.ElapsedMilliseconds}ms");
 
                 if (modEmoHash is not null)
                 {

@@ -120,7 +120,7 @@ internal static class CreationContextMenu
         menu.AddSeparator("ModEmo/");
 
         AddMenu("ModEmo/Folder/Create Expression Folder", () => CreateNewObject("Expression Folder", go, typeof(ModEmoExpressionFolder)), enabled: isExpressionFolder);
-        AddMenu("ModEmo/Folder/Create Expression Frame Folder", () => CreateNewObject("Expression Frame Folder", go, typeof(ModEmoExpressionFolder)), enabled: isExpression);
+        AddMenu("ModEmo/Folder/Create BlendShape Folder", () => CreateNewObject("Expression Frame Folder", go, typeof(ModEmoBlendShapeFolder)), enabled: isExpression);
 
         menu.AddSeparator("ModEmo/");
 
@@ -174,7 +174,7 @@ internal static class CreationContextMenu
         if (string.IsNullOrEmpty(path))
             return;
         path = Path.GetRelativePath(Path.GetDirectoryName(Application.dataPath), path);
-        Debug.LogError(path);
+
         var animatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
         if (animatorController == null)
             return;
