@@ -24,7 +24,7 @@ jobs:
         id: packager
         uses: "docker://ghcr.io/rerigferl/vpm-packager:latest"
         with:
-          args: "-z -u"
+          args: "-z"
           
       - name: Make Release
         if: ${{ steps.packager.outputs.package-version != '0.0.0' }}
