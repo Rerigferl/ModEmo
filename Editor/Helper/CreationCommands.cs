@@ -24,7 +24,7 @@ internal static class CreationContextMenu
             SceneHierarchyHooks.addItemsToGameObjectContextMenu += default(StaticExtension).AddItemsToGameObjectContextMenu;
         };
 
-        ModEmoExpressionEditor.CreateNewObject = CreateNewObject;
+        RuntimeEditor.CreateNewObject = CreateNewObject;
     }
 
     private static Type DefaultConditionType =>

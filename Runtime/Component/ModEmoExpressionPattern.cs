@@ -42,4 +42,14 @@ namespace Numeira
     internal interface IModEmoExpressionPattern : IModEmoExpression, IModEmoExpressionFolder
     {
     }
+
+#if UNITY_EDITOR
+    static partial class RuntimeEditor
+    {
+        [CustomEditor(typeof(ModEmoExpressionPattern))]
+        internal sealed class ModEmoExpressionPatternEditor : ModEmoComponentEditorBase
+        {
+        }
+    }
+#endif
 }

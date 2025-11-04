@@ -43,7 +43,6 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
     }
 
     private static int previewingControlId = 0;
-    private static bool isSettingsOpening;
 
     public override void OnInspectorGUI()
     {
@@ -118,7 +117,7 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
                 foreach (var blendShapeName in stack.AsSpan())
                 {
                     content.text = blendShapeName;
-                    var id = GUIUtility.GetControlID(content, FocusType.Passive);
+                    var id = blendShapeName.GetFarmHash();
                     var rect = EditorGUILayout.GetControlRect(false, lineHeight);
 
                     if (rect.Contains(Event.current.mousePosition))
@@ -163,6 +162,29 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
         EditorGUILayout.EndHorizontal();
 
         serializedObject.ApplyModifiedProperties();
+    }
+
+    [MenuItem($"CONTEXT/{nameof(ModEmoBlendShapeSelector)}/Sort Blendshapes by Category")]
+    internal static void SortByCategoryName(MenuCommand command)
+    {
+        if (command.context is not ModEmoBlendShapeSelector selector)
+            return;
+
+        var list = selector.BlendShapes;
+        if (list.Count < 2)
+            return;
+
+        if (selector.GetComponentInParent<ModEmo>(true) is not { } root)
+            return;
+
+        if (ModEmoData.GetCategorizedBlendShapes(root) is not { } data)
+            return;
+
+        Undo.RecordObject(selector, "Sort Blendshapes by Category");
+
+        list.Sort(new CategorizedBlendShapeComparer(data.CategorizedBlendShapeNames));
+
+        EditorUtility.SetDirty(selector);
     }
 
     private void MenuCallback(GenericMenu menu, KeyValuePair<string, List<string>> group)
@@ -354,5 +376,57 @@ internal abstract class ReorderableListWrapper
         Elements.InsertArrayElementAtIndex(index);
 
         return index;
+    }
+}
+
+
+
+internal sealed class CategorizedBlendShapeComparer : IComparer<BlendShape>
+{
+    private readonly Dictionary<string, int> sortOrder;
+
+    public CategorizedBlendShapeComparer(List<KeyValuePair<string, List<string>>> categorizedBlendshapeNames)
+    {
+        var dict = new Dictionary<string, int>();
+
+        var span = categorizedBlendshapeNames.AsSpan();
+        for (int i = 0; i < span.Length; i++)
+        {
+            var kvp = span[i];
+            foreach(var blendShapeName in kvp.Value.AsSpan())
+            {
+                dict.TryAdd(blendShapeName, i);
+            }
+        }
+
+        sortOrder = dict;
+    }
+
+    public int Compare(BlendShape x, BlendShape y)
+    {
+        if (x.Name == null && y.Name == null) return 0;
+        if (x.Name == null) return 1;
+        if (y.Name == null) return -1;
+
+        // 1. Cancelが有効になっていないほうを先頭に
+        int cancelComparison = x.Cancel.CompareTo(y.Cancel);
+        if (cancelComparison != 0)
+        {
+            return cancelComparison;
+        }
+
+        if (!sortOrder.TryGetValue(x.Name, out var x1))
+            x1 = 0;
+
+        if (!sortOrder.TryGetValue(y.Name, out var y1))
+            y1 = 0;
+
+        var categoryComparison = x1.CompareTo(y1);
+        if (categoryComparison != 0)
+        {
+            return categoryComparison;
+        }
+
+        return x.Name.CompareTo(y.Name);
     }
 }

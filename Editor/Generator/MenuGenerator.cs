@@ -63,13 +63,23 @@ internal class MenuGenerator
         string[] singleArray = new string[1];
         foreach(var (key, values) in data.CategorizedBlendShapes)
         {
-            MenuItem? menu = null;;
-            foreach (var value in values)
+            var values2 = values.Where(data.UsageBlendShapeMap.Contains).ToArray();
+
+            MenuItem? menu = null;
+            MenuItem? page = null;
+            int pageCount = 1;
+            foreach (var value in values2)
             {
-                if (!data.UsageBlendShapeMap.Contains(value))
-                    continue;
                 menu ??= AddMenu(key, PortableControlType.SubMenu, blendShapeMenu);
-                var a = AddMenu(value, PortableControlType.RadialPuppet, menu);
+                if (values2.Length <= 8)
+                {
+                    page = menu;
+                }
+                else if (page == null || page.transform.childCount >= 8)
+                {
+                    page = AddMenu($"Page {pageCount++}", PortableControlType.SubMenu, menu);
+                }
+                var a = AddMenu(value, PortableControlType.RadialPuppet, page);
                 var name = singleArray[0] = $"{ParameterNames.Internal.BlendShapes.Prefix}{value}/Override";
                 parameters.parameters.Add(new ParameterConfig() { nameOrPrefix = name, syncType = ParameterSyncType.Float, localOnly = true, saved = false });
                 a.PortableControl.SubParameters = singleArray.ToImmutableList();

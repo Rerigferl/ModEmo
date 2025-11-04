@@ -28,8 +28,17 @@ internal sealed class ExpressionPreview : IRenderFilter
         return context.Observe(EnableNode.IsEnabled);
     }
 
-    public static float PreviewTime { get; set; } = 0;
-    public static bool AutoPlay { get; set; } = false;
+    public static float PreviewTime
+    {
+        get => ModEmoPreviewPrefs.instance.FrameTime;
+        set => ModEmoPreviewPrefs.instance.FrameTime = value;
+    }
+
+    public static bool AutoPlay
+    {
+        get => ModEmoPreviewPrefs.instance.AutoPlay;
+        set => ModEmoPreviewPrefs.instance.AutoPlay = value;
+    }
 
     public static PublishedValue<string?> TemporaryPreviewBlendShape { get; } = new(null);
 

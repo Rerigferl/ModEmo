@@ -58,7 +58,7 @@
     }
 
 #if UNITY_EDITOR
-    internal static partial class RuntimeEditor
+    static partial class RuntimeEditor
     {
         [CustomEditor(typeof(ModEmoGeneratedArtifactsCache))]
         internal sealed class ModEmoGeneratedArtifactsCacheEditor : Editor

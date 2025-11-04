@@ -4,8 +4,6 @@
 [CustomEditor(typeof(ModEmoExpression), true)]
 internal class ModEmoExpressionEditor : Editor
 {
-    public static Action<GameObject, GameObject>? CreateNewObject;
-
     public IModEmoExpression Target => (target as IModEmoExpression)!;
 
     public override void OnInspectorGUI()
