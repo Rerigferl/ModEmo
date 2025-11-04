@@ -1,7 +1,7 @@
 {
   "name": "numeira.mod-emo",
   "displayName": "ModEmo",
-  "description": "Modular facial expression creation tool for NDMF"
+  "description": "Modular facial expression creation tool for NDMF",
   "version": "0.1.0-alpha.1",
   "unity": "2022.3",
   "author": "Numeira",
