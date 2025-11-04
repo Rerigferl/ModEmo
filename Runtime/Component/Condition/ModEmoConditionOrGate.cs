@@ -9,9 +9,9 @@ namespace Numeira
 
         public override IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> GetConditions()
         {
-            foreach(var child in Children)
+            foreach (var child in Children)
             {
-                foreach(var group in child.GetConditions())
+                foreach (var group in child.GetConditions())
                 {
                     yield return Group.Create(this, group);
                 }

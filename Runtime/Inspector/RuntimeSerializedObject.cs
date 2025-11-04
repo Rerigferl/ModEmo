@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace Numeira;
+﻿namespace Numeira;
 
 internal readonly struct RuntimeSerializedObject
 {
@@ -14,14 +12,14 @@ internal readonly struct RuntimeSerializedObject
 
     public SerializedProperty? this[string name] => FindProperty(name);
 
-    public SerializedProperty? FindProperty(string name) 
+    public SerializedProperty? FindProperty(string name)
         => serializedObject.FindProperty(name);
 
     public SerializedObjectUpdateScope Update(bool undo = true) => new(serializedObject, undo);
 
     public bool ApplyModifiedProperties() => serializedObject.ApplyModifiedProperties();
 
-    public static implicit operator SerializedObject(RuntimeSerializedObject value) 
+    public static implicit operator SerializedObject(RuntimeSerializedObject value)
         => value.serializedObject;
 
     public readonly ref struct SerializedObjectUpdateScope

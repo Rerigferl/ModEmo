@@ -94,11 +94,11 @@ internal struct GUIPosition
             return default;
 
         var margin = Size - innerSize;
-        return this with 
-        { 
+        return this with
+        {
             X = X + margin.x / 2,
             Y = Y + margin.y / 2,
-            Width = innerSize.x, 
+            Width = innerSize.x,
             Height = innerSize.y,
         };
     }
@@ -109,7 +109,7 @@ internal struct GUIPosition
             return default;
 
         var m = margin ?? 0;
-        var w = width ?? Width / 2; 
+        var w = width ?? Width / 2;
         var left = this;
         var right = this;
         left.Width = w;
@@ -160,10 +160,10 @@ internal struct GUIPosition
 
     internal readonly float RequiredHeight => requiredHeight;
 
-    public readonly void Deconstruct(out float X, out float Y) 
+    public readonly void Deconstruct(out float X, out float Y)
         => (X, Y) = (this.X, this.Y);
 
-    public readonly void Deconstruct(out float X, out float Y, out float Width, out float Height) 
+    public readonly void Deconstruct(out float X, out float Y, out float Width, out float Height)
         => (X, Y, Width, Height) = (this.X, this.Y, this.Width, this.Height);
 
     public static implicit operator Rect(GUIPosition position) => Unsafe.As<GUIPosition, Rect>(ref position);
@@ -367,7 +367,7 @@ internal static class GUIPositionExt
     private delegate float InternalSliderMethodDelegate(Rect position, GUIContent label, float value, float sliderMin, float sliderMax, float textFieldMin, float textFieldMax);
 
     private static InternalSliderMethodDelegate? InternalSliderMethod;
-    
+
     private static GUIStyle PlaceholderStyle
     {
         get
@@ -382,7 +382,7 @@ internal static class GUIPositionExt
         }
     }
     private static GUIStyle? placeholderStyle;
-    
+
     private static GUIStyle PlaceholderTextAreaStyle => placeholderTextAreaStyle ??= new(EditorStyles.textArea)
     {
         padding = new RectOffset(2, 2, 0, 0),

@@ -1,8 +1,4 @@
-﻿using System.Runtime.Remoting.Contexts;
-using nadena.dev.modular_avatar.core;
-using nadena.dev.ndmf.runtime;
-
-namespace Numeira
+﻿namespace Numeira
 {
     [AddComponentMenu("ModEmo/ModEmo")]
     internal sealed class ModEmo : ModEmoTagComponent

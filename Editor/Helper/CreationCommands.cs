@@ -36,7 +36,7 @@ internal static class CreationContextMenu
 
     private static bool IsAvatarRoot(GameObject go)
     {
-        if (go == null) 
+        if (go == null)
             return false;
 
 #if VRC_SDK_VRCSDK3
@@ -52,7 +52,7 @@ internal static class CreationContextMenu
 
     private static IEnumerable<(string Name, GameObject Object)> GetTemplates()
     {
-        foreach(var path in Directory.EnumerateFiles(TemplateFolderPath, "*.prefab"))
+        foreach (var path in Directory.EnumerateFiles(TemplateFolderPath, "*.prefab"))
         {
             var obj = AssetDatabase.LoadAssetAtPath<ModEmo>(path);
             if (obj == null)
@@ -111,7 +111,7 @@ internal static class CreationContextMenu
         bool isExpression = go.GetComponentInParent<IModEmoExpression>() != null;
 
         AddMenu("ModEmo/Create Pattern", () => CreateNewObject("Expression Pattern (1)", go, typeof(ModEmoExpressionPattern)), enabled: isRoot);
-        
+
         menu.AddSeparator("ModEmo/");
         AddMenu("ModEmo/Expression/Create Expression", () => CreateNewExpression("Expression (1)", go), enabled: isExpressionFolder);
         AddMenu("ModEmo/Expression/Create Empty Expression", () => CreateNewExpression("Expression (1)", go, empty: true), enabled: isExpressionFolder);
@@ -130,7 +130,7 @@ internal static class CreationContextMenu
 
         var faceEmo = Selection.gameObjects?.FirstOrDefault(x => x.TryGetComponent<FaceEmoLauncherComponent>(out _));
 
-        AddMenu("ModEmo/Import Pattern from FaceEmo ..", () => 
+        AddMenu("ModEmo/Import Pattern from FaceEmo ..", () =>
         {
             if (faceEmo == null)
                 return;
@@ -139,7 +139,7 @@ internal static class CreationContextMenu
             if (patterns is null)
                 return;
 
-            foreach(var pattern in patterns)
+            foreach (var pattern in patterns)
             {
                 pattern.transform.parent = go.transform;
             }

@@ -11,6 +11,7 @@
 #pragma warning disable SA1307 // (public) field names should begin with uppercase letter
 
 namespace Numeira;
+
 internal static class FarmHash
 {
     #region Hash32

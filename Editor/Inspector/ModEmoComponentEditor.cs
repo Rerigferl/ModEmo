@@ -32,13 +32,13 @@ internal sealed class ModEmoComponentEditor : Editor
         EditorGUILayout.Space();
         {
             EditorGUILayout.BeginFoldoutHeaderGroup(true, "Patterns");
-            foreach(var x in Patterns)
+            foreach (var x in Patterns)
             {
                 var rect = (GUIPosition)EditorGUILayout.GetControlRect(true);
                 rect.ObjectField("", x.Component, objectType: typeof(ModEmoExpressionPattern), readOnly: true);
             }
             EditorGUILayout.EndFoldoutHeaderGroup();
-        EditorGUILayout.Space();
+            EditorGUILayout.Space();
         }
 
         EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(ModEmo.Settings)));

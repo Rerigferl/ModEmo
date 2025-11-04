@@ -12,7 +12,7 @@
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            foreach(var x in Parameters.AsSpan())
+            foreach (var x in Parameters.AsSpan())
             {
                 hashCode.Add(x);
             }

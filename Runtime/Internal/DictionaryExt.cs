@@ -1,6 +1,4 @@
-﻿using System.Runtime.Serialization;
-
-namespace Numeira;
+﻿namespace Numeira;
 
 internal static class DictionaryExt
 {

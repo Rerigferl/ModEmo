@@ -90,7 +90,7 @@ internal sealed class Curve
     public static explicit operator Curve(AnimationCurve curve)
     {
         var result = new Curve();
-        foreach(var key in curve.keys)
+        foreach (var key in curve.keys)
         {
             result.AddKey(key.time, key.value);
         }

@@ -71,7 +71,7 @@ internal static class InputConverterGenerator
         }
 
 
-        {  
+        {
             var state = stateMachine.AddState("(WD ON)");
             state.motion = dbt.Build(context.AssetContainer);
         }

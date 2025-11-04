@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using nadena.dev.ndmf.util;
+﻿using nadena.dev.ndmf.util;
 using Numeira.Animation;
 
 namespace Numeira;
@@ -22,7 +21,7 @@ internal static class BlendShapeControllerGenerator
         state.Motion = blendTree;
 
         var facePath = data.Face.gameObject.AvatarRootPath();
-        
+
         foreach (var (name, blendShape) in data.BlendShapes)
         {
             if (!data.UsageBlendShapeMap.Contains(name))
@@ -38,14 +37,14 @@ internal static class BlendShapeControllerGenerator
             //@default.Add(new() { path = facePath, propertyName = propertyName, type = typeof(SkinnedMeshRenderer) }, 0, blendShape.Value);
 
             var paramNameBase = $"{ParameterNames.Internal.BlendShapes.Prefix}{name}";
-            
+
             var enableSwitch = blendTree.AddBlendTree($"{name}").Motion;
             enableSwitch.BlendParameter = $"{paramNameBase}/Enable";
             enableSwitch.Append(data.BlankClip, threshold: 0);
-            
+
             var overrideTree = enableSwitch.AddBlendTree("Override").WithThreshold(1).Motion;
             overrideTree.BlendParameter = $"{paramNameBase}/Override";
-            
+
             var cancelTree = overrideTree.AddBlendTree("Cancel").WithThreshold(0).Motion;
             cancelTree.BlendParameter = $"{paramNameBase}/Cancel";
 

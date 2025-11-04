@@ -44,7 +44,7 @@ internal static class GestureWeightSmootherGenerator
 
     public static void Generate(BuildContext context, AnimatorControllerBuilder animatorController)
     {
-        foreach(var x in context.AvatarRootObject.GetComponentsInChildren<ModEmoMotionTime>())
+        foreach (var x in context.AvatarRootObject.GetComponentsInChildren<ModEmoMotionTime>())
         {
             if (x.ParameterName is "GestureLeftWeight")
                 x.ParameterName = ParameterNames.Internal.Input.LeftWeight;
@@ -55,7 +55,7 @@ internal static class GestureWeightSmootherGenerator
         var layer = animatorController.AddLayer("[ModEmo] Gesture Weight Smoother");
         DirectBlendTreeBuilder tree = new DirectBlendTreeBuilder() { DefaultDirectBlendParameter = ParameterNames.Internal.One };
         layer.StateMachine.WithDefaultMotion(tree).AddState("DirectBlendTree (WD On)");
-        
+
         animatorController.Parameters.AddFloat("GestureLeftWeight", 0f);
         animatorController.Parameters.AddFloat("GestureRightWeight", 0f);
         animatorController.Parameters.AddFloat($"{ParameterNames.Internal.Input.LeftWeight}", 0f);

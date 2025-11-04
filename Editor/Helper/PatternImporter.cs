@@ -13,10 +13,10 @@ internal static partial class PatternImporter
         foreach (var layer in animatorController.layers)
         {
             var stateMachine = layer.stateMachine;
-            foreach(var (state, position) in stateMachine.states.OrderBy(x => Vector3.Magnitude(x.position)))
+            foreach (var (state, position) in stateMachine.states.OrderBy(x => Vector3.Magnitude(x.position)))
             {
                 positions.TryAdd(state, position);
-                foreach(var transition in state.transitions)
+                foreach (var transition in state.transitions)
                 {
                     if (transition.destinationState is { } dest)
                     {
@@ -39,7 +39,7 @@ internal static partial class PatternImporter
         var patternObj = new GameObject(animatorController.name);
         patternObj.AddComponent<ModEmoExpressionPattern>();
 
-        foreach(var (state, transitions) in dict.OrderBy(x => index[x.Key]))
+        foreach (var (state, transitions) in dict.OrderBy(x => index[x.Key]))
         {
             var motion = state.motion;
             bool isFacialAnimation = false;
@@ -64,7 +64,7 @@ internal static partial class PatternImporter
             var expression = expressionObj.AddComponent<ModEmoAnimationClipExpression>();
             expression.AnimationClip = anim;
 
-            foreach(var (transition, idx) in transitions.Index())
+            foreach (var (transition, idx) in transitions.Index())
             {
                 var conditions = transition.conditions;
                 if (conditions.Length == 0)
@@ -80,7 +80,7 @@ internal static partial class PatternImporter
                     var conditionObj = new GameObject($"Condition ({idx + 1})");
                     conditionObj.transform.parent = expressionObj.transform;
                     var f = conditionObj.AddComponent<ModEmoConditionFolder>();
-                    foreach(var condition in conditions)
+                    foreach (var condition in conditions)
                     {
                         var c = new GameObject(condition.parameter);
                         c.transform.parent = conditionObj.transform;
@@ -115,7 +115,7 @@ internal static partial class PatternImporter
                     continue;
 
                 uint mask = 0u;
-                foreach(var cond in transition.conditions)
+                foreach (var cond in transition.conditions)
                 {
                     if (cond.parameter is not ("GestureLeft" or "GestureRight") || cond.threshold is not (>= 0 and < 8))
                         continue;
@@ -152,8 +152,8 @@ internal static partial class PatternImporter
         foreach (var (key, item) in dict.OrderByDescending(x => x.Value.Side).ThenBy(x => x.Value.Index))
         {
             var bits = DeconstructPopBits((ushort)key, span);
-            if (bits.Length == 0) 
-            { 
+            if (bits.Length == 0)
+            {
                 continue;
             }
 
@@ -164,7 +164,7 @@ internal static partial class PatternImporter
 
             //exp.Settings.ConditionFolder ??= ModEmoConditionFolder.New(exp.transform);
 
-            foreach(var bit in bits)
+            foreach (var bit in bits)
             {
                 if (!maskPatterns.TryGetValue(bit, out var maskPattern))
                     continue;

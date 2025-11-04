@@ -54,7 +54,7 @@
         }
 
         public readonly void EndModifyCurveTime() => keyframeFactories.TryPop(out _);
-        
+
         internal readonly IEnumerable<CurveBlendShape> Export()
         {
             foreach (var (key, value) in innerDictionary)
@@ -62,7 +62,7 @@
                 if (value.Count == 0)
                     continue;
 
-                yield return new CurveBlendShape(key.Name, new (value), key.Cancel);
+                yield return new CurveBlendShape(key.Name, new(value), key.Cancel);
             }
         }
 

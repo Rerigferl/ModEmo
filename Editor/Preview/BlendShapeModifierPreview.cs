@@ -94,7 +94,7 @@ internal sealed class BlendShapeModifierPreview : IRenderFilter
             if (selectedExpression is not { } modifier)
                 return;
 
-            foreach(var x in modifier.GetBlendShapes())
+            foreach (var x in modifier.GetBlendShapes())
             {
                 int index = GetBlendShapeIndex(mesh, x.Name);
                 if (index == -1)

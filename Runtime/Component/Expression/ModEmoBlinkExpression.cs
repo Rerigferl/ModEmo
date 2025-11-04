@@ -7,7 +7,7 @@ namespace Numeira
         public IEnumerable<CurveBlendShape> GetBlendShapes()
         {
             var writer = BlendShapeCurveWriter.Create();
-            foreach(var x in this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
+            foreach (var x in this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
             {
                 x.CollectBlendShapes(writer);
             }

@@ -20,7 +20,7 @@ namespace Numeira
 
             foreach (var x in Children)
             {
-                x.CollectBlendShapes(writer); 
+                x.CollectBlendShapes(writer);
             }
 
             if (OverrideKeyframe)
@@ -31,7 +31,7 @@ namespace Numeira
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            foreach(var x in Children)
+            foreach (var x in Children)
             {
                 x.CalculateContentHash(ref hashCode);
             }

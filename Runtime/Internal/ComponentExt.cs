@@ -14,7 +14,7 @@ internal static class ComponentExt
             if (includeInactive || go.activeInHierarchy)
             {
                 go.GetComponents(temp);
-                foreach(var x in temp.AsSpan())
+                foreach (var x in temp.AsSpan())
                 {
                     if (x is Component y && y.GetInstanceID() == self?.GetInstanceID())
                         continue;
@@ -22,7 +22,7 @@ internal static class ComponentExt
                 }
             }
         }
-        foreach(var child in go)
+        foreach (var child in go)
         {
             if (!includeInactive && !child.activeInHierarchy)
                 continue;
@@ -75,7 +75,7 @@ internal static class ComponentExt
         if (obj == null)
             return default!;
 
-        if (obj.TryGetComponent<T>(out var x)) 
+        if (obj.TryGetComponent<T>(out var x))
             return x;
         x = obj.AddComponent<T>();
         return x;
@@ -97,6 +97,6 @@ internal static class ComponentExt
         }
         GameObjectUtility.RemoveMonoBehavioursWithMissingScript(obj);
         return;
-        #endif
+#endif
     }
 }

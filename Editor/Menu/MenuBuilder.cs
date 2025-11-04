@@ -18,7 +18,7 @@ internal sealed class MenuBuilder
         {
             name = Name,
             type = Children.Count != 0 ? VRCExpressionsMenu.Control.ControlType.SubMenu : IsRadialPuppet ? VRCExpressionsMenu.Control.ControlType.RadialPuppet : VRCExpressionsMenu.Control.ControlType.Toggle,
-            
+
         };
         return control;
     }

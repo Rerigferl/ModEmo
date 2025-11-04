@@ -25,7 +25,7 @@
                     var curve = AnimationUtility.GetEditorCurve(AnimationClip, bind);
                     if (curve.length == 0)
                         continue;
-                    
+
                     yield return new CurveBlendShape(propertyName, (Curve)curve);
                 }
 #endif

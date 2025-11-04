@@ -17,7 +17,7 @@ static partial class PatternImporter
 
         var result = new GameObject[groups.Length];
 
-        for(int i = 0; i < groups.Length; i++)
+        for (int i = 0; i < groups.Length; i++)
         {
             var group = groups[i];
             var groupName = group.DisplayName;
@@ -26,7 +26,7 @@ static partial class PatternImporter
             go.AddComponent<ModEmoExpressionPattern>();
 
             int count = 0;
-            foreach(var branch in group.Branches.AsSpan())
+            foreach (var branch in group.Branches.AsSpan())
             {
                 var exp = new GameObject();
                 exp.name = $"Expression {count + 1}";

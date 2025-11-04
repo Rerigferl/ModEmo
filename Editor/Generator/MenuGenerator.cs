@@ -1,7 +1,5 @@
 ﻿using System.Collections.Immutable;
 using nadena.dev.modular_avatar.core;
-using VRC.Core;
-using ExpressionsMenuControlType = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu.Control.ControlType;
 using MenuItem = nadena.dev.modular_avatar.core.ModularAvatarMenuItem;
 
 namespace Numeira;
@@ -10,7 +8,7 @@ internal class MenuGenerator
 {
     private BuildContext Context { get; }
     private ModEmo Component { get; }
-    
+
     public MenuGenerator(BuildContext context)
     {
         Context = context;
@@ -34,7 +32,7 @@ internal class MenuGenerator
         if (patterns.Length > 1)
         {
             var patternsFolder = AddMenu("Patterns", PortableControlType.SubMenu, menuRoot);
-            
+
             foreach (var pattern in patterns)
             {
                 var a = pattern.First();
@@ -51,7 +49,7 @@ internal class MenuGenerator
         var data = Context.GetData();
         var expressionMenu = AddMenu("Expressions", PortableControlType.SubMenu, menuRoot);
         {
-            foreach(var x in data.Expressions!)
+            foreach (var x in data.Expressions!)
             {
                 var m = AddMenu(x.Expression.Name, PortableControlType.Toggle, expressionMenu);
                 m.PortableControl.Parameter = ParameterNames.Expression.Index;
@@ -61,7 +59,7 @@ internal class MenuGenerator
 
         var blendShapeMenu = AddMenu("BlendShapes", PortableControlType.SubMenu, menuRoot);
         string[] singleArray = new string[1];
-        foreach(var (key, values) in data.CategorizedBlendShapes)
+        foreach (var (key, values) in data.CategorizedBlendShapes)
         {
             var values2 = values.Where(data.UsageBlendShapeMap.Contains).ToArray();
 
@@ -104,7 +102,7 @@ internal static partial class Ext
     public static ref ParameterConfig GetOrAdd(this ModularAvatarParameters parameters, string name)
     {
         var list = parameters.parameters;
-        foreach(ref var parameter in list.AsSpan())
+        foreach (ref var parameter in list.AsSpan())
         {
             if (parameter.nameOrPrefix == name)
                 return ref parameter;

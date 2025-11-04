@@ -26,7 +26,7 @@ internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefini
         InPhase(BuildPhase.Transforming)
             .BeforePlugin("nadena.dev.modular-avatar")
             .AfterPlugin("net.rs64.tex-trans-tool")
-            .WithRequiredExtensions(new[] { typeof(ModEmoContext) }, 
+            .WithRequiredExtensions(new[] { typeof(ModEmoContext) },
             sequence =>
             {
                 sequence
@@ -55,7 +55,7 @@ internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefini
             if (components is null)
                 return;
 
-            foreach(var component in components.OrderByDescending(x => x.GetType().GetCustomAttribute<RequireComponent>(true) != null ? 1 : 0))
+            foreach (var component in components.OrderByDescending(x => x.GetType().GetCustomAttribute<RequireComponent>(true) != null ? 1 : 0))
             {
                 Object.DestroyImmediate(component);
             }
@@ -68,7 +68,7 @@ internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefini
         protected override void Execute(BuildContext context)
         {
             var modEmo = context.GetModEmoContext().Root;
-            if (modEmo == null || !modEmo.gameObject.activeInHierarchy || !modEmo.enabled )
+            if (modEmo == null || !modEmo.gameObject.activeInHierarchy || !modEmo.enabled)
                 return;
 
             int? modEmoHash = modEmo.Settings.UseCache ? modEmo.GetHashCode() : null;

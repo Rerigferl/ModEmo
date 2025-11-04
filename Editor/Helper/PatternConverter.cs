@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Numeira;
+﻿namespace Numeira;
 
 internal static class PatternConverter
 {
@@ -19,9 +13,9 @@ internal static class PatternConverter
     {
         var patterns = Selection.activeGameObject.GetComponent<IModEmoExpressionPattern>();
         Dictionary<AnimatorParameterCondition, IModEmoExpression> dict = new();
-        foreach(var expression in patterns.Expressions)
+        foreach (var expression in patterns.Expressions)
         {
-            foreach(var conditions in expression.Conditions)
+            foreach (var conditions in expression.Conditions)
             {
                 foreach (var condition in conditions)
                 {

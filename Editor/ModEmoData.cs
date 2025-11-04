@@ -1,9 +1,6 @@
 ﻿using System.Collections.Immutable;
-using System.Collections.Specialized;
 using System.Text.RegularExpressions;
-using nadena.dev.modular_avatar.core;
 using Numeira.Animation;
-using UnityEngine;
 
 namespace Numeira;
 
@@ -39,10 +36,10 @@ internal sealed class ModEmoData
         (CategorizedBlendShapes, BlendShapes) = GetCategorizedBlendShapes(component) ?? default;
 
         List<IModEmoExpression> expressions = new();
-        foreach(var x in component.ExportExpressions())
+        foreach (var x in component.ExportExpressions())
         {
             expressions.Add(x.Key);
-            foreach(var y in x)
+            foreach (var y in x)
             {
                 expressions.Add(y);
             }
@@ -51,7 +48,7 @@ internal sealed class ModEmoData
         if (component.GetBlinkExpression() is { } blink)
             expressions.Add(blink);
 
-        UsageBlendShapeMap = 
+        UsageBlendShapeMap =
             expressions.SelectMany(x => x.BlendShapes)
             .Where(x => BlendShapes.TryGetValue(x.Name, out var value) && !x.Value.Equals(value.Value))
             .Select(x => x.Name)

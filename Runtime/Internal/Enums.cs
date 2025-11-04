@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Numeira;
+﻿namespace Numeira;
 
 internal sealed class Enums<T> where T : struct, Enum
 {

@@ -7,7 +7,7 @@ internal static class AnimationCurveExt
         if (curve == null || curve.length == 0)
             return false;
 
-        foreach(var key in curve.keys)
+        foreach (var key in curve.keys)
         {
             if (key.value != value)
                 return false;

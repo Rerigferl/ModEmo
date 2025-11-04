@@ -31,7 +31,7 @@ namespace Numeira
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
             hashCode.Add((this as IModEmoExpression).Name.GetFarmHash64());
-            foreach(var x in this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
+            foreach (var x in this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
             {
                 x.CalculateContentHash(ref hashCode);
             }

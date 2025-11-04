@@ -50,14 +50,14 @@ internal static class ModEmoExpressionExt
         if (!previewMode)
             anim.AddAnimatedParameter(ParameterNames.MouthMorphCancel.Enable, 0, expression.EnableMouthMorphCancel ? 1 : 0);
 
-        foreach(var blendShape in expression.BlendShapes)
+        foreach (var blendShape in expression.BlendShapes)
         {
             var name = blendShape.Name;
 
             if (!blendShapes.TryGetValue(name, out var defaultValue))
                 defaultValue = new(0, 100);
 
-            foreach(var key in blendShape.Value.Keys)
+            foreach (var key in blendShape.Value.Keys)
             {
                 float value = (previewMode, blendShape.Cancel) switch
                 {

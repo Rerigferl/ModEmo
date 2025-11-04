@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Numeira;
+﻿namespace Numeira;
 
 [Serializable]
 internal struct Condition
@@ -21,7 +19,7 @@ internal sealed class VRChatExpressionCondition : IModEmoExpressionCondition
     {
         if (Hand is Hand.Right)
         {
-            for(int i = 0; i < 8; i++)
+            for (int i = 0; i < 8; i++)
             {
                 yield return GestureToIndex(Gesture, (Gesture)i);
             }

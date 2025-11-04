@@ -13,7 +13,7 @@ internal sealed class AnimationClipGenerator
         var list = keyframeMap.GetOrAdd(key, _ => new());
         if (list.Count > 0)
         {
-            foreach(var x in list.AsSpan())
+            foreach (var x in list.AsSpan())
             {
                 if (Mathf.Approximately(x.Time, time))
                     return;
@@ -90,7 +90,7 @@ internal sealed class AnimationClipGenerator
         AnimationClip result = new() { name = Name };
         var keys = keyframeMap.Keys;
         var times = keyframeMap.Values.SelectMany(x => x).Select(x => x.Time).Distinct().OrderBy(x => x).ToArray();
-        
+
         var dict = keyframeMap.ToDictionary(x => x.Key, x => x.Value.ToDictionary(x => x.Time, x => x));
 
         var curves = new Dictionary<EditorCurveBinding, List<UnityKeyframe>>();
@@ -131,10 +131,10 @@ internal sealed class AnimationClipGenerator
         }
 
         var curve = new AnimationCurve();
-        foreach(var (key, value) in curves)
+        foreach (var (key, value) in curves)
         {
             var array = value.ToArray();
-            for(int i = 0; i < array.Length; i++)
+            for (int i = 0; i < array.Length; i++)
             {
                 if (i != 0)
                 {
@@ -159,9 +159,9 @@ internal sealed class AnimationClipGenerator
         HashSet<float> timesSet = new(FloatEqualityComparer.Default);
         var map = keyframeMap;
 
-        foreach(var (binding, keyframes) in map)
+        foreach (var (binding, keyframes) in map)
         {
-            foreach(var keyframe in keyframes)
+            foreach (var keyframe in keyframes)
             {
                 timesSet.Add(keyframe.Time);
             }
@@ -171,7 +171,7 @@ internal sealed class AnimationClipGenerator
         var keys = new UnityKeyframe[times.Length];
         var curve = new AnimationCurve(keys);
 
-        foreach(var (binding, keyframes) in map)
+        foreach (var (binding, keyframes) in map)
         {
             for (int i = 0; i < keys.Length; i++)
             {

@@ -1,6 +1,5 @@
 ﻿using nadena.dev.ndmf.preview;
 using UnityEditor.Overlays;
-using UnityEditor.SceneManagement;
 using UnityEngine.UIElements;
 
 namespace Numeira;
@@ -13,7 +12,8 @@ internal sealed class PreviewOptionOverlay : Overlay, ITransientOverlay
 
     protected override Layout supportedLayouts => Layout.Panel;
 
-    public bool visible {
+    public bool visible
+    {
         get
         {
             if (!NDMFPreviewPrefs.instance.EnablePreview)
@@ -23,7 +23,7 @@ internal sealed class PreviewOptionOverlay : Overlay, ITransientOverlay
                 return false;
 
             return true;
-        } 
+        }
     }
 
     public override VisualElement CreatePanelContent()

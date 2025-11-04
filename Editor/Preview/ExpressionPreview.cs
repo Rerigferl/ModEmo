@@ -1,7 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Threading.Tasks;
 using nadena.dev.ndmf.preview;
-using Numeira.Animation;
 
 namespace Numeira;
 
@@ -45,11 +44,11 @@ internal sealed class ExpressionPreview : IRenderFilter
     public ImmutableList<RenderGroup> GetTargetGroups(ComputeContext context)
     {
         var result = Iterate(context).ToImmutableList();
-        
+
         return result;
         static IEnumerable<RenderGroup> Iterate(ComputeContext context)
         {
-            foreach(var root in context.GetAvatarRoots())
+            foreach (var root in context.GetAvatarRoots())
             {
                 if (!context.ActiveInHierarchy(root))
                     continue;
@@ -133,7 +132,7 @@ internal sealed class ExpressionPreview : IRenderFilter
                 time = PreviewTime;
 
             var blendShapes = selectedExpression.BlendShapes;
-            foreach(var shape in blendShapes)
+            foreach (var shape in blendShapes)
             {
                 int index = GetBlendShapeIndex(mesh, shape.Name);
                 if (index == -1)
@@ -187,16 +186,16 @@ internal sealed class ExpressionPreview : IRenderFilter
                 if (selectedExpression != null)
                 {
                     if (selectedExpression.BlendShapes.Select(x => x.Value.Length).MaxOrDefault() > 1)
-                    sceneReflesher = SceneViewReflesher.BeginReflesh();
+                        sceneReflesher = SceneViewReflesher.BeginReflesh();
                 }
-            }    
-            
+            }
+
             this.selectedExpression = selectedExpression;
 
             IModEmoExpression? GetSelectedExpression()
             {
                 var active = Selection.activeGameObject;
-                if (active == null) 
+                if (active == null)
                     return null;
 
                 if (active.GetComponentInParent<IModEmoExpression>() is not { } expression)

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using System.Text.RegularExpressions;
-using UnityEditor;
 using UnityEditorInternal;
 
 namespace Numeira;
@@ -156,7 +155,7 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
             }
 
             EditorGUILayout.EndVertical();
-        }    
+        }
 
 
         EditorGUILayout.EndHorizontal();
@@ -203,7 +202,7 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
         menu.AddItem(new("Add Cancel BlendShapes"), false, () =>
         {
             Undo.RecordObject(Component, "Add Cancel Blendshapes");
-            foreach(var item in group.Value)
+            foreach (var item in group.Value)
             {
                 if (!BlendShapes.TryGetValue(item, out var blendShape) || blendShape.Value == 0)
                     continue;
@@ -288,7 +287,7 @@ internal sealed class BlendShapeDataDrawer : PropertyDrawer
         }
 
         EditorGUI.EndProperty();
-        
+
     }
 }
 
@@ -393,7 +392,7 @@ internal sealed class CategorizedBlendShapeComparer : IComparer<BlendShape>
         for (int i = 0; i < span.Length; i++)
         {
             var kvp = span[i];
-            foreach(var blendShapeName in kvp.Value.AsSpan())
+            foreach (var blendShapeName in kvp.Value.AsSpan())
             {
                 dict.TryAdd(blendShapeName, i);
             }

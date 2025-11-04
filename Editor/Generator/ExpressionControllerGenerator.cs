@@ -1,11 +1,7 @@
-﻿using System;
-using System.Linq.Expressions;
-using System.Reflection.Emit;
-using nadena.dev.ndmf.util;
-using Numeira.Animation;
-using Debug = UnityEngine.Debug;
+﻿using Numeira.Animation;
 
 namespace Numeira;
+
 internal static class ExpressionControllerGenerator
 {
     private const float Epsilon = 0.005f;
@@ -76,7 +72,7 @@ internal static class ExpressionControllerGenerator
                 {
                     int index = expressions.Count;
                     var id = expression.GetID();
-                    expressions.Add(new (pattern.Key, patternIdx, expression, id));
+                    expressions.Add(new(pattern.Key, patternIdx, expression, id));
 
                     var expressionTree = patternTree.AddDirectBlendTree(expression.Name).Motion;
 
@@ -93,7 +89,7 @@ internal static class ExpressionControllerGenerator
                     {
                         float? lastValue = null;
 
-                        foreach(var condition in conditionGroup)
+                        foreach (var condition in conditionGroup)
                         {
                             var tree = parent.AddBlendTree(condition.Parameter.Name).WithThreshold(lastValue ?? 0).Motion;
                             tree.BlendParameter = condition.Parameter.Name;
@@ -283,9 +279,9 @@ internal static class ExpressionControllerGenerator
         if (modEmo.MouthMorphCanceller is not { } cancellar)
             return;
 
-        var blendTree = new OneDirectionBlendTreeBuilder() 
+        var blendTree = new OneDirectionBlendTreeBuilder()
         {
-            Name = "", 
+            Name = "",
             DefaultDirectBlendParameter = ParameterNames.Internal.One,
             BlendParameter = ParameterNames.MouthMorphCancel.Enable,
         };
@@ -303,7 +299,7 @@ internal static class ExpressionControllerGenerator
 
         var enable = voiceSwitch.AddAnimationClip("Enable").WithThreshold(float.Epsilon).Motion;
 
-        foreach(var blendShape in cancellar.GetBlendShapes())
+        foreach (var blendShape in cancellar.GetBlendShapes())
         {
             var name = $"{ParameterNames.Internal.BlendShapes.Prefix}{blendShape.Name}/Enable";
             disable.AddAnimatedParameter(name, 0, 1);

@@ -18,7 +18,7 @@
                 yield return Group.Create(self[0], self.SelectMany(x => x.GetConditions()).SelectMany(x => x));
             }
 
-            foreach(var x in Component.GetComponentsInDirectChildren<IModEmoConditionProvider>().SelectMany(x => x.GetConditions()))
+            foreach (var x in Component.GetComponentsInDirectChildren<IModEmoConditionProvider>().SelectMany(x => x.GetConditions()))
                 yield return x;
         }
 

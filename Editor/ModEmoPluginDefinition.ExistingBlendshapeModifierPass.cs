@@ -22,19 +22,19 @@ internal sealed partial class ModEmoPluginDefinition
             var mix = faceRenderer.gameObject.AddComponent<AdHocBlendShapeMix>();
             mix.Replace = true;
             var list = new List<BlendShapeMixDefinition>();
-            
-            foreach(var group in modifiers.GroupBy(x => x.TargetBlendShapeName, x => x.GetBlendShapes()))
+
+            foreach (var group in modifiers.GroupBy(x => x.TargetBlendShapeName, x => x.GetBlendShapes()))
             {
-                list.Add(new ()
+                list.Add(new()
                 {
                     ToBlendShape = group.Key,
                     FromBlendShape = group.Key,
                     MixWeight = -1
                 });
 
-                foreach(var x in group.SelectMany(x => x))
+                foreach (var x in group.SelectMany(x => x))
                 {
-                    list.Add(new ()
+                    list.Add(new()
                     {
                         ToBlendShape = group.Key,
                         FromBlendShape = x.Name,
