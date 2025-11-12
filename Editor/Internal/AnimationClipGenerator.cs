@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using Numeira.Animation;
 using UnityKeyframe = UnityEngine.Keyframe;
 
 namespace Numeira;
@@ -300,5 +301,22 @@ internal sealed class AnimationClipGenerator
             ArrayPool<Keyframe>.Shared.Return(items);
             items = null;
         }
+    }
+}
+
+
+
+internal sealed class AnimationClipBuilderWriter : AnimationWriter
+{
+    public AnimationClipBuilder Builder { get; }
+
+    public AnimationClipBuilderWriter(AnimationClipBuilder builder)
+    {
+        Builder = builder;
+    }
+
+    protected override void Write(AnimationBinding binding, Curve.Keyframe keyframe)
+    {
+        Builder.Add(binding, keyframe.Time, keyframe.Value);
     }
 }

@@ -34,6 +34,8 @@ internal sealed class Curve
         this.keys = new(keys);
     }
 
+    internal void Reset() => keys.Clear();
+
     public int Length => keys?.Count ?? 0;
 
     public IEnumerable<Keyframe> Keys => keys;
@@ -47,16 +49,29 @@ internal sealed class Curve
 
         if (keys.Count == 1 && keys[0].Time > 0)
         {
-            keys.Add(default);
+            AddKey(0, 0);
         }
-        keys!.Sort((x, y) => x.Time.CompareTo(y.Time));
 
         return Evaluate(keys.AsSpan(), time);
     }
 
     public void AddKey(float time, float value) => AddKey(new(time, value));
 
-    public void AddKey(Keyframe keyframe) => keys.Add(keyframe);
+    public void AddKey(Keyframe keyframe, bool update = true)
+    {
+        int index = keys.AsSpan().BinarySearch(keyframe, TimeEqualityComparer.Default);
+        if (index >= 0)
+        {
+            if (update)
+            {
+                keys[index] = keyframe;
+            }
+
+            return;
+        }
+
+        keys.Insert(~index, keyframe);
+    }
 
     private static float Evaluate(ReadOnlySpan<Keyframe> sortedKeyframes, float time)
     {
@@ -97,24 +112,54 @@ internal sealed class Curve
         return result;
     }
 
+    [Serializable]
     public struct Keyframe
     {
         public float Time;
         public float Value;
 
+        public InOutPair<float> Tangent;
+
         public Keyframe(float time, float value)
         {
             Time = time;
             Value = value;
+            Tangent = default;
+        }
+
+        public Keyframe(float time, float value, InOutPair<float> tangent)
+        {
+            Time = time;
+            Value = value;
+            Tangent = tangent;
         }
     }
 
-    public sealed class TimeEqualityComparer : IEqualityComparer<Keyframe>
+    public sealed class TimeEqualityComparer : IEqualityComparer<Keyframe>, IComparer<Keyframe>
     {
         public static TimeEqualityComparer Default { get; } = new();
+
+        int IComparer<Keyframe>.Compare(Keyframe x, Keyframe y) => x.Time.CompareTo(y.Time);
 
         bool IEqualityComparer<Keyframe>.Equals(Keyframe x, Keyframe y) => x.Time.Equals(y.Time);
 
         int IEqualityComparer<Keyframe>.GetHashCode(Keyframe obj) => obj.Time.GetHashCode();
     }
 }
+
+[Serializable]
+internal struct InOutPair<T>
+{
+    public T In;
+    public T Out;
+
+    public InOutPair(T @in, T @out)
+    {
+        In = @in;
+        Out = @out;
+    }
+
+    public static implicit operator InOutPair<T>((T x, T y) tuple) => new(tuple.x, tuple.y);
+
+    public readonly void Deconstruct(out T @in, out T @out) => (@in, @out) = (In, Out);
+} 

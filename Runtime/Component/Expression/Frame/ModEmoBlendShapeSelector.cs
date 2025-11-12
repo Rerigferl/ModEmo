@@ -3,18 +3,23 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "BlendShape")]
-    internal sealed class ModEmoBlendShapeSelector : ModEmoTagComponent, IModEmoBlendShapeProvider
+    internal sealed class ModEmoBlendShapeSelector : ModEmoTagComponent, IModEmoBlendShapeProvider, IModEmoAnimationProvider
     {
         public float Keyframe = 0;
         public List<BlendShape> BlendShapes = new();
 
-        public void CollectBlendShapes(in BlendShapeCurveWriter writer)
+        public IEnumerable<BlendShape> GetBlendShapes() => BlendShapes;
+
+        public void WriteAnimation(IAnimationWriter writer, in AnimationWriterContext context)
         {
-            foreach (var blendShape in BlendShapes)
+            foreach (var blendShape in BlendShapes.AsSpan())
             {
+                var binding = new AnimationBinding(typeof(SkinnedMeshRenderer), context.FaceObjectPath ?? "", $"{(blendShape.Cancel ? "cancel." : "")}blendShape.{blendShape.Name}");
                 if (Keyframe != 0)
-                    writer.Write(0, blendShape with { Value = 0 });
-                writer.Write(Keyframe, blendShape);
+                {
+                    writer.Write(binding, 0, 0);
+                }
+                writer.Write(binding, Keyframe, blendShape.Value);
             }
         }
 

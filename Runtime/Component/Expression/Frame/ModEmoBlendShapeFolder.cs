@@ -1,8 +1,9 @@
 ﻿
+
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "BlendShape Folder")]
-    internal class ModEmoBlendShapeFolder : ModEmoTagComponent, IModEmoBlendShapeProvider
+    internal class ModEmoBlendShapeFolder : ModEmoTagComponent, IModEmoBlendShapeProvider, IModEmoAnimationProvider
     {
         protected virtual bool IncludeSelf => false;
 
@@ -11,24 +12,6 @@ namespace Numeira
 
         public IModEmoBlendShapeProvider[] Children => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: IncludeSelf);
 
-        public void CollectBlendShapes(in BlendShapeCurveWriter writer)
-        {
-            if (OverrideKeyframe)
-            {
-                writer.BeginModifyCurveTime(_ => Keyframe);
-            }
-
-            foreach (var x in Children)
-            {
-                x.CollectBlendShapes(writer);
-            }
-
-            if (OverrideKeyframe)
-            {
-                writer.EndModifyCurveTime();
-            }
-        }
-
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
             foreach (var x in Children)
@@ -36,6 +19,19 @@ namespace Numeira
                 x.CalculateContentHash(ref hashCode);
             }
         }
+
+        public void WriteAnimation(IAnimationWriter writer, in AnimationWriterContext context)
+        {
+            using var modifyKeyframe = OverrideKeyframe ? writer.RegisterPreWriteKeyframe((ref AnimationBinding _, ref Curve.Keyframe keyframe) => keyframe.Time = Keyframe) : default;
+
+            foreach (var x in Children)
+            {
+                if (x is IModEmoAnimationProvider a)
+                    a.WriteAnimation(writer, context);
+            }
+        }
+
+        public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true).SelectMany(x => x.GetBlendShapes());
     }
 
 #if UNITY_EDITOR

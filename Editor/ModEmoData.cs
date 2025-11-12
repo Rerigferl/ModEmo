@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Text.RegularExpressions;
+using nadena.dev.ndmf.util;
 using Numeira.Animation;
 
 namespace Numeira;
@@ -48,11 +49,12 @@ internal sealed class ModEmoData
         if (component.GetBlinkExpression() is { } blink)
             expressions.Add(blink);
 
-        UsageBlendShapeMap =
-            expressions.SelectMany(x => x.BlendShapes)
-            .Where(x => BlendShapes.TryGetValue(x.Name, out var value) && !x.Value.Equals(value.Value))
-            .Select(x => x.Name)
-            .ToImmutableHashSet();
+        var writer = new Collector(BlendShapes);
+        var animationWriterContext = new AnimationWriterContext(context.AvatarRootTransform, Face.transform, Face.transform.AvatarRootPath());
+        foreach (var x in expressions)
+            x.CollectAnimation(writer, animationWriterContext);
+
+        UsageBlendShapeMap = writer.BlendshapeNames.ToImmutableHashSet();
     }
 
     public static ImmutableDictionary<string, BlendShapeInfo> GetBlendShapeInfos(SkinnedMeshRenderer? renderer)
@@ -106,5 +108,25 @@ internal sealed class ModEmoData
 
         return (groups, blendShapes.ToImmutableDictionary());
 
+    }
+
+    private sealed class Collector : BlendshapeCollector
+    {
+        public HashSet<string> BlendshapeNames { get; } = new();
+        public ImmutableDictionary<string, BlendShapeInfo> BlendShapes { get; }
+
+        public Collector(ImmutableDictionary<string, BlendShapeInfo> blendShapes)
+        {
+            BlendShapes = blendShapes;
+        }
+
+        protected override void WriteWithBlendshape(AnimationBinding binding, Curve.Keyframe keyframe, ReadOnlySpan<char> blendShapeName, bool isCancel)
+        {
+            var name = blendShapeName.ToString();
+            if (!BlendShapes.TryGetValue(name, out var info) || Mathf.Approximately(keyframe.Value, info.Value))
+                return;
+
+            BlendshapeNames.Add(name);
+        }
     }
 }

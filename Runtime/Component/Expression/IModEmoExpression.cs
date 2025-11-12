@@ -1,12 +1,10 @@
 ﻿namespace Numeira
 {
-    internal interface IModEmoExpression : IModEmoComponent
+    internal interface IModEmoExpression : IModEmoComponent, IModEmoAnimationCollector
     {
         string Name { get; }
 
         ExpressionMode Mode { get; }
-
-        IEnumerable<CurveBlendShape> BlendShapes { get; }
 
         IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> Conditions => GetConditions();
 

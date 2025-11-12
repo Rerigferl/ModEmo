@@ -234,7 +234,7 @@ internal static class ExpressionControllerGenerator
             var t = stateMachine.AddAnyStateTransition(state).WithDuration(0.1f);
             t.AddCondition(AnimatorConditionMode.Equals, ParameterNames.Expression.Index, expressionData.Index);
 
-            state.Motion = expression.MakeAnimationClip(data);
+            state.Motion = expression.MakeAnimationClip(context);
             defaultState.Motion ??= state.Motion;
             state.MotionTime = expression.MotionTime;
 
@@ -261,7 +261,7 @@ internal static class ExpressionControllerGenerator
         off.Motion = context.GetData().BlankClip;
 
         var on = stateMachine.AddState("ON");
-        on.Motion = expression.MakeAnimationClip(context.GetData(), writeDefault: false, writeBlink: false);
+        on.Motion = expression.MakeAnimationClip(context, writeDefaultValues: false, writeBlink: false);
 
         off.AddTransition(on)
             .AddCondition(AnimatorConditionMode.Greater, ParameterNames.Blink.Value, 1 - Epsilon)

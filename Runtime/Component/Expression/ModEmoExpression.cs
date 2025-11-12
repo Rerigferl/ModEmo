@@ -9,19 +9,6 @@ namespace Numeira
 
         ExpressionMode IModEmoExpression.Mode => GetMode();
 
-        public virtual IEnumerable<CurveBlendShape> BlendShapes
-        {
-            get
-            {
-                var writer = BlendShapeCurveWriter.Create();
-                foreach (var provider in this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
-                {
-                    provider.CollectBlendShapes(writer);
-                }
-                return writer.Export();
-            }
-        }
-
         protected virtual string GetName() => !string.IsNullOrEmpty(Name) ? Name : name;
 
         protected virtual ExpressionMode GetMode() => ExpressionMode.Default;

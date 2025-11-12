@@ -1,6 +1,9 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using nadena.dev.ndmf.preview;
+using UnityEngine;
 
 namespace Numeira;
 
@@ -84,7 +87,7 @@ internal sealed class ExpressionPreview : IRenderFilter
         private DateTime selectionChangedTime;
         private IDisposable? sceneReflesher;
 
-        private readonly Dictionary<string, int> blendShapeIndexCache = new();
+        private readonly PreviewWriter previewWriter = new();
 
         public Node(RenderGroup renderGroup, IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context)
         {
@@ -102,13 +105,6 @@ internal sealed class ExpressionPreview : IRenderFilter
             rootComponent = source.rootComponent;
         }
 
-        private int GetBlendShapeIndex(Mesh mesh, string name)
-        {
-            if (blendShapeIndexCache.TryGetValue(name, out var index)) return index;
-            index = mesh.GetBlendShapeIndex(name);
-            blendShapeIndexCache.Add(name, index);
-            return index;
-        }
 
         public void OnFrame(Renderer original, Renderer proxy)
         {
@@ -131,17 +127,31 @@ internal sealed class ExpressionPreview : IRenderFilter
             if (!AutoPlay)
                 time = PreviewTime;
 
-            var blendShapes = selectedExpression.BlendShapes;
-            foreach (var shape in blendShapes)
+            previewWriter.Renderer = smr;
+            previewWriter.Reset();
+            selectedExpression.CollectAnimation(previewWriter, default);
+
+            if (sceneReflesher == null)
             {
-                int index = GetBlendShapeIndex(mesh, shape.Name);
-                if (index == -1)
+                if (previewWriter.Curves.Select(x => x.Value.Length).MaxOrDefault() > 1)
+                    sceneReflesher = SceneViewReflesher.BeginReflesh();
+                else
+                    sceneReflesher = Disposable.Empty;
+            }
+
+            foreach (var kvp in previewWriter.Curves)
+            {
+                var (index, curve) = kvp;
+                if (curve.Length == 0)
                     continue;
 
-                var lastTime = shape.Value[^1].Time;
-                var value = shape.Value.Evaluate(time * lastTime);
+                bool isCancel = index < 0;
+                index = Math.Abs(index);
 
-                if (shape.Cancel)
+                var lastTime = curve.Keys.Select(x => x.Time).MaxOrDefault();
+                var value = curve.Evaluate(time * lastTime);
+
+                if (isCancel)
                 {
                     float orig = origSmr.GetBlendShapeWeight(index);
                     var weight = value / 100f;
@@ -153,7 +163,7 @@ internal sealed class ExpressionPreview : IRenderFilter
 
             if (TemporaryPreviewBlendShape.Value != null)
             {
-                int index = GetBlendShapeIndex(mesh, TemporaryPreviewBlendShape.Value);
+                int index = previewWriter.GetBlendShapeIndex(TemporaryPreviewBlendShape.Value);
                 if (index != -1)
                 {
                     smr.SetBlendShapeWeight(index, 100);
@@ -182,12 +192,6 @@ internal sealed class ExpressionPreview : IRenderFilter
                 selectionChangedTime = DateTime.Now;
                 sceneReflesher?.Dispose();
                 sceneReflesher = null;
-
-                if (selectedExpression != null)
-                {
-                    if (selectedExpression.BlendShapes.Select(x => x.Value.Length).MaxOrDefault() > 1)
-                        sceneReflesher = SceneViewReflesher.BeginReflesh();
-                }
             }
 
             this.selectedExpression = selectedExpression;
@@ -211,6 +215,47 @@ internal sealed class ExpressionPreview : IRenderFilter
         public void Dispose()
         {
             sceneReflesher?.Dispose();
+        }
+
+        private sealed class PreviewWriter : BlendshapeCollector
+        {
+            private readonly Dictionary<uint, int> blendShapeIndexCache = new();
+
+            public SkinnedMeshRenderer? Renderer { get; set; }
+
+            public IEnumerable<KeyValuePair<int, Curve>> Curves => curves;
+
+            private readonly Dictionary<int, Curve> curves = new();
+
+            public void Reset()
+            {
+                foreach (var x in curves.Values)
+                    x.Reset();
+            }
+
+            protected override void WriteWithBlendshape(AnimationBinding binding, Curve.Keyframe keyframe, ReadOnlySpan<char> blendShapeName, bool isCancel)
+            {
+                int index = GetBlendShapeIndex(blendShapeName);
+                if (isCancel)
+                    index *= -1;
+
+                curves.GetOrAdd(index, _ => new()).AddKey(keyframe, UpdateKeyframe);
+            }
+
+            public int GetBlendShapeIndex(ReadOnlySpan<char> name)
+            {
+                if (Renderer is not { } renderer || renderer.sharedMesh is not { } mesh)
+                    return -1;
+
+                var nameHash = FarmHash.Hash32(MemoryMarshal.AsBytes(name));
+                if (!blendShapeIndexCache.TryGetValue(nameHash, out var index))
+                {
+                    index = mesh.GetBlendShapeIndex(name.ToString());
+                    blendShapeIndexCache.Add(nameHash, index);
+                }
+
+                return index;
+            }
         }
     }
 }

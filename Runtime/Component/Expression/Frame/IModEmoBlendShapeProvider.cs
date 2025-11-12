@@ -2,14 +2,7 @@
 {
     internal interface IModEmoBlendShapeProvider : IModEmoComponent
     {
-        public void CollectBlendShapes(in BlendShapeCurveWriter writer);
-
-        public IEnumerable<CurveBlendShape> GetBlendShapes()
-        {
-            var writer = BlendShapeCurveWriter.Create();
-            CollectBlendShapes(writer);
-            return writer.Export().ToArray();
-        }
+        public IEnumerable<BlendShape> GetBlendShapes();
     }
 
     internal readonly struct BlendShapeCurveWriter
