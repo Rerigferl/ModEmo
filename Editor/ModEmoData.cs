@@ -23,7 +23,7 @@ internal sealed class ModEmoData
 
     public ImmutableHashSet<string>? GeneratedBlendshapeControls { get; set; }
 
-    public ImmutableHashSet<string> UsageBlendShapeMap { get; }
+    public Dictionary<string, BlendshapeUsageInfo> UsageBlendShapeMap { get; } = new();
 
     internal static ModEmoData Init(BuildContext context) => new(context);
 
@@ -49,12 +49,19 @@ internal sealed class ModEmoData
         if (component.GetBlinkExpression() is { } blink)
             expressions.Add(blink);
 
-        var writer = new Collector(BlendShapes);
+        var writer = new Collector(BlendShapes, UsageBlendShapeMap);
         var animationWriterContext = new AnimationWriterContext(context.AvatarRootTransform, Face.transform, Face.transform.AvatarRootPath());
         foreach (var x in expressions)
             x.CollectAnimation(writer, animationWriterContext);
 
-        UsageBlendShapeMap = writer.BlendshapeNames.ToImmutableHashSet();
+        if (component.MouthMorphCanceller is { } mmc)
+        {
+            foreach(var x in mmc.GetBlendShapes())
+            {
+                if (UsageBlendShapeMap.TryGetValue(x.Name, out var info))
+                    info.UseEnableGate = true;
+            }
+        }
     }
 
     public static ImmutableDictionary<string, BlendShapeInfo> GetBlendShapeInfos(SkinnedMeshRenderer? renderer)
@@ -112,12 +119,13 @@ internal sealed class ModEmoData
 
     private sealed class Collector : BlendshapeCollector
     {
-        public HashSet<string> BlendshapeNames { get; } = new();
         public ImmutableDictionary<string, BlendShapeInfo> BlendShapes { get; }
+        public Dictionary<string, BlendshapeUsageInfo> UsageBlendshapes { get; }
 
-        public Collector(ImmutableDictionary<string, BlendShapeInfo> blendShapes)
+        public Collector(ImmutableDictionary<string, BlendShapeInfo> blendShapes, Dictionary<string, BlendshapeUsageInfo> usageBlendshapes)
         {
             BlendShapes = blendShapes;
+            UsageBlendshapes = usageBlendshapes;
         }
 
         protected override void WriteWithBlendshape(AnimationBinding binding, Curve.Keyframe keyframe, ReadOnlySpan<char> blendShapeName, bool isCancel)
@@ -126,7 +134,9 @@ internal sealed class ModEmoData
             if (!BlendShapes.TryGetValue(name, out var info) || Mathf.Approximately(keyframe.Value, info.Value))
                 return;
 
-            BlendshapeNames.Add(name);
+            var x = UsageBlendshapes.GetOrAdd(name, name => new() { Name = name });
+            if (isCancel)
+                x.UseCancelGate = true;
         }
     }
 }

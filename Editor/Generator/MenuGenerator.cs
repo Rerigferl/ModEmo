@@ -61,7 +61,7 @@ internal class MenuGenerator
         string[] singleArray = new string[1];
         foreach (var (key, values) in data.CategorizedBlendShapes)
         {
-            var values2 = values.Where(data.UsageBlendShapeMap.Contains).ToArray();
+            var values2 = values.Where(data.UsageBlendShapeMap.ContainsKey).ToArray();
 
             MenuItem? menu = null;
             MenuItem? page = null;

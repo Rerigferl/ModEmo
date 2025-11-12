@@ -22,7 +22,7 @@ internal static class ModEmoExpressionExt
         {
             foreach (var (name, blendShape) in blendShapes)
             {
-                if (usageBlendShapes != null && !usageBlendShapes.Contains(name))
+                if (usageBlendShapes != null && !usageBlendShapes.ContainsKey(name))
                     continue;
 
                 float value = blendShape.Value;

@@ -24,7 +24,7 @@ internal static class BlendShapeControllerGenerator
 
         foreach (var (name, blendShape) in data.BlendShapes)
         {
-            if (!data.UsageBlendShapeMap.Contains(name))
+            if (!data.UsageBlendShapeMap.TryGetValue(name, out var usageInfo))
                 continue;
 
             var min = new AnimationClipBuilder() { Name = $"{name} Min" };
@@ -38,30 +38,47 @@ internal static class BlendShapeControllerGenerator
 
             var paramNameBase = $"{ParameterNames.Internal.BlendShapes.Prefix}{name}";
 
-            var enableSwitch = blendTree.AddBlendTree($"{name}").Motion;
-            enableSwitch.BlendParameter = $"{paramNameBase}/Enable";
-            enableSwitch.Append(data.BlankClip, threshold: 0);
+            BlendTreeBuilder parent;
 
-            var overrideTree = enableSwitch.AddBlendTree("Override").WithThreshold(1).Motion;
+            if (usageInfo.UseEnableGate)
+            {
+                var enableSwitch = blendTree.AddBlendTree($"{name}").Motion;
+                enableSwitch.BlendParameter = $"{paramNameBase}/Enable";
+                enableSwitch.Append(data.BlankClip, threshold: 0);
+                parent = enableSwitch;
+
+                animatorController.Parameters.AddFloat(enableSwitch.BlendParameter, 1);
+            }
+            else
+            {
+                parent = blendTree;
+            }
+
+            var overrideTree = parent.AddBlendTree("Override").WithThreshold(1).Motion;
             overrideTree.BlendParameter = $"{paramNameBase}/Override";
+            parent = overrideTree;
+            animatorController.Parameters.AddFloat(overrideTree.BlendParameter);
 
-            var cancelTree = overrideTree.AddBlendTree("Cancel").WithThreshold(0).Motion;
-            cancelTree.BlendParameter = $"{paramNameBase}/Cancel";
+            overrideTree.Append(min, threshold: float.Epsilon);
+            overrideTree.Append(max, threshold: 1);
 
-            var controlTree = cancelTree.AddBlendTree("Control").WithThreshold(0).Motion;
+            if (usageInfo.UseCancelGate)
+            {
+                var cancelTree = overrideTree.AddBlendTree("Cancel").WithThreshold(0).Motion;
+                cancelTree.BlendParameter = $"{paramNameBase}/Cancel";
+
+                cancelTree.Append(min, threshold: 1);
+
+                parent = cancelTree;
+                animatorController.Parameters.AddFloat(cancelTree.BlendParameter);
+            }
+
+            var controlTree = parent.AddBlendTree("Control").WithThreshold(0).Motion;
             controlTree.BlendParameter = $"{paramNameBase}/Value";
 
             controlTree.Append(min, threshold: 0);
             controlTree.Append(max, threshold: 1);
 
-            cancelTree.Append(min, threshold: 1);
-
-            overrideTree.Append(min, threshold: float.Epsilon);
-            overrideTree.Append(max, threshold: 1);
-
-            animatorController.Parameters.AddFloat(enableSwitch.BlendParameter, 1);
-            animatorController.Parameters.AddFloat(overrideTree.BlendParameter);
-            animatorController.Parameters.AddFloat(cancelTree.BlendParameter);
             animatorController.Parameters.AddFloat(controlTree.BlendParameter);
         }
     }
