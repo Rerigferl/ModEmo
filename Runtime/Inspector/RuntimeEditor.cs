@@ -2,6 +2,7 @@
 
 internal static partial class RuntimeEditor
 {
+#if UNITY_EDITOR
     public static Action<GameObject, GameObject>? CreateNewObject;
 
     internal abstract class ModEmoFolderComponentEditorBase<T> : Editor where T : IModEmoComponent
@@ -36,4 +37,5 @@ internal static partial class RuntimeEditor
             }
         }
     }
+#endif
 }

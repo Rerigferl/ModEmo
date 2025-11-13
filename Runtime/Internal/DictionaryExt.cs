@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine.UIElements;
-using static Codice.Client.Common.Locks.ServerLocks.ForWorkingBranchOnRepoByItem;
 
 namespace Numeira;
 
