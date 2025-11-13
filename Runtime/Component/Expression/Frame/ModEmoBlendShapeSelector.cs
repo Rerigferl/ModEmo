@@ -33,4 +33,29 @@ namespace Numeira
             }
         }
     }
+
+#if UNITY_EDITOR
+    internal static class ModEmoBlendShapeSelectorExt
+    {
+        public static void ImportFromAnimationClip(this ModEmoBlendShapeSelector selector, AnimationClip? clip)
+        {
+            if (clip == null)
+                return;
+
+            var bindings = AnimationUtility.GetCurveBindings(clip);
+            foreach(var binding in bindings)
+            {
+                if (binding.type != typeof(SkinnedMeshRenderer))
+                    continue;
+                var name = binding.propertyName;
+                if (!name.StartsWith("blendShape."))
+                    continue;
+                name = name["blendShape.".Length..];
+
+                var curve = AnimationUtility.GetEditorCurve(clip, binding);
+                selector.BlendShapes.Add(new() { Name = name, Value = curve.Evaluate(0), Cancel = false });
+            }
+        }
+    }
+#endif
 }

@@ -31,16 +31,53 @@ static partial class PatternImporter
                 var exp = new GameObject();
                 exp.name = $"Expression {count + 1}";
 
-                bool isMultiframe = branch.IsLeftTriggerUsed || branch.IsRightTriggerUsed;
+                var expression = exp.AddComponent<ModEmoDefaultExpression>();
 
-                if (isMultiframe)
+                var blink = exp.AddComponent<ModEmoBlinkControl>();
+                blink.enabled = branch.BlinkEnabled;
+
+                var mmc = exp.AddComponent<ModEmoMouthMorphCancelControl>();
+                mmc.enabled = branch.MouthMorphCancelerEnabled;
+
+                foreach (var condition in branch.Conditions)
                 {
+                    if (condition.ComparisonOperator != Suzuryg.FaceEmo.Domain.ComparisonOperator.Equals)
+                        continue;
 
+                    switch(condition.Hand)
+                    {
+                        case Suzuryg.FaceEmo.Domain.Hand.Left or Suzuryg.FaceEmo.Domain.Hand.Right:
+                            {
+                                var cond = exp.AddComponent<ModEmoGestureCondition>();
+                                cond.Hand = (Hand)(condition.Hand + 1);
+                                cond.Gesture = (Gesture)condition.HandGesture;
+                            }
+                            break;
+                        case Suzuryg.FaceEmo.Domain.Hand.Both:
+                            {
+                                var cond = exp.AddComponent<ModEmoGestureCondition>();
+                                cond.Hand = Hand.Both;
+                                cond.Gesture = (Gesture)condition.HandGesture;
+                            }
+                            break;
+                    }
                 }
-                else
-                {
-                    var c = exp.AddComponent<ModEmoAnimationClipExpression>();
 
+                var blendShape = exp.AddComponent<ModEmoBlendShapeSelector>();
+                blendShape.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.BaseAnimation.GUID)));
+
+                if (branch.IsLeftTriggerUsed)
+                {
+                    var blendShape2 = exp.AddComponent<ModEmoBlendShapeSelector>();
+                    blendShape2.Keyframe = 1;
+                    blendShape2.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.LeftHandAnimation.GUID)));
+                }
+
+                if (branch.IsRightTriggerUsed)
+                {
+                    var blendShape2 = exp.AddComponent<ModEmoBlendShapeSelector>();
+                    blendShape2.Keyframe = 1;
+                    blendShape2.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.RightHandAnimation.GUID)));
                 }
 
                 exp.transform.parent = go.transform;
