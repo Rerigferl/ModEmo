@@ -68,6 +68,7 @@ static partial class PatternImporter
 
                 if (branch.IsLeftTriggerUsed)
                 {
+                    exp.AddComponent<ModEmoGestureWeightMotionTime>().Side = Hand.Left;
                     var blendShape2 = exp.AddComponent<ModEmoBlendShapeSelector>();
                     blendShape2.Keyframe = 1;
                     blendShape2.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.LeftHandAnimation.GUID)));
@@ -75,6 +76,7 @@ static partial class PatternImporter
 
                 if (branch.IsRightTriggerUsed)
                 {
+                    exp.AddComponent<ModEmoGestureWeightMotionTime>().Side = Hand.Right;
                     var blendShape2 = exp.AddComponent<ModEmoBlendShapeSelector>();
                     blendShape2.Keyframe = 1;
                     blendShape2.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.RightHandAnimation.GUID)));
