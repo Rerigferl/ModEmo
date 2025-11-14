@@ -233,13 +233,25 @@ internal sealed class ExpressionPreview : IRenderFilter
                     x.Reset();
             }
 
+            protected override void WriteDefaultValue(AnimationBinding binding, float value)
+            {
+                var name = GetTargetBlendshapeName(binding, out _);
+                if (name.IsEmpty)
+                    return;
+
+                int index = GetBlendShapeIndex(name);
+
+                curves.GetOrAdd(index, _ => new()).AddKey(default, false);
+
+            }
+
             protected override void WriteWithBlendshape(AnimationBinding binding, Curve.Keyframe keyframe, ReadOnlySpan<char> blendShapeName, bool isCancel)
             {
                 int index = GetBlendShapeIndex(blendShapeName);
                 if (isCancel)
                     index *= -1;
 
-                curves.GetOrAdd(index, _ => new()).AddKey(keyframe, UpdateKeyframe);
+                curves.GetOrAdd(index, _ => new()).AddKey(keyframe);
             }
 
             public int GetBlendShapeIndex(ReadOnlySpan<char> name)

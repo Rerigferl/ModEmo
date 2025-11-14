@@ -40,8 +40,6 @@ internal interface IAnimationWriter
 
     public event PreWriteKeyframeDelegate? PreWriteKeyframe;
 
-    public bool UpdateKeyframe { get; set; }
-
     public void Write(AnimationBinding binding, float keyframe, float value) => Write(binding, new Curve.Keyframe(keyframe, value));
 
     public void Write(AnimationBinding binding, Curve.Keyframe keyframe);
@@ -57,7 +55,6 @@ internal interface IAnimationWriterSource : IAnimationWriter
 internal abstract class AnimationWriter : IAnimationWriterSource, IAnimationWriter
 {
     public static DefaultAnimationWriter Shared { get; } = new();
-    public bool UpdateKeyframe { get; set; } = false;
 
     public event IAnimationWriter.PreWriteKeyframeDelegate? PreWriteKeyframe;
 
@@ -86,7 +83,7 @@ internal abstract class AnimationWriter : IAnimationWriterSource, IAnimationWrit
 
         protected override void Write(AnimationBinding binding, Curve.Keyframe keyframe)
         {
-            Curves.GetOrAdd(binding, _ => new()).AddKey(keyframe, UpdateKeyframe);
+            Curves.GetOrAdd(binding, _ => new()).AddKey(keyframe);
         }
     }
 }
@@ -95,25 +92,36 @@ internal abstract class BlendshapeCollector : AnimationWriter
 {
     protected override void Write(AnimationBinding binding, Curve.Keyframe keyframe)
     {
-        if (binding.Type != typeof(SkinnedMeshRenderer))
+        var name = GetTargetBlendshapeName(binding, out var isCancel);
+        if (name.IsEmpty)
             return;
+
+        WriteWithBlendshape(binding, keyframe, name, isCancel);
+    }
+
+    protected ReadOnlySpan<char> GetTargetBlendshapeName(AnimationBinding binding, out bool isCancelBlendshape)
+    {
+        isCancelBlendshape = false;
+        if (binding.Type != typeof(SkinnedMeshRenderer))
+        {
+            return default;
+        }
 
         const string cancelShapeNamePrefix = "cancel.";
         const string blendShapeNamePrefix = "blendShape.";
         var name = binding.PropertyName.AsSpan();
-        bool isCancel = false;
         if (name.StartsWith(cancelShapeNamePrefix))
         {
-            isCancel = true;
+            isCancelBlendshape = true;
             name = name[cancelShapeNamePrefix.Length..];
         }
 
         if (!name.StartsWith(blendShapeNamePrefix))
-            return;
+            return default;
 
         name = name[blendShapeNamePrefix.Length..];
 
-        WriteWithBlendshape(binding, keyframe, name, isCancel);
+        return name;
     }
 
     protected override void WriteDefaultValue(AnimationBinding binding, float value)
