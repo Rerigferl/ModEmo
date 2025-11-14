@@ -15,10 +15,8 @@ namespace Numeira
             foreach (var blendShape in BlendShapes.AsSpan())
             {
                 var binding = new AnimationBinding(typeof(SkinnedMeshRenderer), context.FaceObjectPath ?? "", $"{(blendShape.Cancel ? "cancel." : "")}blendShape.{blendShape.Name}");
-                if (Keyframe != 0)
-                {
-                    writer.Write(binding, 0, 0);
-                }
+               
+                writer.WriteDefaultValue(binding, 0);
                 writer.Write(binding, Keyframe, blendShape.Value);
             }
         }

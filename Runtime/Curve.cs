@@ -113,7 +113,7 @@ internal sealed class Curve
     }
 
     [Serializable]
-    public struct Keyframe
+    public struct Keyframe : IEquatable<Keyframe>
     {
         public float Time;
         public float Value;
@@ -133,6 +133,17 @@ internal sealed class Curve
             Value = value;
             Tangent = tangent;
         }
+
+        public readonly override bool Equals(object obj) => obj is Keyframe other && Equals(other);
+
+        public readonly bool Equals(in Keyframe other) => Time == other.Time && Value == other.Value && Tangent == other.Tangent;
+
+        readonly bool IEquatable<Keyframe>.Equals(Keyframe other) => Equals(other);
+
+        public readonly override int GetHashCode() => HashCode.Combine(Time, Value, Tangent);
+
+        public static bool operator ==(in Keyframe left, in Keyframe right) => left.Equals(right);
+        public static bool operator !=(in Keyframe left, in Keyframe right) => left.Equals(right);
     }
 
     public sealed class TimeEqualityComparer : IEqualityComparer<Keyframe>, IComparer<Keyframe>
@@ -148,7 +159,7 @@ internal sealed class Curve
 }
 
 [Serializable]
-internal struct InOutPair<T>
+internal struct InOutPair<T> : IEquatable<InOutPair<T>>
 {
     public T In;
     public T Out;
@@ -162,4 +173,26 @@ internal struct InOutPair<T>
     public static implicit operator InOutPair<T>((T x, T y) tuple) => new(tuple.x, tuple.y);
 
     public readonly void Deconstruct(out T @in, out T @out) => (@in, @out) = (In, Out);
+
+    public readonly bool Equals(in InOutPair<T> other)
+    {
+        if (typeof(T).IsValueType)
+        {
+            return EqualityComparer<T>.Default.Equals(In, other.In) && EqualityComparer<T>.Default.Equals(Out, other.Out);
+        }
+        else
+        {
+            var comparer = EqualityComparer<T>.Default;
+            return comparer.Equals(In, other.In) && comparer.Equals(Out, other.Out);
+        }
+    }
+
+    readonly bool IEquatable<InOutPair<T>>.Equals(InOutPair<T> other) => Equals(other);
+
+    public readonly override bool Equals(object obj) => obj is InOutPair<T> other && Equals(other);
+
+    public readonly override int GetHashCode() => HashCode.Combine(In, Out);
+
+    public static bool operator ==(in InOutPair<T> left, in InOutPair<T> right) => left.Equals(right);
+    public static bool operator !=(in InOutPair<T> left, in InOutPair<T> right) => !left.Equals(right);
 } 

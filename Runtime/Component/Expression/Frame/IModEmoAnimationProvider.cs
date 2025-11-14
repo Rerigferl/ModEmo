@@ -45,6 +45,8 @@ internal interface IAnimationWriter
     public void Write(AnimationBinding binding, float keyframe, float value) => Write(binding, new Curve.Keyframe(keyframe, value));
 
     public void Write(AnimationBinding binding, Curve.Keyframe keyframe);
+
+    public void WriteDefaultValue(AnimationBinding binding, float value);
 }
 
 internal interface IAnimationWriterSource : IAnimationWriter
@@ -61,11 +63,21 @@ internal abstract class AnimationWriter : IAnimationWriterSource, IAnimationWrit
 
     protected abstract void Write(AnimationBinding binding, Curve.Keyframe keyframe);
 
+    protected virtual void WriteDefaultValue(AnimationBinding binding, float value) => Write(binding, new(0, value));
+
     void IAnimationWriter.Write(AnimationBinding binding, Curve.Keyframe keyframe)
     {
         PreWriteKeyframe?.Invoke(ref binding, ref keyframe);
 
         Write(binding, keyframe);
+    }
+
+    void IAnimationWriter.WriteDefaultValue(AnimationBinding binding, float value)
+    {
+        var keyframe = new Curve.Keyframe(0, value);
+        PreWriteKeyframe?.Invoke(ref binding, ref keyframe);
+
+        WriteDefaultValue(binding, keyframe.Value);
     }
 
     public sealed class DefaultAnimationWriter : AnimationWriter
@@ -102,6 +114,11 @@ internal abstract class BlendshapeCollector : AnimationWriter
         name = name[blendShapeNamePrefix.Length..];
 
         WriteWithBlendshape(binding, keyframe, name, isCancel);
+    }
+
+    protected override void WriteDefaultValue(AnimationBinding binding, float value)
+    {
+
     }
 
     protected abstract void WriteWithBlendshape(AnimationBinding binding, Curve.Keyframe keyframe, ReadOnlySpan<char> blendShapeName, bool isCancel);

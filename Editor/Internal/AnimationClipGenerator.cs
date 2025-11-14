@@ -319,4 +319,12 @@ internal sealed class AnimationClipBuilderWriter : AnimationWriter
     {
         Builder.Add(binding, keyframe.Time, keyframe.Value);
     }
+
+    protected override void WriteDefaultValue(AnimationBinding binding, float value)
+    {
+        var frames = Builder[binding];
+        if (frames.Length != 0)
+            return;
+        Builder.Add(binding, 0, value);
+    }
 }
