@@ -1,7 +1,7 @@
 ﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Expression Folder")]
-    internal class ModEmoExpressionFolder : ModEmoTagComponent, IModEmoExpressionFolder
+    internal class ModEmoExpressionFolder : ModEmoNamedTagComponent, IModEmoExpressionFolder
     {
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
@@ -12,7 +12,7 @@
         }
     }
 
-    internal interface IModEmoExpressionFolder : IModEmoComponent
+    internal interface IModEmoExpressionFolder : IModEmoNamedComponent
     {
         IEnumerable<IModEmoExpression> Expressions
         {

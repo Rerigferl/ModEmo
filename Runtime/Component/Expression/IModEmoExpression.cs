@@ -1,9 +1,7 @@
 ﻿namespace Numeira
 {
-    internal interface IModEmoExpression : IModEmoComponent, IModEmoAnimationCollector
+    internal interface IModEmoExpression : IModEmoNamedComponent, IModEmoAnimationCollector
     {
-        string Name { get; }
-
         ExpressionMode Mode { get; }
 
         IEnumerable<IGrouping<IModEmoConditionProvider, AnimatorParameterCondition>> Conditions => GetConditions();

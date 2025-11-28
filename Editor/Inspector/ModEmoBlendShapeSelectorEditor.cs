@@ -27,6 +27,24 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
     private string searchText = string.Empty;
     private Regex? searchTextRegEx;
 
+    private bool isExpressionChild = false;
+
+    private static bool IsExpressionChild(ModEmoBlendShapeSelector selector)
+    {
+        var t = selector.transform;
+        while(t != null)
+        {
+            if (t.GetComponent<IModEmoExpression>() != null)
+                return true;
+
+            if (t != selector.transform && t.GetComponent<IModEmoBlendShapeFolder>() == null)
+                return false;
+
+            t = t.parent;
+        }
+        return false;
+    }
+
     public void OnEnable()
     {
         blendShapesProperty = serializedObject.FindProperty("BlendShapes");
@@ -39,6 +57,8 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
         categoryOpenStatus = new bool[CategorizedBlendShapes.Count];
         categoryScrolls = new Vector2[CategorizedBlendShapes.Count];
+
+        isExpressionChild = IsExpressionChild(Component);
     }
 
     private static int previewingControlId = 0;
@@ -53,7 +73,7 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
         //isSettingsOpening = EditorGUILayout.BeginFoldoutHeaderGroup(isSettingsOpening, "Settings");
         //EditorGUILayout.EndFoldoutHeaderGroup();
-        //if (isSettingsOpening)
+        if (isExpressionChild)
         {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("Keyframe"));
             EditorGUILayout.Separator();

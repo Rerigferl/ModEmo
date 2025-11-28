@@ -3,13 +3,9 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Expression Pattern")]
-    internal sealed class ModEmoExpressionPattern : ModEmoExpressionFolder, IModEmoExpressionPattern, IModEmoComponent
+    internal sealed class ModEmoExpressionPattern : ModEmoExpressionFolder, IModEmoExpressionPattern
     {
-        public string Name = "";
-
         public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true).Where(x => !x.GameObject.GetComponents<IModEmoExpression>().Where(x => x is not IModEmoExpressionPattern).Any()).SelectMany(x => x.GetBlendShapes());
-
-        string IModEmoExpression.Name => !string.IsNullOrEmpty(Name) ? Name : name;
 
         ExpressionMode IModEmoExpression.Mode => ExpressionMode.Default;
 

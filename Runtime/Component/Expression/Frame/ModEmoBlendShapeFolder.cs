@@ -3,7 +3,7 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "BlendShape Folder")]
-    internal class ModEmoBlendShapeFolder : ModEmoTagComponent, IModEmoBlendShapeProvider, IModEmoAnimationProvider
+    internal class ModEmoBlendShapeFolder : ModEmoTagComponent, IModEmoBlendShapeFolder
     {
         protected virtual bool IncludeSelf => false;
 
@@ -32,6 +32,11 @@ namespace Numeira
         }
 
         public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true).SelectMany(x => x.GetBlendShapes());
+    }
+
+    internal interface IModEmoBlendShapeFolder : IModEmoComponent, IModEmoBlendShapeProvider, IModEmoAnimationProvider
+    {
+        public IModEmoBlendShapeProvider[] Children => Component.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>();
     }
 
 #if UNITY_EDITOR

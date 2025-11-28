@@ -75,19 +75,7 @@
         // lang=regex 
         public string SeparatorStringRegEx = "[-=]{2,}";
 
-        // Broken...
-        [HideInInspector]
-        public bool UseCache = false;
-
         [Range(0, 1)]
-        public float SmoothFactor = 0.85f;
-
-        public ModEmoDebugSettings DebugSettings = new();
-    }
-
-    [Serializable]
-    internal sealed class ModEmoDebugSettings
-    {
-        public bool SkipExpressionController = false;
+        public float SmoothFactor = 0.75f;
     }
 }

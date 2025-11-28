@@ -47,6 +47,8 @@ internal static partial class ModEmoConstants
             {
                 public const string Prefix = $"{Internal.Prefix}{nameof(BlendShapes)}/";
 
+                public const string Reset = $"{Prefix}Reset";
+
                 public const string ControlPrefix = $"{Prefix}C/";
                 public const string OverridePrefix = $"{Prefix}O/";
                 public const string DisablePrefix = $"{Prefix}D/";

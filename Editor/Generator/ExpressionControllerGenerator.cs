@@ -55,74 +55,61 @@ internal static class ExpressionControllerGenerator
         var lockTree = localOnly.AddBlendTree("Lock").WithThreshold(1).Motion;
         lockTree.BlendParameter = ParameterNames.Expression.Lock;
 
-        if (!modEmo.Settings.DebugSettings.SkipExpressionController)
+
+        var patternSwitch = lockTree.AddBlendTree("Pattern Switch").Motion;
+        patternSwitch.BlendParameter = ParameterNames.Expression.Pattern;
+
+        foreach (var (pattern, patternIdx) in expressionPatterns.Index())
         {
-            var patternSwitch = lockTree.AddBlendTree("Pattern Switch").Motion;
-            patternSwitch.BlendParameter = ParameterNames.Expression.Pattern;
+            var patternTree = patternSwitch.AddDirectBlendTree(pattern.Key.Name).WithThreshold(patternIdx).Motion;
 
-            foreach (var (pattern, patternIdx) in expressionPatterns.Index())
+            var patternAnimation = new AnimationClipBuilder() { Name = pattern.Key.Name };
+            patternAnimation.AddAnimatedParameter(ParameterNames.Expression.Index, 0, 0);
+            expressions.Add(new(pattern.Key, patternIdx, pattern.Key, null));
+
+            foreach (var (expression, expressionIdx) in pattern.Index())
             {
-                var patternTree = patternSwitch.AddDirectBlendTree(pattern.Key.Name).WithThreshold(patternIdx).Motion;
+                int index = expressions.Count;
+                var id = expression.GetID();
+                expressions.Add(new(pattern.Key, patternIdx, expression, id));
 
-                var patternAnimation = new AnimationClipBuilder() { Name = pattern.Key.Name };
-                patternAnimation.AddAnimatedParameter(ParameterNames.Expression.Index, 0, 0);
-                expressions.Add(new(pattern.Key, patternIdx, pattern.Key, null));
+                var expressionTree = patternTree.AddDirectBlendTree(expression.Name).Motion;
 
-                foreach (var (expression, expressionIdx) in pattern.Index())
+                BlendTreeBuilder parent = expressionTree;
+
+
+                var fallback = new AnimationClipBuilder() { Name = "Fallback" };
+                fallback.AddAnimatedParameter($"{ParameterNames.Expression.Index}/{id}", 0, 0);
+
+                var expressionAnimation = new AnimationClipBuilder() { Name = expression.Name };
+                expressionAnimation.AddAnimatedParameter($"{ParameterNames.Expression.Index}/{id}", 0, 1);
+                animatorController.Parameters.AddFloat($"{ParameterNames.Expression.Index}/{id}", 0);
+                foreach (var conditionGroup in expression.Conditions)
                 {
-                    int index = expressions.Count;
-                    var id = expression.GetID();
-                    expressions.Add(new(pattern.Key, patternIdx, expression, id));
+                    float? lastValue = null;
 
-                    var expressionTree = patternTree.AddDirectBlendTree(expression.Name).Motion;
-
-                    BlendTreeBuilder parent = expressionTree;
-
-
-                    var fallback = new AnimationClipBuilder() { Name = "Fallback" };
-                    fallback.AddAnimatedParameter($"{ParameterNames.Expression.Index}/{id}", 0, 0);
-
-                    var expressionAnimation = new AnimationClipBuilder() { Name = expression.Name };
-                    expressionAnimation.AddAnimatedParameter($"{ParameterNames.Expression.Index}/{id}", 0, 1);
-                    animatorController.Parameters.AddFloat($"{ParameterNames.Expression.Index}/{id}", 0);
-                    foreach (var conditionGroup in expression.Conditions)
+                    foreach (var condition in conditionGroup)
                     {
-                        float? lastValue = null;
+                        var tree = parent.AddBlendTree(condition.Parameter.Name).WithThreshold(lastValue ?? 0).Motion;
+                        tree.BlendParameter = condition.Parameter.Name;
+                        animatorController.AddParameter(tree.BlendParameter, AnimatorControllerParameterType.Float);
+                        var value = condition.Parameter.Value;
+                        lastValue = value;
 
-                        foreach (var condition in conditionGroup)
+                        if (condition.Mode is ConditionMode.Equals)
                         {
-                            var tree = parent.AddBlendTree(condition.Parameter.Name).WithThreshold(lastValue ?? 0).Motion;
-                            tree.BlendParameter = condition.Parameter.Name;
-                            animatorController.AddParameter(tree.BlendParameter, AnimatorControllerParameterType.Float);
-                            var value = condition.Parameter.Value;
-                            lastValue = value;
-
-                            if (condition.Mode is ConditionMode.Equals)
-                            {
-                                tree.Append(fallback, threshold: value - Epsilon);
-                                tree.Append(fallback, threshold: value + Epsilon);
-                            }
-                            else
-                            {
-                                throw new NotImplementedException();
-                            }
-
-                            parent = tree;
+                            tree.Append(fallback, threshold: value - Epsilon);
+                            tree.Append(fallback, threshold: value + Epsilon);
+                        }
+                        else
+                        {
+                            throw new NotImplementedException();
                         }
 
-                        parent.Append(expressionAnimation).WithThreshold(lastValue ?? 0);
+                        parent = tree;
                     }
-                }
-            }
-        }
-        else
-        {
-            foreach (var (pattern, patternIdx) in expressionPatterns.Index())
-            {
-                expressions.Add(new(pattern.Key, patternIdx, pattern.Key, null));
-                foreach (var (expression, expressionIdx) in pattern.Index())
-                {
-                    expressions.Add(new(pattern.Key, patternIdx, expression, expression.GetID()));
+
+                    parent.Append(expressionAnimation).WithThreshold(lastValue ?? 0);
                 }
             }
         }

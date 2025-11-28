@@ -9,11 +9,20 @@
         void IModEmoComponent.CalculateContentHash(ref HashCode hashCode) => CalculateContentHash(ref hashCode);
     }
 
-    internal abstract class ModEmoNamedComponent : ModEmoTagComponent, IModEmoNamedComponent
+    internal abstract class ModEmoNamedTagComponent : ModEmoTagComponent, IModEmoNamedComponent
     {
         public string Name = "";
 
-        string IModEmoNamedComponent.Name => string.IsNullOrEmpty(Name) ? name : Name;
+        protected virtual string GetName() => Name;
+
+        string IModEmoNamedComponent.Name
+        {
+            get
+            {
+                var name = GetName();
+                return string.IsNullOrEmpty(name) ? this.name : name;
+            }
+        }
     }
 
     internal interface IModEmoNamedComponent : IModEmoComponent

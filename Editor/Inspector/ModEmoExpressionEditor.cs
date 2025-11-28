@@ -27,24 +27,6 @@ internal class ModEmoExpressionEditor : Editor
 
             EditorGUILayout.Space();
         }
-
-        DrawPreviewSetting();
-    }
-
-    private static bool IsPreviewSettingOpen;
-
-    internal static void DrawPreviewSetting()
-    {
-        var open = IsPreviewSettingOpen = EditorGUILayout.BeginFoldoutHeaderGroup(IsPreviewSettingOpen, "Preview Setting");
-        EditorGUILayout.EndFoldoutHeaderGroup();
-
-        if (!open)
-            return;
-
-        ExpressionPreview.AutoPlay = EditorGUILayout.Toggle("Auto Play", ExpressionPreview.AutoPlay);
-        ExpressionPreview.PreviewTime = EditorGUILayout.Slider("Preview Frame", ExpressionPreview.PreviewTime, 0, 1);
-
-        EditorGUILayout.Space();
     }
 
     protected virtual SerializedProperty GetNameProperty(SerializedObject so) => so.FindProperty("Name");

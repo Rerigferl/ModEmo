@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using UnityEngine.UIElements;
 
 namespace Numeira;
@@ -11,6 +12,18 @@ internal static class DictionaryExt
             return value;
         value = factory(key);
         dictionary.Add(key, value);
+        return value;
+    }
+
+    public delegate TResult ReadOnlySpanFunc<T, TResult>(ReadOnlySpan<T> span);
+
+    public static TValue GetOrAdd<TValue>(this Dictionary<ulong, TValue> dictionary, ReadOnlySpan<char> key, ReadOnlySpanFunc<char, TValue> factory)
+    {
+        var hash = FarmHash.Hash64(MemoryMarshal.AsBytes(key));
+        if (dictionary.TryGetValue(hash, out TValue value))
+            return value;
+        value = factory(key);
+        dictionary.Add(hash, value);
         return value;
     }
 
