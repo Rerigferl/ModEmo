@@ -131,8 +131,12 @@ internal sealed class ModEmoData
         protected override void WriteWithBlendshape(AnimationBinding binding, Curve.Keyframe keyframe, ReadOnlySpan<char> blendShapeName, bool isCancel)
         {
             var name = blendShapeName.ToString();
-            if (!BlendShapes.TryGetValue(name, out var info) || Mathf.Approximately(keyframe.Value, info.Value))
+            if (!BlendShapes.TryGetValue(name, out var info))
                 return;
+
+            if (!isCancel)
+                if (Mathf.Approximately(info.Value, keyframe.Value))
+                    return;
 
             var x = UsageBlendshapes.GetOrAdd(name, name => new() { Name = name });
             if (isCancel)

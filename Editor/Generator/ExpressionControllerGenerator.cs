@@ -142,6 +142,7 @@ internal static class ExpressionControllerGenerator
 
         var defaultState = stateMachine.AddState("0 Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
         defaultState.AddAvatarParameterDriver().Set(ParameterNames.Expression.Index, 0);
+        defaultState.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, 0);
 
         foreach (var group in expressions.GroupBy(x => x.Pattern))
         {
