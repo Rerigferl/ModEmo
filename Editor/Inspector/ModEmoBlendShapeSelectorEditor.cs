@@ -29,6 +29,10 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
     private bool isExpressionChild = false;
 
+    internal Guid Identifier;
+    private static ulong previewingControlId = 0;
+    private static Guid? previewingIdentifier = null;
+
     private static bool IsExpressionChild(ModEmoBlendShapeSelector selector)
     {
         var t = selector.transform;
@@ -47,6 +51,8 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
     public void OnEnable()
     {
+        Identifier = Guid.NewGuid();
+
         blendShapesProperty = serializedObject.FindProperty("BlendShapes");
         blendShapeList = new(serializedObject, blendShapesProperty);
 
@@ -60,8 +66,6 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
         isExpressionChild = IsExpressionChild(Component);
     }
-
-    private static int previewingControlId = 0;
 
     public override void OnInspectorGUI()
     {
@@ -133,40 +137,57 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
                 if (needScroll)
                     scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.MaxHeight(maxHeight));
 
-                foreach (var blendShapeName in stack.AsSpan())
+                var items = stack.AsSpan();
+                for (int i2 = 0; i2 < items.Length; i2++)
                 {
+                    var blendShapeName = items[i2];
                     content.text = blendShapeName;
-                    var id = blendShapeName.GetFarmHash();
+                    var id = blendShapeName.GetFarmHash64();
+
                     var rect = EditorGUILayout.GetControlRect(false, lineHeight);
 
-                    if (rect.Contains(Event.current.mousePosition))
-                    {
-                        ExpressionPreview.TemporaryPreviewBlendShape.Value = blendShapeName;
-                        previewingControlId = id;
-                    }
-                    else if (previewingControlId == id)
-                    {
-                        ExpressionPreview.TemporaryPreviewBlendShape.Value = null;
-                        previewingControlId = 0;
-                    }
+                    float viewTop = needScroll ? scroll.y : 0;
+                    float viewBottom = viewTop + maxHeight;
+                    float itemTop = rect.y;
+                    float itemBottom = rect.y + rect.height;
+                    bool isVisible = !needScroll || (itemBottom > viewTop && itemTop < viewBottom);
 
-                    if (GUI.Button(rect, blendShapeName))
+                    if (isVisible)
                     {
-                        var blendShapeValue = BlendShapes.TryGetValue(blendShapeName, out var value) ? value.Max : 100;
-                        Undo.RecordObject(Component, "Modify BlendShapes");
-                        if (Event.current.shift)
+                        if (Event.current.type == EventType.Repaint)
                         {
-                            Component.BlendShapes.RemoveAll(y => y.Name == blendShapeName);
+                            if (rect.Contains(Event.current.mousePosition))
+                            {
+                                ExpressionPreview.TemporaryPreviewBlendShape.Value = blendShapeName;
+                                previewingControlId = id;
+                                previewingIdentifier = Identifier;
+                            }
+                            else if (previewingIdentifier == Identifier && previewingControlId == id)
+                            {
+                                ExpressionPreview.TemporaryPreviewBlendShape.Value = null;
+                                previewingControlId = 0;
+                                previewingIdentifier = null;
+                            }
                         }
-                        else if (Event.current.button == 1)
+
+                        if (GUI.Button(rect, blendShapeName))
                         {
-                            Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = true, Value = blendShapeValue });
+                            var blendShapeValue = BlendShapes.TryGetValue(blendShapeName, out var value) ? value.Max : 100;
+                            Undo.RecordObject(Component, "Modify BlendShapes");
+                            if (Event.current.shift)
+                            {
+                                Component.BlendShapes.RemoveAll(y => y.Name == blendShapeName);
+                            }
+                            else if (Event.current.button == 1)
+                            {
+                                Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = true, Value = blendShapeValue });
+                            }
+                            else
+                            {
+                                Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = false, Value = blendShapeValue });
+                            }
+                            EditorUtility.SetDirty(Component);
                         }
-                        else
-                        {
-                            Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = false, Value = blendShapeValue });
-                        }
-                        EditorUtility.SetDirty(Component);
                     }
                 }
 
@@ -237,7 +258,7 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
         {
         }
 
-        public override bool DisplayRemove => false;
+        public override bool DisplayRemove => true;
 
         protected override void OnItemGUI(Rect rect, int index, bool isActive, bool isFocused)
         {
@@ -397,8 +418,6 @@ internal abstract class ReorderableListWrapper
         return index;
     }
 }
-
-
 
 internal sealed class CategorizedBlendShapeComparer : IComparer<BlendShape>
 {
