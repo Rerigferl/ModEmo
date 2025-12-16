@@ -14,7 +14,7 @@ internal static class ExpressionControllerGenerator
         List<ExpressionData> expressions = new();
         //GenerateIndexSelectorBlendTree(context, animatorController, expressions);
         GenerateIndexSelectorStates(context, animatorController, expressions);
-        int count = 1;
+        int count = 0;
         foreach (var expression in expressions.AsSpan())
         {
             expression.Index = count++;
@@ -140,24 +140,26 @@ internal static class ExpressionControllerGenerator
 
         int stateCount = 0;
 
-        var defaultState = stateMachine.AddState("0 Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
-        defaultState.AddAvatarParameterDriver().Set(ParameterNames.Expression.Index, 0);
-        defaultState.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, 0);
+        Vector2 GetPosition(int index) => new((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * index);
 
         foreach (var group in expressions.GroupBy(x => x.Pattern))
         {
             var pattern = group.Key;
             var array = group.ToArray();
 
+            StateBuilder? defaultExpState = null;
+
             for (int i = 0; i < array.Length; i++)
             {
                 var expData = array[i];
                 var expression = expData.Expression;
 
-                var state = stateMachine.AddState($"{expData.Index} {expression.Name}", new Vector2(defaultState.Position!.Value.x, 120 + 70 * stateCount++));
+                var state = stateMachine.AddState($"{expData.Index} {expression.Name}", GetPosition(stateCount++));
 
                 if (i == 0)
                 {
+                    defaultExpState = state;
+
                     var t = stateMachine.AddEntryTransition(state);
                     t.AddCondition(AnimatorConditionMode.Greater, ParameterNames.IsLocal, 0);
                     t.AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon);
@@ -174,7 +176,8 @@ internal static class ExpressionControllerGenerator
                 }
                 else
                 {
-                    defaultState.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
+
+                    defaultExpState?.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
 
                     var t = stateMachine.AddEntryTransition(state)
                         .AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon)
