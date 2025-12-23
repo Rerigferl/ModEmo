@@ -92,7 +92,9 @@ internal static class MenuGenerator
 
         {
             var resetLayer = builder.AddLayer("[ModEmo] Reset Overrided Blendshapes");
-            resetLayer.StateMachine.AddState("Idle");
+            resetLayer.StateMachine.DefaultMotion = data.BlankClip;
+            var idle = resetLayer.StateMachine.AddState("Idle");
+            resetLayer.StateMachine.AddAnyStateTransition(idle).Equals(ParameterNames.Internal.BlendShapes.Reset, 0);
 
             var resetAllState = resetLayer.StateMachine.AddState("Reset All");
             resetLayer.StateMachine.AddAnyStateTransition(resetAllState).Equals(ParameterNames.Internal.BlendShapes.Reset, 1);
