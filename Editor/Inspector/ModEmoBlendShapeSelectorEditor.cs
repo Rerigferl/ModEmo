@@ -204,29 +204,6 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
         serializedObject.ApplyModifiedProperties();
     }
 
-    [MenuItem($"CONTEXT/{nameof(ModEmoBlendShapeSelector)}/Sort Blendshapes by Category")]
-    internal static void SortByCategoryName(MenuCommand command)
-    {
-        if (command.context is not ModEmoBlendShapeSelector selector)
-            return;
-
-        var list = selector.BlendShapes;
-        if (list.Count < 2)
-            return;
-
-        if (selector.GetComponentInParent<ModEmo>(true) is not { } root)
-            return;
-
-        if (ModEmoData.GetCategorizedBlendShapes(root) is not { } data)
-            return;
-
-        Undo.RecordObject(selector, "Sort Blendshapes by Category");
-
-        list.Sort(new CategorizedBlendShapeComparer(data.CategorizedBlendShapeNames));
-
-        EditorUtility.SetDirty(selector);
-    }
-
     private void MenuCallback(GenericMenu menu, KeyValuePair<string, List<string>> group)
     {
         menu.AddItem(new("Add Existing Blendshapes"), false, () =>
