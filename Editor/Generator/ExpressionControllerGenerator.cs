@@ -173,6 +173,10 @@ internal static class ExpressionControllerGenerator
                         state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex);
                         state.AddExitTransition().AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex);
                     }
+
+                    // Exit
+                    state.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon);
+                    state.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex - Epsilon);
                 }
                 else
                 {
@@ -212,21 +216,23 @@ internal static class ExpressionControllerGenerator
 
         int stateCount = 0;
 
-        var defaultState = stateMachine.AddState("0 Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
-        stateMachine.AddAnyStateTransition(defaultState).WithDuration(0.1f).AddCondition(AnimatorConditionMode.Equals, ParameterNames.Expression.Index, 0);
+        //var defaultState = stateMachine.AddState("0 Default", new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++));
+        //stateMachine.AddAnyStateTransition(defaultState).WithDuration(0.1f).AddCondition(AnimatorConditionMode.Equals, ParameterNames.Expression.Index, 0);
+
+        var positionBase = new Vector2((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * stateCount++);
 
         var span = expressions.AsSpan();
         for (int i = 0; i < span.Length; i++)
         {
             var expressionData = span[i];
             var expression = expressionData.Expression;
-            var state = stateMachine.AddState($"{expressionData.Index} {expression.Name}", new Vector2(defaultState.Position!.Value.x, 120 + 70 * stateCount++));
+            var state = stateMachine.AddState($"{expressionData.Index} {expression.Name}", new Vector2(positionBase.x, 120 + 70 * stateCount++));
 
             var t = stateMachine.AddAnyStateTransition(state).WithDuration(0.1f);
             t.AddCondition(AnimatorConditionMode.Equals, ParameterNames.Expression.Index, expressionData.Index);
 
             state.Motion = expression.MakeAnimationClip(context);
-            defaultState.Motion ??= state.Motion;
+            //defaultState.Motion ??= state.Motion;
             state.MotionTime = expression.MotionTime;
 
             var tr = state.AddTrackingControl();
