@@ -175,13 +175,13 @@ internal static class ExpressionControllerGenerator
                     }
 
                     // Exit
-                    state.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon);
-                    state.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex - Epsilon);
+                    state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon);
+                    state.AddExitTransition().AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex - Epsilon);
                 }
                 else
                 {
 
-                    defaultExpState?.AddExitTransition().WithDuration(0.1f).AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
+                    defaultExpState?.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
 
                     var t = stateMachine.AddEntryTransition(state)
                         .AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon)
@@ -210,6 +210,8 @@ internal static class ExpressionControllerGenerator
     private static void GenerateExpressionLayer(BuildContext context, AnimatorControllerBuilder animatorController, List<ExpressionData> expressions)
     {
         var data = context.GetData();
+        var rootComponent = context.GetModEmoContext().Root;
+        var defaultDuration = rootComponent.Settings.DefaultTransitionDuration;
 
         var layer = animatorController.AddLayer("[ModEmo] Expressions");
         var stateMachine = layer.StateMachine;
@@ -228,7 +230,7 @@ internal static class ExpressionControllerGenerator
             var expression = expressionData.Expression;
             var state = stateMachine.AddState($"{expressionData.Index} {expression.Name}", new Vector2(positionBase.x, 120 + 70 * stateCount++));
 
-            var t = stateMachine.AddAnyStateTransition(state).WithDuration(0.1f);
+            var t = stateMachine.AddAnyStateTransition(state).WithDuration(defaultDuration);
             t.AddCondition(AnimatorConditionMode.Equals, ParameterNames.Expression.Index, expressionData.Index);
 
             state.Motion = expression.MakeAnimationClip(context);

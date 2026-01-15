@@ -77,5 +77,8 @@
 
         [Range(0, 1)]
         public float SmoothFactor = 0.75f;
+
+        [Range(0, 1)]
+        public float DefaultTransitionDuration = 0.1f;
     }
 }
