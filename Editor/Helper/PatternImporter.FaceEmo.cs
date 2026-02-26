@@ -64,14 +64,14 @@ static partial class PatternImporter
                 }
 
                 var blendShape = exp.AddComponent<ModEmoBlendShapeSelector>();
-                blendShape.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.BaseAnimation.GUID)));
+                blendShape.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.BaseAnimation?.GUID)));
 
                 if (branch.IsLeftTriggerUsed)
                 {
                     exp.AddComponent<ModEmoGestureWeightMotionTime>().Side = Hand.Left;
                     var blendShape2 = exp.AddComponent<ModEmoBlendShapeSelector>();
                     blendShape2.Keyframe = 1;
-                    blendShape2.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.LeftHandAnimation.GUID)));
+                    blendShape2.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.LeftHandAnimation?.GUID)));
                 }
 
                 if (branch.IsRightTriggerUsed)
@@ -79,7 +79,7 @@ static partial class PatternImporter
                     exp.AddComponent<ModEmoGestureWeightMotionTime>().Side = Hand.Right;
                     var blendShape2 = exp.AddComponent<ModEmoBlendShapeSelector>();
                     blendShape2.Keyframe = 1;
-                    blendShape2.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.RightHandAnimation.GUID)));
+                    blendShape2.ImportFromAnimationClip(AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(branch.RightHandAnimation?.GUID)));
                 }
 
                 exp.transform.parent = go.transform;

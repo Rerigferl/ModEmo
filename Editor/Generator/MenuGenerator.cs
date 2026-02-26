@@ -100,7 +100,7 @@ internal static class MenuGenerator
             resetLayer.StateMachine.AddAnyStateTransition(resetAllState).Equals(ParameterNames.Internal.BlendShapes.Reset, 1);
             var resetAll = resetAllState.AddAvatarParameterDriver();
 
-            var blendShapeMenu = menuRoot.AddMenu("BlendShapes");
+            var blendShapeMenu = menuRoot.AddMenu("BlendShapes\n[LOCAL]");
             blendShapeMenu.AddButton("Reset", ParameterNames.Internal.BlendShapes.Reset, 1);
             string[] singleArray = new string[1];
             int resetLayerIdx = 2;

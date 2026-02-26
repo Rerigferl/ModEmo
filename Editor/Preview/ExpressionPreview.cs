@@ -146,7 +146,8 @@ internal sealed class ExpressionPreview : IRenderFilter
                     continue;
 
                 bool isCancel = index < 0;
-                index = Math.Abs(index);
+                if (isCancel)
+                    index = ~index;
 
                 var lastTime = curve.Keys.Select(x => x.Time).MaxOrDefault();
                 var value = curve.Evaluate(time * lastTime);
@@ -163,11 +164,8 @@ internal sealed class ExpressionPreview : IRenderFilter
 
             if (TemporaryPreviewBlendShape.Value != null)
             {
-                int index = previewWriter.GetBlendShapeIndex(TemporaryPreviewBlendShape.Value);
-                if (index != -1)
-                {
+                if (previewWriter.GetBlendShapeIndex(TemporaryPreviewBlendShape.Value) is {} index)
                     smr.SetBlendShapeWeight(index, 100);
-                }
             }
         }
 
@@ -239,7 +237,8 @@ internal sealed class ExpressionPreview : IRenderFilter
                 if (name.IsEmpty)
                     return;
 
-                int index = GetBlendShapeIndex(name);
+                if (GetBlendShapeIndex(name) is not {} index)
+                    return;
 
                 curves.GetOrAdd(index, _ => new()).AddKey(default, false);
 
@@ -247,17 +246,19 @@ internal sealed class ExpressionPreview : IRenderFilter
 
             protected override void WriteWithBlendshape(AnimationBinding binding, Curve.Keyframe keyframe, ReadOnlySpan<char> blendShapeName, bool isCancel)
             {
-                int index = GetBlendShapeIndex(blendShapeName);
+                if (GetBlendShapeIndex(blendShapeName) is not {} index)
+                    return;
+                
                 if (isCancel)
-                    index *= -1;
+                    index = ~index;
 
                 curves.GetOrAdd(index, _ => new()).AddKey(keyframe);
             }
 
-            public int GetBlendShapeIndex(ReadOnlySpan<char> name)
+            public int? GetBlendShapeIndex(ReadOnlySpan<char> name)
             {
                 if (Renderer is not { } renderer || renderer.sharedMesh is not { } mesh)
-                    return -1;
+                    return null;
 
                 var nameHash = FarmHash.Hash32(MemoryMarshal.AsBytes(name));
                 if (!blendShapeIndexCache.TryGetValue(nameHash, out var index))

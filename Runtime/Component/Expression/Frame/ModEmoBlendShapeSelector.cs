@@ -10,8 +10,12 @@ namespace Numeira
 
         public IEnumerable<BlendShape> GetBlendShapes() => BlendShapes;
 
+        public void OnEnable() { }
+
         public void WriteAnimation(IAnimationWriter writer, in AnimationWriterContext context)
         {
+            if (!enabled)
+                return;
             foreach (var blendShape in BlendShapes.AsSpan())
             {
                 var binding = new AnimationBinding(typeof(SkinnedMeshRenderer), context.FaceObjectPath ?? "", $"{(blendShape.Cancel ? "cancel." : "")}blendShape.{blendShape.Name}");

@@ -117,4 +117,21 @@ internal static class ModEmoBlendShapeSelectorHelper
 
         EditorUtility.SetDirty(selector);
     }
+    
+    [MenuItem($"CONTEXT/{nameof(ModEmoBlendShapeSelector)}/Copy Previous Frame", false, 202)]
+    internal static void CopyPreviousFrame(MenuCommand command)
+    {
+        if (command.context is not ModEmoBlendShapeSelector selector)
+            return;
+
+        var selectors = selector.gameObject.GetComponents<ModEmoBlendShapeSelector>().Where(x => x.Keyframe < selector.Keyframe).SelectMany(x => x.BlendShapes).GroupBy(x => (x.Name, x.Cancel)).Select(x => x.FirstOrDefault());
+        var list = selector.BlendShapes;
+        Undo.RecordObject(selector, "Copy Previous Frame");
+        foreach (var x in selectors)
+        {
+            list.Add(x);
+        }
+
+        EditorUtility.SetDirty(selector);
+    }
 }

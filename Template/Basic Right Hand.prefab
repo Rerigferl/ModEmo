@@ -462,10 +462,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Settings:
     SeparatorStringRegEx: '[-=]{2,}'
-    UseCache: 0
     SmoothFactor: 0.85
-    DebugSettings:
-      SkipExpressionController: 0
+    DefaultTransitionDuration: 0.1
 --- !u!1 &2406417501764813842
 GameObject:
   m_ObjectHideFlags: 0
@@ -850,7 +848,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 648d8858d216f2a45a06fc023b9ade96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Side: 2
+  Side: 1
 --- !u!114 &858740503074167413
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -930,6 +928,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e6a232368278904a869fd7fb3de1c1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Name: 
 --- !u!1 &3387896249133783649
 GameObject:
   m_ObjectHideFlags: 0
@@ -1796,6 +1795,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e6a232368278904a869fd7fb3de1c1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Name: 
 --- !u!1 &7762406958777436543
 GameObject:
   m_ObjectHideFlags: 0
@@ -2032,8 +2032,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8dbcbab090b8e734d90ea5173e48dbf8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OverrideKeyframe: 0
-  Keyframe: 0
 --- !u!114 &3095432976708791056
 MonoBehaviour:
   m_ObjectHideFlags: 0
