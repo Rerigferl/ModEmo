@@ -15,20 +15,18 @@ internal static class ModEmoExpressionExt
         };
 
         var data = context.GetData();
-        var blendShapes = data.BlendShapes;
-        var usageBlendShapes = data.UsageBlendShapeMap;
 
         if (writeDefaultValues)
         {
-            foreach (var (name, blendShape) in blendShapes)
+            foreach (var blendShape in data.FaceInfo.BlendShapes)
             {
-                if (usageBlendShapes != null && !usageBlendShapes.ContainsKey(name))
+                if (!blendShape.UsageInfo.AllowControl)
                     continue;
 
                 float value = blendShape.Value;
                 value /= blendShape.Max;
 
-                anim.AddAnimatedParameter($"{ParameterNames.Internal.BlendShapes.Prefix}{name}/Value", 0, value);
+                anim.AddAnimatedParameter($"{ParameterNames.Internal.BlendShapes.Prefix}{blendShape.Name}/Value", 0, value);
             }
 
             if (writeBlink)
@@ -61,10 +59,13 @@ internal static class ModEmoExpressionExt
 
             binding = new(typeof(Animator), "", $"{ParameterNames.Internal.BlendShapes.Prefix}{name}{(isCancel ? "/Cancel" : "/Value")}");
 
-            if (!blendShapes.TryGetValue(name.ToString(), out var defaultValue))
-                defaultValue = new(0, 100);
+            float maxValue = 100;
+            if (data.FaceInfo.BlendshapeMap.TryGetValue(name.ToString(), out var info))
+            {
+                maxValue = info.Max;
+            }
 
-            keyframe.Value /= defaultValue.Max;
+            keyframe.Value /= maxValue;
         });
 
         expression.CollectAnimation(animationWriter, new(context.AvatarRootTransform, data.Face.transform, data.Face.transform.AvatarRootPath()));

@@ -13,17 +13,11 @@ internal sealed class ModEmoData
 
     public List<ExpressionData>? Expressions { get; set; }
 
-    public List<KeyValuePair<string, List<string>>> CategorizedBlendShapes { get; }
-
-    public ImmutableDictionary<string, BlendShapeInfo> BlendShapes { get; }
+    public FaceInfo FaceInfo { get; }
 
     public HashSet<AvatarParameter> Parameters { get; } = new(AvatarParameter.ParameterNameEqualityComparer.Instance);
 
     public MotionBuilder BlankClip { get; } = AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath("3107326e8ebb7da42981f107a7207199"));
-
-    public ImmutableHashSet<string>? GeneratedBlendshapeControls { get; set; }
-
-    public Dictionary<string, BlendshapeUsageInfo> UsageBlendShapeMap { get; } = new();
 
     internal static ModEmoData Init(BuildContext context) => new(context);
 
@@ -33,8 +27,7 @@ internal sealed class ModEmoData
         Face = component.GetFaceRenderer() ?? throw new MissingReferenceException("Face object is missing");
 
         var mesh = Face.sharedMesh;
-
-        (CategorizedBlendShapes, BlendShapes) = GetCategorizedBlendShapes(component) ?? default;
+        FaceInfo = new(component);
 
         List<IModEmoExpression> expressions = new();
         foreach (var x in component.ExportExpressions())
@@ -49,7 +42,7 @@ internal sealed class ModEmoData
         if (component.GetBlinkExpression() is { } blink)
             expressions.Add(blink);
 
-        var writer = new Collector(BlendShapes, UsageBlendShapeMap);
+        var writer = new Collector(FaceInfo);
         var animationWriterContext = new AnimationWriterContext(context.AvatarRootTransform, Face.transform, Face.transform.AvatarRootPath());
         foreach (var x in expressions)
             x.CollectAnimation(writer, animationWriterContext);
@@ -58,8 +51,8 @@ internal sealed class ModEmoData
         {
             foreach(var x in mmc.GetBlendShapes())
             {
-                if (UsageBlendShapeMap.TryGetValue(x.Name, out var info))
-                    info.UseEnableGate = true;
+                if (FaceInfo.BlendshapeMap.TryGetValue(x.Name, out var info))
+                    info.UsageInfo.UseEnableGate = true;
             }
         }
     }
@@ -96,7 +89,7 @@ internal sealed class ModEmoData
 
         Dictionary<string, BlendShapeInfo> blendShapes = new();
 
-        var regex = new Regex(component.Settings.SeparatorStringRegEx, RegexOptions.CultureInvariant);
+        var regex = component.Settings.SeparatorStringRegEx;
         int count = mesh.blendShapeCount;
         for (int i = 0; i < count; i++)
         {
@@ -119,28 +112,26 @@ internal sealed class ModEmoData
 
     private sealed class Collector : BlendshapeCollector
     {
-        public ImmutableDictionary<string, BlendShapeInfo> BlendShapes { get; }
-        public Dictionary<string, BlendshapeUsageInfo> UsageBlendshapes { get; }
+        public FaceInfo FaceInfo;
 
-        public Collector(ImmutableDictionary<string, BlendShapeInfo> blendShapes, Dictionary<string, BlendshapeUsageInfo> usageBlendshapes)
+        public Collector(FaceInfo faceInfo)
         {
-            BlendShapes = blendShapes;
-            UsageBlendshapes = usageBlendshapes;
+            this.FaceInfo = faceInfo;
         }
 
         protected override void WriteWithBlendshape(AnimationBinding binding, Curve.Keyframe keyframe, ReadOnlySpan<char> blendShapeName, bool isCancel)
         {
             var name = blendShapeName.ToString();
-            if (!BlendShapes.TryGetValue(name, out var info))
+            if (!FaceInfo.BlendshapeMap.TryGetValue(name, out var info))
                 return;
 
             if (!isCancel)
                 if (Mathf.Approximately(info.Value, keyframe.Value))
                     return;
 
-            var x = UsageBlendshapes.GetOrAdd(name, name => new() { Name = name });
+            info.UsageInfo.UseControlGate = true;
             if (isCancel)
-                x.UseCancelGate = true;
+                info.UsageInfo.UseCancelGate = true;
         }
     }
 }

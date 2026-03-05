@@ -22,9 +22,13 @@ internal static class BlendShapeControllerGenerator
 
         var facePath = data.Face.gameObject.AvatarRootPath();
 
-        foreach (var (name, blendShape) in data.BlendShapes)
+
+
+        foreach (var blendShape in data.FaceInfo.BlendShapes)
         {
-            if (!data.UsageBlendShapeMap.TryGetValue(name, out var usageInfo))
+            var name = blendShape.Name;
+            var usageInfo = blendShape.UsageInfo;
+            if (!usageInfo.AllowControl)
                 continue;
 
             var min = new AnimationClipBuilder() { Name = $"{name} Min" };

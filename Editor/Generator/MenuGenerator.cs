@@ -104,16 +104,24 @@ internal static class MenuGenerator
             blendShapeMenu.AddButton("Reset", ParameterNames.Internal.BlendShapes.Reset, 1);
             string[] singleArray = new string[1];
             int resetLayerIdx = 2;
-            foreach (var (key, values) in data.CategorizedBlendShapes)
-            {
-                var values2 = values.Where(data.UsageBlendShapeMap.ContainsKey).ToArray();
 
+            foreach(var (key, values) in data.FaceInfo.GroupedBlendShapes)
+            {
+                int count = 0;
+                foreach(var x in values.Span)
+                {
+                    if (x.UsageInfo.UseOverrideGate)
+                        count++;
+                }
                 MenuItem? menu = null;
                 MenuItem? page = null;
                 AvatarParameterDriverBuilder? reset = null;
                 int pageCount = 1;
-                foreach (var value in values2)
+                foreach (var value in values.Span)
                 {
+                    if (!value.UsageInfo.UseOverrideGate)
+                        continue;
+
                     if (menu == null)
                     {
                         menu = blendShapeMenu.AddMenu(key);
@@ -124,7 +132,7 @@ internal static class MenuGenerator
                         resetLayerIdx++;
                     }
 
-                    if (values2.Length <= 8)
+                    if (count <= 8)
                     {
                         page = menu;
                     }
@@ -132,8 +140,8 @@ internal static class MenuGenerator
                     {
                         page = menu.AddMenu($"Page {pageCount++}");
                     }
-                    var name = $"{ParameterNames.Internal.BlendShapes.Prefix}{value}/Override";
-                    page.AddRadialPuppet(value, name);
+                    var name = $"{ParameterNames.Internal.BlendShapes.Prefix}{value.Name}/Override";
+                    page.AddRadialPuppet(value.Name, name);
                     parameters.parameters.Add(new ParameterConfig() { nameOrPrefix = name, syncType = ParameterSyncType.Float, localOnly = true, saved = false });
                     reset?.Set(name, 0);
                     resetAll?.Set(name, 0);

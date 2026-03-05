@@ -1,4 +1,6 @@
-﻿namespace Numeira
+﻿using System.Text.RegularExpressions;
+
+namespace Numeira
 {
     [AddComponentMenu("ModEmo/ModEmo")]
     internal sealed class ModEmo : ModEmoTagComponent
@@ -73,12 +75,32 @@
     internal sealed class ModEmoSettings
     {
         // lang=regex 
-        public string SeparatorStringRegEx = "[-=]{2,}";
+        public string SeparatorStringPattern = "[-=]{2,}";
 
         [Range(0, 1)]
         public float SmoothFactor = 0.75f;
 
         [Range(0, 1)]
         public float DefaultTransitionDuration = 0.1f;
+
+        [NonSerialized]
+        private Regex? separatorStringRegexCache;
+
+        [NonSerialized]
+        private int separatorStringRegexCacheHash;
+
+        public Regex SeparatorStringRegEx
+        {
+            get
+            {
+                int hash = SeparatorStringPattern.GetFarmHash();
+                if (separatorStringRegexCache == null || separatorStringRegexCacheHash != hash)
+                {
+                    separatorStringRegexCache = new(SeparatorStringPattern, RegexOptions.CultureInvariant, TimeSpan.FromSeconds(5));
+                    separatorStringRegexCacheHash = hash;
+                }
+                return separatorStringRegexCache;
+            }
+        }
     }
 }
