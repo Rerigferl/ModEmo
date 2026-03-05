@@ -138,6 +138,8 @@ internal static class ExpressionControllerGenerator
         var layer = animatorController.AddLayer("[ModEmo] Expressions Selector");
         var stateMachine = layer.StateMachine.WithDefaultMotion(data.BlankClip);
 
+        var idle = stateMachine.AddState("Idle");
+        idle.Position = GetPosition(-1);
         int stateCount = 0;
 
         Vector2 GetPosition(int index) => new((stateMachine.EntryPosition.x + stateMachine.ExitPosition.x) / 2, 120 + 70 * index);
@@ -160,7 +162,7 @@ internal static class ExpressionControllerGenerator
                 {
                     defaultExpState = state;
 
-                    var t = stateMachine.AddEntryTransition(state);
+                    var t = idle.AddTransition(state);
                     t.AddCondition(AnimatorConditionMode.Greater, ParameterNames.IsLocal, 0);
                     t.AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon);
                     t.AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex - Epsilon);
@@ -183,7 +185,7 @@ internal static class ExpressionControllerGenerator
 
                     defaultExpState?.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
 
-                    var t = stateMachine.AddEntryTransition(state)
+                    var t = idle.AddTransition(state)
                         .AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon)
                         .AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex - Epsilon)
                         .AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
