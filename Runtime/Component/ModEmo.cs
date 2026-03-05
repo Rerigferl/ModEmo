@@ -85,6 +85,8 @@ namespace Numeira
         [Range(0, 1)]
         public float DefaultTransitionDuration = 0.1f;
 
+        public string DefaultGroupName = "Uncategorized";
+
         [NonSerialized]
         private Regex? separatorStringRegexCache;
 

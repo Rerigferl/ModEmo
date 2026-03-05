@@ -4,8 +4,6 @@ namespace Numeira;
 
 internal sealed class FaceInfo
 {
-    private const string UncategorizedGroupName = "Uncategorized";
-
     public SkinnedMeshRenderer Renderer { get; }
     public ReadOnlySpan<BlendshapeInfo> BlendShapes => blendShapes;
     public ImmutableDictionary<string, ReadOnlyMemory<BlendshapeInfo>> GroupedBlendShapes { get; }
@@ -34,7 +32,7 @@ internal sealed class FaceInfo
             var name = mesh.GetBlendShapeName(i);
             if (UnsafeMeshUtils.IsMarkerBlendShape(mesh, i) && !IsReservedBlendShape(name))
             {
-                groupRangeMaps.TryAdd(currentGroup ?? UncategorizedGroupName, new Range(groupStartIndex, blendShapes.Count));
+                groupRangeMaps.TryAdd(currentGroup ?? component.Settings.DefaultGroupName, new Range(groupStartIndex, blendShapes.Count));
                 groupStartIndex = blendShapes.Count;
                 currentGroup = component.Settings.SeparatorStringRegEx.Replace(name, "");
             }
@@ -43,7 +41,7 @@ internal sealed class FaceInfo
                 blendShapes.Add(new(renderer, currentGroup, name, i, mesh.GetBlendShapeFrameWeight(i, 0)));
             }
         }
-        groupRangeMaps.TryAdd(currentGroup ?? UncategorizedGroupName, new Range(groupStartIndex, blendShapes.Count));
+        groupRangeMaps.TryAdd(currentGroup ?? component.Settings.DefaultGroupName, new Range(groupStartIndex, blendShapes.Count));
 
         this.blendShapes = blendShapes.ToArray();
         GroupedBlendShapes = groupRangeMaps.ToImmutableDictionary(x => x.Key, x =>
