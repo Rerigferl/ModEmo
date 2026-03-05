@@ -52,6 +52,15 @@ internal static partial class ModEmoConstants
                 public const string ControlPrefix = $"{Prefix}C/";
                 public const string OverridePrefix = $"{Prefix}O/";
                 public const string DisablePrefix = $"{Prefix}D/";
+
+                public static class Sync
+                {
+                    public const string Prefix = $"{BlendShapes.Prefix}{nameof(Sync)}/";
+
+                    public const string Selected = $"{Prefix}Selected";
+                    public const string Index = $"{Prefix}Index";
+                    public const string Value = $"{Prefix}Value";
+                }
             }
 
             public static class Input

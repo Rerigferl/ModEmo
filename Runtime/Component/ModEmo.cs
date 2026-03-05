@@ -12,9 +12,11 @@ namespace Numeira
 
         public IModEmoExpressionPattern[] Patterns => this.GetComponentsInDirectChildren<IModEmoExpressionPattern>();
 
-        public IModEmoExpression? GetBlinkExpression() => this.GetComponentsInDirectChildren<IModEmoExpression>().Where(x => x is not IModEmoExpressionPattern).FirstOrDefault();
+        public IModEmoExpression? GetBlinkExpression() => this.GetComponentsInDirectChildren<IModEmoExpression>().FirstOrDefault(x => x is not IModEmoExpressionPattern);
 
         public IModEmoMouthMorphCanceller? MouthMorphCanceller => this.GetComponentInDirectChildren<IModEmoMouthMorphCanceller>();
+
+        public IModEmoRuntimeBlendshapeController? RuntimeBlendshapeController => this.GetComponentInDirectChildren<IModEmoRuntimeBlendshapeController>(includeSelf: true);
 
         private sealed class ExpressionGroups : IEnumerable<ExpressionGroup>
         {

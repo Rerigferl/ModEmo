@@ -88,6 +88,7 @@ internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefini
 
             ExpressionControllerGenerator.Generate(context, builder);
             BlendShapeControllerGenerator.Generate(context, builder);
+            BlendShapeControllerGenerator.GenerateBlendshapeSyncController(context, builder);
             MenuGenerator.Generate(context, builder);
 
             var assetContainer = new AssetContainer();
@@ -107,6 +108,25 @@ internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefini
             ma.matchAvatarWriteDefaults = true;
             ma.layerType = VRC.SDK3.Avatars.Components.VRCAvatarDescriptor.AnimLayerType.FX;
             ma.animator = animatorController;
+
+            var mp = modEmo.gameObject.GetOrAddComponent<ModularAvatarParameters>();
+            foreach(var x in context.GetData().Parameters)
+            {
+                mp.parameters.Add(new()
+                {
+                    nameOrPrefix = x.Name,
+                    defaultValue = x.Value,
+                    localOnly = x.IsLocal,
+                    saved = x.Saved,
+                    syncType = x.SyncType switch
+                    {
+                        AnimatorParameterType.Int => ParameterSyncType.Int,
+                        AnimatorParameterType.Float => ParameterSyncType.Float,
+                        AnimatorParameterType.Bool => ParameterSyncType.Bool,
+                        _ => ParameterSyncType.NotSynced,
+                    },
+                });
+            }
 
             //new MenuGenerator(context).Generate();
         }

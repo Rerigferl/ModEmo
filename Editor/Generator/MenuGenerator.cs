@@ -14,17 +14,20 @@ internal static class MenuGenerator
         var menuRoot = modEmoContext.Root.gameObject.AddComponent<MenuItem>();
         menuRoot.PortableControl.Type = PortableControlType.SubMenu;
         menuRoot.MenuSource = SubmenuSource.Children;
+        var data = context.GetData();
 
-        var parameters = context.GetModEmoContext().Root.gameObject.AddComponent<ModularAvatarParameters>();
-        parameters.GetOrAdd(ParameterNames.Expression.Pattern).syncType = ParameterSyncType.Int;
-        parameters.GetOrAdd(ParameterNames.Expression.Index).syncType = ParameterSyncType.Int;
-        parameters.GetOrAdd(ParameterNames.Internal.BlendShapes.Reset, x => x with { localOnly = true, saved = false, }).syncType = ParameterSyncType.Int;
+        //var parameters = context.GetModEmoContext().Root.gameObject.GetOrAddComponent<ModularAvatarParameters>();
+        data.Parameters.Add(new(ParameterNames.Expression.Pattern, 0, AnimatorParameterType.Int, saved: false, isLocal: false));
+        data.Parameters.Add(new(ParameterNames.Expression.Index, 0, AnimatorParameterType.Int, saved: false, isLocal: false));
+        data.Parameters.Add(new(ParameterNames.Internal.BlendShapes.Reset, 0, AnimatorParameterType.Int, isLocal: true));
+        //parameters.GetOrAdd(ParameterNames.Expression.Pattern).syncType = ParameterSyncType.Int;
+        //parameters.GetOrAdd(ParameterNames.Expression.Index).syncType = ParameterSyncType.Int;
+        //parameters.GetOrAdd(ParameterNames.Internal.BlendShapes.Reset, x => x with { localOnly = true, saved = false, }).syncType = ParameterSyncType.Int;
         builder.Parameters.AddInt(ParameterNames.Internal.BlendShapes.Reset, 0);
 
         menuRoot.AddToggle("Lock", ParameterNames.Expression.Lock).WithSaved(false);
         menuRoot.AddToggle("Blink", ParameterNames.Blink.Sync).WithSaved(false).WithDefault(true);
 
-        var data = context.GetData();
         var patterns = data.Expressions.GroupBy(x => x.PatternIndex).ToArray();
         if (patterns.Length > 1)
         {
@@ -141,8 +144,11 @@ internal static class MenuGenerator
                         page = menu.AddMenu($"Page {pageCount++}");
                     }
                     var name = $"{ParameterNames.Internal.BlendShapes.Prefix}{value.Name}/Override";
-                    page.AddRadialPuppet(value.Name, name);
-                    parameters.parameters.Add(new ParameterConfig() { nameOrPrefix = name, syncType = ParameterSyncType.Float, localOnly = true, saved = false });
+                    var puppet = page.AddRadialPuppet(value.Name, name);
+                    puppet.PortableControl.Parameter = ParameterNames.Internal.BlendShapes.Sync.Selected;
+                    puppet.PortableControl.Value = data.GetBlendshapeIndexForSync(value.Index);
+
+                    data.Parameters.Add(new(name, 0f, AnimatorParameterType.Float, false, true));
                     reset?.Set(name, 0);
                     resetAll?.Set(name, 0);
                 }
@@ -264,7 +270,7 @@ internal static class MenuGenerator
 
     private static ref ParameterConfig GetOrAdd(this ModularAvatarParameters parameters, string name)
     {
-        var list = parameters.parameters;
+        var list = parameters.parameters ??= new();
         foreach (ref var parameter in list.AsSpan())
         {
             if (parameter.nameOrPrefix == name)

@@ -19,6 +19,8 @@ internal sealed class ModEmoData
 
     public MotionBuilder BlankClip { get; } = AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath("3107326e8ebb7da42981f107a7207199"));
 
+    private readonly Dictionary<int, int> blendshapeIndexForSynchronize = new();
+
     internal static ModEmoData Init(BuildContext context) => new(context);
 
     private ModEmoData(BuildContext context)
@@ -79,6 +81,8 @@ internal sealed class ModEmoData
             }
         }
     }
+
+    public int GetBlendshapeIndexForSync(int blendshapeIndex) => blendshapeIndexForSynchronize.GetOrAdd(blendshapeIndex, _ => blendshapeIndexForSynchronize.Count + 1);
 
     [Obsolete]
     public static ImmutableDictionary<string, BlendShapeInfo> GetBlendShapeInfos(SkinnedMeshRenderer? renderer)
@@ -155,8 +159,11 @@ internal sealed class ModEmoData
                     return;
 
             info.UsageInfo.UseControlGate = true;
-            if (isCancel)
+            if (isCancel && !Mathf.Approximately(info.Value, 0))
+            {
                 info.UsageInfo.UseCancelGate = true;
+            }
+
             info.UsageInfo.UseOverrideGate = true;
         }
     }

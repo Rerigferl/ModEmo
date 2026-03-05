@@ -6,13 +6,16 @@
         {
         }
 
+        public bool Sync = false;
         public string[] Blacklist = { };
 
+        bool IModEmoRuntimeBlendshapeController.Sync => Sync;
         IEnumerable<string> IModEmoRuntimeBlendshapeController.Blacklist => Blacklist;
     }
 
     internal interface IModEmoRuntimeBlendshapeController : IModEmoComponent
     {
         public IEnumerable<string> Blacklist { get; }
+        public bool Sync { get; }
     }
 }
