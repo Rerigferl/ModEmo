@@ -105,7 +105,7 @@ internal static class MenuGenerator
             string[] singleArray = new string[1];
             int resetLayerIdx = 2;
 
-            foreach(var (key, values) in data.FaceInfo.GroupedBlendShapes)
+            foreach(var (key, values) in data.FaceInfo.GroupedBlendShapes.OrderBy(x => x.Value.Span.FirstOrDefault()?.Index ?? -1))
             {
                 int count = 0;
                 foreach(var x in values.Span)

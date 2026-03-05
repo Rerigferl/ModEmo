@@ -102,7 +102,7 @@ internal sealed class FaceInfo
             public bool UseControlGate;
             public bool UseOverrideGate;
 
-            public readonly bool AllowControl => UseControlGate | UseOverrideGate;
+            public readonly bool AllowControl => UseControlGate || UseOverrideGate;
         }
     }
 }

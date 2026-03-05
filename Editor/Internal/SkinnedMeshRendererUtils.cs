@@ -85,7 +85,18 @@ internal static unsafe class UnsafeMeshUtils
     {
         var data = GetBlendShapeData(mesh);
         var shape = data.Shapes[index];
-        return shape.VertexCount == 0;
+        
+        if (shape.VertexCount == 0)
+            return true;
+
+        if (shape.VertexCount <= 2)
+        {
+            // まれにマーカーシェイプキーが2頂点動かしてるアバターがいる?
+            // エクちゃんとしなのさんで確認
+            return true;
+        }
+
+        return false;
     }
 
     public static ref BlendShapeData GetBlendShapeData(Mesh mesh)

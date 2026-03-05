@@ -55,8 +55,32 @@ internal sealed class ModEmoData
                     info.UsageInfo.UseEnableGate = true;
             }
         }
+
+        if (component.GetComponentInDirectChildren<IModEmoRuntimeBlendshapeController>(includeSelf: true) is { } rbc)
+        {
+            foreach(var pattern in rbc.Blacklist)
+            {
+                var regex = new Regex(pattern, RegexOptions.CultureInvariant);
+
+                foreach(var x in FaceInfo.BlendShapes)
+                {
+                    if (regex.IsMatch(x.Name))
+                        x.UsageInfo.UseOverrideGate = false;
+                }
+            }
+
+            foreach (var x in rbc.Component.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
+            {
+                foreach (var blendShape in x.GetBlendShapes())
+                {
+                    if (FaceInfo.BlendshapeMap.TryGetValue(blendShape.Name, out var info))
+                        info.UsageInfo.UseOverrideGate = true;
+                }
+            }
+        }
     }
 
+    [Obsolete]
     public static ImmutableDictionary<string, BlendShapeInfo> GetBlendShapeInfos(SkinnedMeshRenderer? renderer)
     {
         if (renderer is null)
@@ -74,6 +98,7 @@ internal sealed class ModEmoData
         return info.ToImmutableDictionary();
     }
 
+    [Obsolete]
     public static (List<KeyValuePair<string, List<string>>> CategorizedBlendShapeNames, ImmutableDictionary<string, BlendShapeInfo> BlendShapeInfos)? GetCategorizedBlendShapes(ModEmo component)
     {
         var face = component.GetFaceRenderer();
@@ -132,6 +157,7 @@ internal sealed class ModEmoData
             info.UsageInfo.UseControlGate = true;
             if (isCancel)
                 info.UsageInfo.UseCancelGate = true;
+            info.UsageInfo.UseOverrideGate = true;
         }
     }
 }
