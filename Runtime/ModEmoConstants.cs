@@ -30,12 +30,6 @@ internal static partial class ModEmoConstants
             public const string Sync = $"{Prefix}Sync";
         }
 
-        public abstract class MouthMorphCancel
-        {
-            public const string Prefix = $"{Parameters.Prefix}MouthMorphCancel/";
-            public const string Enable = $"{Prefix}Enable";
-        }
-
         public static class Internal
         {
             public const string Prefix = $"{Parameters.Prefix}I/";
@@ -73,6 +67,13 @@ internal static partial class ModEmoConstants
                 public const string RightWeight = $"{Right}/Weight";
                 public const string Switch = $"{Prefix}Switch";
                 public const string Override = $"{Prefix}Override";
+            }
+
+
+            public abstract class MouthMorphCancel
+            {
+                public const string Prefix = $"{Parameters.Prefix}MouthMorphCancel/";
+                public const string Enable = $"{Prefix}Enable";
             }
         }
     }

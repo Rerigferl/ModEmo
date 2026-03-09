@@ -70,6 +70,11 @@ internal static class ModEmoExpressionExt
 
         expression.CollectAnimation(animationWriter, new(context.AvatarRootTransform, data.Face.transform, data.Face.transform.AvatarRootPath()));
 
+        if (expression.EnableMouthMorphCancel)
+        {
+            anim.AddAnimatedParameter($"{ParameterNames.Internal.MouthMorphCancel.Enable}", 0, 1);
+        }
+
         return anim;
     }
 

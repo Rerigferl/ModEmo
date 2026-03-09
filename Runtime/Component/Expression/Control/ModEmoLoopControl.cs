@@ -15,7 +15,7 @@ namespace Numeira
         }
     }
 
-    internal interface IModEmoLoopControl : IModEmoComponent
+    internal interface IModEmoLoopControl : IModEmoExpressionControl
     {
         public bool IsLoop { get; }
     }

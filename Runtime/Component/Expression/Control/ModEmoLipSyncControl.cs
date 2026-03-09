@@ -2,10 +2,8 @@
 {
     [RequireComponent(typeof(ModEmoExpression))]
     [AddComponentMenu(ComponentMenuPrefix + "LipSync Control")]
-    internal sealed class ModEmoLipSyncControl : ModEmoTagComponent, IModEmoLipSyncConttrol
+    internal sealed class ModEmoLipSyncControl : ModEmoTagComponent, IModEmoLipSyncControl
     {
-        bool IModEmoLipSyncConttrol.Enable => enabled;
-
         private void OnEnable() { }
 
         protected override void CalculateContentHash(ref HashCode hashCode)
@@ -14,8 +12,7 @@
         }
     }
 
-    internal interface IModEmoLipSyncConttrol : IModEmoComponent
+    internal interface IModEmoLipSyncControl : IModEmoExpressionControl
     {
-        public bool Enable { get; }
     }
 }

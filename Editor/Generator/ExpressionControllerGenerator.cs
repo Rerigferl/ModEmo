@@ -274,7 +274,7 @@ internal static class ExpressionControllerGenerator
 
     private static void GenerateMouthMorphCancellar(BuildContext context, AnimatorControllerBuilder animatorController)
     {
-        animatorController.Parameters.AddFloat(ParameterNames.MouthMorphCancel.Enable, 0);
+        animatorController.Parameters.AddFloat(ParameterNames.Internal.MouthMorphCancel.Enable, 0);
 
         var modEmo = context.GetModEmoContext().Root;
         if (modEmo.MouthMorphCanceller is not { } cancellar)
@@ -284,7 +284,7 @@ internal static class ExpressionControllerGenerator
         {
             Name = "",
             DefaultDirectBlendParameter = ParameterNames.Internal.One,
-            BlendParameter = ParameterNames.MouthMorphCancel.Enable,
+            BlendParameter = ParameterNames.Internal.MouthMorphCancel.Enable,
         };
 
         animatorController.Parameters.AddFloat("Voice", 0);
