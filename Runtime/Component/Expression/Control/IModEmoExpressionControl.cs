@@ -4,13 +4,13 @@ internal interface IModEmoExpressionControl : IModEmoComponent
 {
     public bool Visible
     {
-        get => GameObject.hideFlags.HasFlag(HideFlags.HideInInspector);
+        get => Component.hideFlags.HasFlag(HideFlags.HideInInspector);
         set
         {
             if (value)
-                GameObject.hideFlags |= HideFlags.HideInInspector;
+                Component.hideFlags |= HideFlags.HideInInspector;
             else
-                GameObject.hideFlags &= ~HideFlags.HideInInspector;
+                Component.hideFlags &= ~HideFlags.HideInInspector;
         }
     }
 
@@ -18,5 +18,14 @@ internal interface IModEmoExpressionControl : IModEmoComponent
     {
         get => (Component as MonoBehaviour)!.enabled;
         set => (Component as MonoBehaviour)!.enabled = value;
+    }
+}
+
+internal static class ExpressionControlExt
+{
+    public static T WithVisibile<T>(this T component, bool visible) where T : IModEmoExpressionControl
+    {
+        component.Visible = visible;
+        return component;
     }
 }

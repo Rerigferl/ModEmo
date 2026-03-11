@@ -11,7 +11,6 @@
             hashCode.Add(enabled);
         }
     }
-
     internal interface IModEmoLipSyncControl : IModEmoExpressionControl
     {
     }

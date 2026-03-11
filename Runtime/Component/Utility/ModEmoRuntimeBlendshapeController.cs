@@ -1,5 +1,6 @@
 ﻿namespace Numeira
 {
+    [AddComponentMenu($"{ComponentMenuPrefix}Runtime Blendshape Controller")]
     internal sealed class ModEmoRuntimeBlendshapeController : ModEmoTagComponent, IModEmoRuntimeBlendshapeController
     {
         protected override void CalculateContentHash(ref HashCode hashCode)

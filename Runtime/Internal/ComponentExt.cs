@@ -70,7 +70,7 @@ internal static class ComponentExt
         return null;
     }
 
-    public static T GetOrAddComponent<T>(this GameObject obj) where T : Component
+    public static T GetOrAddComponent<T>(this GameObject obj, Action<T>? initialize = null) where T : Component
     {
         if (obj == null)
             return default!;
@@ -78,11 +78,12 @@ internal static class ComponentExt
         if (obj.TryGetComponent<T>(out var x))
             return x;
         x = obj.AddComponent<T>();
+        initialize?.Invoke(x);
         return x;
     }
 
-    public static T GetOrAddComponent<T>(this Component component) where T : Component
-        => component.gameObject.GetOrAddComponent<T>();
+    public static T GetOrAddComponent<T>(this Component component, Action<T>? initialize = null) where T : Component
+        => component.gameObject.GetOrAddComponent(initialize);
 
     public static void RemoveComponents<T>(this GameObject obj)
     {

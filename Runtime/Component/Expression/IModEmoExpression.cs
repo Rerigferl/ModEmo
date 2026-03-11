@@ -26,6 +26,8 @@
 
         bool LipSync => Component.GetComponent<IModEmoLipSyncControl>()?.Enable ?? true;
 
+        bool EyeTracking => Component.GetComponent<IModEmoEyeTrackingControl>()?.Enable ?? true;
+
         bool EnableMouthMorphCancel => Component.GetComponent<IModEmoMouthMorphCancelControl>()?.Enable ?? false;
     }
 }

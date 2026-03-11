@@ -1,4 +1,6 @@
 ﻿#if UNITY_EDITOR
+using System.Diagnostics.CodeAnalysis;
+
 namespace Numeira;
 
 internal static class RuntimeGUIUtils
@@ -12,6 +14,18 @@ internal static class RuntimeGUIUtils
             callback(value);
         }
         return value;
+    }
+
+    public static T NullableField<T>(T? value, Func<T, T> gui) where T : struct
+    {
+        if (value is not { } v)
+        {
+            EditorGUI.showMixedValue = true;
+            v = default;
+        }
+        v = gui(v);
+        EditorGUI.showMixedValue = false;
+        return v;
     }
 }
 #endif
