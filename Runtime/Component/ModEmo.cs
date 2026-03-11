@@ -87,6 +87,9 @@ namespace Numeira
 
         public string DefaultGroupName = "Uncategorized";
 
+        public float MarkerBlendshapeThreshold = 5e-08f;
+        public int MarkerBlendshapeVertexCountThreshold = 3;
+
         [NonSerialized]
         private Regex? separatorStringRegexCache;
 

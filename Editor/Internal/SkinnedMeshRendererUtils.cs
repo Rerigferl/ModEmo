@@ -81,7 +81,7 @@ internal static unsafe class UnsafeMeshUtils
         return span.Slice(shape.FirstVertex, shape.VertexCount);
     }
 
-    public static bool IsMarkerBlendShape(Mesh mesh, int index)
+    public static bool IsMarkerBlendShape(Mesh mesh, int index, int vertexCount = 2, float threshold = 5e-08f)
     {
         var data = GetBlendShapeData(mesh);
         var shape = data.Shapes[index];
@@ -89,10 +89,17 @@ internal static unsafe class UnsafeMeshUtils
         if (shape.VertexCount == 0)
             return true;
 
-        if (shape.VertexCount <= 2)
+        if (shape.VertexCount <= vertexCount)
         {
             // まれにマーカーシェイプキーが2頂点動かしてるアバターがいる?
             // エクちゃんとしなのさんで確認
+
+            foreach(var vertex in data.Vertex.Slice(shape.FirstVertex, shape.VertexCount))
+            {
+                if (vertex.Vertex.sqrMagnitude > threshold)
+                    return false;
+            }
+
             return true;
         }
 

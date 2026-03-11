@@ -30,7 +30,7 @@ internal sealed class FaceInfo
         for (int i  = 0; i < count; i++)
         {
             var name = mesh.GetBlendShapeName(i);
-            if (UnsafeMeshUtils.IsMarkerBlendShape(mesh, i) && !IsReservedBlendShape(name))
+            if (UnsafeMeshUtils.IsMarkerBlendShape(mesh, i, component.Settings.MarkerBlendshapeVertexCountThreshold, component.Settings.MarkerBlendshapeThreshold) && !IsReservedBlendShape(name))
             {
                 groupRangeMaps.TryAdd(currentGroup ?? component.Settings.DefaultGroupName, new Range(groupStartIndex, blendShapes.Count));
                 groupStartIndex = blendShapes.Count;
