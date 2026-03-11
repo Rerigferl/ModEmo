@@ -34,6 +34,7 @@ internal class ModEmoExpressionEditor : Editor
                 {
                     x.Visible = !c;
                 }
+                Repaint();
             }
 
             EditorGUILayout.Space();
