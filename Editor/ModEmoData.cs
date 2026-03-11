@@ -62,6 +62,7 @@ internal sealed class ModEmoData
         {
             foreach(var pattern in rbc.Blacklist)
             {
+                if (string.IsNullOrEmpty(pattern)) continue;
                 var regex = new Regex(pattern, RegexOptions.CultureInvariant);
 
                 foreach(var x in FaceInfo.BlendShapes)
