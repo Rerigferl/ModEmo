@@ -44,11 +44,11 @@ internal sealed class ExpressionPreview : IRenderFilter
 
     public static PublishedValue<string?> TemporaryPreviewBlendShape { get; } = new(null);
 
-    public ImmutableList<RenderGroup> GetTargetGroups(ComputeContext context)
+    private static PropCache<int, ImmutableList<RenderGroup>> RendererCache { get; } = new("numeira.mod-emo.expression-preview.renderer-cache", static (context, go) =>
     {
-        var result = Iterate(context).ToImmutableList();
-
+        var result = Iterate(context).OrderBy(x => x.GetData<ModEmo>().GetInstanceID()).ToImmutableList();
         return result;
+
         static IEnumerable<RenderGroup> Iterate(ComputeContext context)
         {
             foreach (var root in context.GetAvatarRoots())
@@ -68,11 +68,18 @@ internal sealed class ExpressionPreview : IRenderFilter
             }
             yield break;
         }
+    }, (left, right) => left.SequenceEqual(right));
+
+    private readonly static PropCache<int, GameObject?> SelectionCache = new("numeira.mod-emo.expression-preview.selection-cache", (context, _) => context.Observe(SelectionMonitor.Active, x => x, (x, y) => x == y), (x, y) => x == y);
+
+    public ImmutableList<RenderGroup> GetTargetGroups(ComputeContext context)
+    {
+        return RendererCache.Get(context, 0);
     }
 
-    public Task<IRenderFilterNode> Instantiate(RenderGroup group, IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context)
+    public async Task<IRenderFilterNode> Instantiate(RenderGroup group, IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context)
     {
-        return Task.FromResult<IRenderFilterNode>(new Node(group, proxyPairs, context));
+        return new Node(group, proxyPairs, context);
     }
 
     internal sealed class Node : IRenderFilterNode
@@ -81,30 +88,30 @@ internal sealed class ExpressionPreview : IRenderFilter
 
         private readonly ComputeContext context;
         private readonly ModEmo rootComponent;
-        private readonly ImmutableDictionary<string, BlendShapeInfo> blendShapeInfos;
         private readonly Renderer originalRenderer;
-        private IModEmoExpression? selectedExpression;
+        private readonly IModEmoExpression? selectedExpression;
         private DateTime selectionChangedTime;
         private IDisposable? sceneReflesher;
 
-        private readonly PreviewWriter previewWriter = new();
+        private static readonly PreviewWriter previewWriter = new();
 
         public Node(RenderGroup renderGroup, IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context)
         {
             this.context = context;
             originalRenderer = proxyPairs.FirstOrDefault().Item1;
-            blendShapeInfos = ModEmoData.GetBlendShapeInfos(renderGroup.Renderers[0] as SkinnedMeshRenderer);
             rootComponent = renderGroup.GetData<ModEmo>();
+
+            selectedExpression = GetSelectedExpression();
         }
 
         public Node(Node source, ComputeContext context)
         {
             this.context = context;
             originalRenderer = source.originalRenderer;
-            blendShapeInfos = source.blendShapeInfos;
             rootComponent = source.rootComponent;
-        }
 
+            selectedExpression = GetSelectedExpression();
+        }
 
         public void OnFrame(Renderer original, Renderer proxy)
         {
@@ -114,7 +121,7 @@ internal sealed class ExpressionPreview : IRenderFilter
             if (selectedExpression is not { } expression)
                 return;
 
-            float time = (float)(DateTime.Now - selectionChangedTime).TotalSeconds;
+            float time = (float)(DateTime.Now - selectionChangedTime).TotalSeconds - 1;
             if (selectedExpression.IsLoop)
             {
                 time = (time * 0.5f) % 1;
@@ -181,33 +188,23 @@ internal sealed class ExpressionPreview : IRenderFilter
             return Task.FromResult<IRenderFilterNode?>(null);
         }
 
-        public void OnFrameGroup()
+        private IModEmoExpression? GetSelectedExpression()
         {
-            var selectedExpression = GetSelectedExpression();
+            var active = SelectionCache.Get(context, 0);
+            if (active == null)
+                return null;
 
-            if (selectedExpression != this.selectedExpression)
-            {
-                selectionChangedTime = DateTime.Now;
-                sceneReflesher?.Dispose();
-                sceneReflesher = null;
-            }
+            if (active.GetComponentInParent<IModEmoExpression>() is not { } expression)
+                return null;
 
-            this.selectedExpression = selectedExpression;
+            if (expression.Component!.GetComponentInParent<ModEmo>() != rootComponent)
+                return null;
 
-            IModEmoExpression? GetSelectedExpression()
-            {
-                var active = Selection.activeGameObject;
-                if (active == null)
-                    return null;
+            selectionChangedTime = DateTime.Now;
+            sceneReflesher?.Dispose();
+            sceneReflesher = null;
 
-                if (active.GetComponentInParent<IModEmoExpression>() is not { } expression)
-                    return null;
-
-                if (expression.Component!.GetComponentInParent<ModEmo>() != rootComponent)
-                    return null;
-
-                return expression;
-            }
+            return expression;
         }
 
         public void Dispose()
