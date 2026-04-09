@@ -64,6 +64,9 @@ internal static class CreationContextMenu
 
     private static void AddItemsToGameObjectContextMenu(this StaticExtension? __, GenericMenu menu, GameObject go)
     {
+        if (go == null)
+            return;
+
         if (IsAvatarRoot(go))
         {
             menu.AddSeparator("");
@@ -108,7 +111,8 @@ internal static class CreationContextMenu
         bool isRoot = go.GetComponent<ModEmo>() != null;
         bool isPattern = go.GetComponent<IModEmoExpressionPattern>() != null;
         bool isExpressionFolder = go.GetComponent<IModEmoExpressionFolder>() != null;
-        bool isExpression = go.GetComponentInParent<IModEmoExpression>() != null;
+        var expression = go.GetComponentInParent<IModEmoExpression>();
+        bool isExpression = expression != null;
 
         AddMenu("ModEmo/Create Pattern", () => CreateNewObject("Expression Pattern (1)", go, typeof(ModEmoExpressionPattern)), enabled: isRoot);
 
@@ -123,6 +127,22 @@ internal static class CreationContextMenu
         AddMenu("ModEmo/Folder/Create BlendShape Folder", () => CreateNewObject("Expression Frame Folder", go, typeof(ModEmoBlendShapeFolder)), enabled: isExpression);
 
         menu.AddSeparator("ModEmo/");
+
+        {
+            bool flag = expression != null && ExpressionPreview.PreviewTarget.Value == expression;
+            AddMenu("ModEmo/Lock Preview", () =>
+            {
+                ExpressionPreview.PreviewTarget.Value = flag ? null : expression;
+            }, isExpression, flag);
+
+            if (ExpressionPreview.PreviewTarget.Value != null)
+            {
+                AddMenu("ModEmo/Unlock Preview", () =>
+                {
+                    ExpressionPreview.PreviewTarget.Value = null;
+                });
+            }
+        }
 
         AddMenu("ModEmo/Import Pattern from Avatar FX Layer ..", () => ImportPatternFromFXLayer(go), isRoot);
 
@@ -147,13 +167,13 @@ internal static class CreationContextMenu
         }, faceEmo != null);
 #endif
 
-        void AddMenu(string title, GenericMenu.MenuFunction callback, bool enabled = true)
+        void AddMenu(string title, GenericMenu.MenuFunction callback, bool enabled = true, bool check = false)
         {
             var content = new GUIContent(title);
             if (enabled)
-                menu.AddItem(content, false, callback);
+                menu.AddItem(content, check, callback);
             else
-                menu.AddDisabledItem(content, false);
+                menu.AddDisabledItem(content, check);
         }
     }
 

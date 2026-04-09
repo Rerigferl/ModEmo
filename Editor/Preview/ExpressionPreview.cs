@@ -43,6 +43,7 @@ internal sealed class ExpressionPreview : IRenderFilter
     }
 
     public static PublishedValue<string?> TemporaryPreviewBlendShape { get; } = new(null);
+    public static PublishedValue<IModEmoExpression?> PreviewTarget { get; } = new(null, "numeira.mod-emo.expression-preview.preview-target");
 
     private static PropCache<int, ImmutableList<RenderGroup>> RendererCache { get; } = new("numeira.mod-emo.expression-preview.renderer-cache", static (context, go) =>
     {
@@ -71,6 +72,20 @@ internal sealed class ExpressionPreview : IRenderFilter
     }, (left, right) => left.SequenceEqual(right));
 
     private readonly static PropCache<int, GameObject?> SelectionCache = new("numeira.mod-emo.expression-preview.selection-cache", (context, _) => context.Observe(SelectionMonitor.Active, x => x, (x, y) => x == y), (x, y) => x == y);
+    private readonly static PropCache<int, IModEmoExpression?> SelectedExpression = new("numeira.mod-emo.expression-preview.selected-expression", (context, _) =>
+    {
+        if (context.Observe(PreviewTarget, x => x, (x, y) => x == y) is { } locked)
+            return locked;
+
+        var active = SelectionCache.Get(context, 0);
+        if (active == null)
+            return null;
+
+        if (active.GetComponentInParent<IModEmoExpression>() is not { } expression)
+            return null;
+
+        return expression;
+    }, (x, y) => x == y);
 
     public ImmutableList<RenderGroup> GetTargetGroups(ComputeContext context)
     {
@@ -90,7 +105,7 @@ internal sealed class ExpressionPreview : IRenderFilter
         private readonly ModEmo rootComponent;
         private readonly Renderer originalRenderer;
         private readonly IModEmoExpression? selectedExpression;
-        private DateTime selectionChangedTime;
+        private readonly DateTime selectionChangedTime;
         private IDisposable? sceneReflesher;
 
         private static readonly PreviewWriter previewWriter = new();
@@ -101,7 +116,8 @@ internal sealed class ExpressionPreview : IRenderFilter
             originalRenderer = proxyPairs.FirstOrDefault().Item1;
             rootComponent = renderGroup.GetData<ModEmo>();
 
-            selectedExpression = GetSelectedExpression();
+            selectionChangedTime = DateTime.Now;
+            selectedExpression = SelectedExpression.Get(context, 0);
         }
 
         public Node(Node source, ComputeContext context)
@@ -109,8 +125,9 @@ internal sealed class ExpressionPreview : IRenderFilter
             this.context = context;
             originalRenderer = source.originalRenderer;
             rootComponent = source.rootComponent;
+            selectionChangedTime = DateTime.Now;
+            selectedExpression = SelectedExpression.Get(context, 0);
 
-            selectedExpression = GetSelectedExpression();
         }
 
         public void OnFrame(Renderer original, Renderer proxy)
@@ -119,6 +136,9 @@ internal sealed class ExpressionPreview : IRenderFilter
                 return;
 
             if (selectedExpression is not { } expression)
+                return;
+
+            if (expression.Component!.GetComponentInParent<ModEmo>() != rootComponent)
                 return;
 
             float time = (float)(DateTime.Now - selectionChangedTime).TotalSeconds - 1;
@@ -142,8 +162,6 @@ internal sealed class ExpressionPreview : IRenderFilter
             {
                 if (previewWriter.Curves.Select(x => x.Value.Length).MaxOrDefault() > 1)
                     sceneReflesher = SceneViewReflesher.BeginReflesh();
-                else
-                    sceneReflesher = Disposable.Empty;
             }
 
             foreach (var kvp in previewWriter.Curves)
@@ -186,25 +204,6 @@ internal sealed class ExpressionPreview : IRenderFilter
             }
 
             return Task.FromResult<IRenderFilterNode?>(null);
-        }
-
-        private IModEmoExpression? GetSelectedExpression()
-        {
-            var active = SelectionCache.Get(context, 0);
-            if (active == null)
-                return null;
-
-            if (active.GetComponentInParent<IModEmoExpression>() is not { } expression)
-                return null;
-
-            if (expression.Component!.GetComponentInParent<ModEmo>() != rootComponent)
-                return null;
-
-            selectionChangedTime = DateTime.Now;
-            sceneReflesher?.Dispose();
-            sceneReflesher = null;
-
-            return expression;
         }
 
         public void Dispose()
