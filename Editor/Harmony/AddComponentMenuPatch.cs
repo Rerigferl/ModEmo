@@ -58,34 +58,17 @@ internal sealed class AddComponentMenuPatch : HarmonyPatch<AddComponentMenuPatch
         if (editor == null || editor.target == null || editor.target is not GameObject go)
             return;
 
-        if (go.GetComponent<IModEmoExpression>() is not { } expression)
-            return;
-
-        var rect = EditorGUILayout.GetControlRect(false, 1);
-        if (Event.current.type is EventType.Repaint)
-            DrawSplitLine?.Invoke(__instance, rect.y);
-
-        EditorGUILayout.Space();
-
-        if (Button("Add Blendshape"))
+        if (go.GetComponent<IModEmoExpression>() is { } expression)
         {
-            Undo.AddComponent<ModEmoBlendShapeSelector>(go);
-        }
-        
-        EditorGUILayout.Space();
+            var rect = EditorGUILayout.GetControlRect(false, 1);
+            if (Event.current.type is EventType.Repaint)
+                DrawSplitLine?.Invoke(__instance, rect.y);
 
-        static bool Button(string content)
-        {
-            var c = EditorGUIUtility.TrTempContent(content);
+            EditorGUILayout.Space();
 
-            var rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight * 1.5f);
-            var temp = rect.width;
-            var newWidth = Math.Min(rect.width * 0.9f, 200);
-            rect.width = newWidth;
-            rect.x += (temp - rect.width) / 2;
-            
+            ModEmoExpressionEditor.OnFooterGUI(editor, expression);
 
-            return GUI.Button(rect, c);
+            EditorGUILayout.Space();
         }
     }
 
