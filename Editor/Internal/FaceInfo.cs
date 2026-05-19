@@ -81,6 +81,8 @@ internal sealed class FaceInfo
             get
             {
                 using var x = renderer.GetBlendshapeWeights();
+                if (Index > x.Span.Length)
+                    return 0;
                 return x.Span[Index];
             }
         }
