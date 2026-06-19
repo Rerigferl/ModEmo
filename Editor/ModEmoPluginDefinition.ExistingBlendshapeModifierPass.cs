@@ -20,32 +20,59 @@ internal sealed partial class ModEmoPluginDefinition
             if (faceRenderer == null)
                 return;
 
-            var mix = faceRenderer.gameObject.AddComponent<AdHocBlendShapeMix>();
-            mix.Replace = true;
-            var list = new List<BlendShapeMixDefinition>();
+            var mesh = faceRenderer.sharedMesh;
+            if (mesh == null)
+                return;
 
-            foreach (var group in modifiers.GroupBy(x => x.TargetBlendShapeName, x => x.GetBlendShapes()))
+            var newMesh = Object.Instantiate(mesh);
+            ObjectRegistry.RegisterReplacedObject(mesh, newMesh);
+
+            newMesh.ClearBlendShapes();
+
+            int count = mesh.blendShapeCount;
+
+            var dict = modifiers.ToDictionary(x => x.TargetBlendShapeName, x => x);
+
+            Vector3[] verticies1 = new Vector3[mesh.vertexCount];
+            Vector3[] verticies2 = new Vector3[mesh.vertexCount];
+
+            for (int index = 0; index < count; index++)
             {
-                list.Add(new()
+                var name = mesh.GetBlendShapeName(index);
+                if (!dict.TryGetValue(name, out var modifier))
                 {
-                    ToBlendShape = group.Key,
-                    FromBlendShape = group.Key,
-                    MixWeight = -1
-                });
-
-                foreach (var x in group.SelectMany(x => x))
-                {
-                    list.Add(new()
-                    {
-                        ToBlendShape = group.Key,
-                        FromBlendShape = x.Name,
-                        MixWeight = (x.Value / 100f) * (x.Cancel ? -1 : 1),
-                    });
+                    mesh.GetBlendShapeFrameVertices(index, 0, verticies1, null, null);
                 }
+                else
+                {
+                    verticies1.AsSpan().Clear();
+                    foreach (var blendshape in modifier.GetBlendShapes())
+                    {
+                        int index2 = mesh.GetBlendShapeIndex(blendshape.Name);
+                        if (index2 == -1)
+                            continue;
+
+                        mesh.GetBlendShapeFrameVertices(index2, 0, verticies2, null, null);
+
+                        var v = blendshape.Value;
+                        var w = mesh.GetBlendShapeFrameWeight(index2, 0);
+                        v /= w;
+
+                        var origweight = faceRenderer.GetBlendShapeWeight(index2) / w;
+                        float cancel = blendshape.Cancel ? -origweight : 1;
+
+                        for (int i = 0; i < verticies1.Length; i++)
+                        {
+                            var v1 = verticies1[i];
+                            var v2 = verticies2[i];
+                            verticies1[i] = Vector3.Lerp(v1, v1 + v2 * cancel, v);
+                        }
+                    }
+                }
+
+                newMesh.AddBlendShapeFrame(name, mesh.GetBlendShapeFrameWeight(index, 0), verticies1, null, null);
             }
-
-            mix.MixDefinitions = list.ToArray();
-
+            faceRenderer.sharedMesh = newMesh;
 
             foreach (var x in allModifiers)
             {

@@ -128,22 +128,6 @@ internal static class CreationContextMenu
 
         menu.AddSeparator("ModEmo/");
 
-        {
-            bool flag = expression != null && ExpressionPreview.PreviewTarget.Value == expression;
-            AddMenu("ModEmo/Lock Preview", () =>
-            {
-                ExpressionPreview.PreviewTarget.Value = flag ? null : expression;
-            }, isExpression, flag);
-
-            if (ExpressionPreview.PreviewTarget.Value != null)
-            {
-                AddMenu("ModEmo/Unlock Preview", () =>
-                {
-                    ExpressionPreview.PreviewTarget.Value = null;
-                });
-            }
-        }
-
         AddMenu("ModEmo/Import Pattern from Avatar FX Layer ..", () => ImportPatternFromFXLayer(go), isRoot);
 
 #if FACE_EMO
@@ -229,13 +213,14 @@ internal static class CreationContextMenu
 
     private static void CreateNewObject(string name, GameObject parent, params Type[] components)
     {
-        var newObj = ObjectFactory.CreateGameObject(name, components);
+        var newObj = ObjectFactory.CreateGameObject(parent.scene, HideFlags.None, name, components);
         CreateNewObject(newObj, parent);
     }
 
     private static void CreateNewObject(GameObject go, GameObject parent)
     {
         ObjectFactory.PlaceGameObject(go, parent);
+        go.transform.SetAsFirstSibling();
         Selection.activeObject = go;
         SceneHierarchyWindow.FrameAndRenameNewGameObject();
     }

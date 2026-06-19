@@ -2,8 +2,10 @@
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using nadena.dev.ndmf.preview;
 using UnityEngine;
+using UnityEngine.Internal;
 
 namespace Numeira;
 
@@ -43,7 +45,6 @@ internal sealed class ExpressionPreview : IRenderFilter
     }
 
     public static PublishedValue<string?> TemporaryPreviewBlendShape { get; } = new(null);
-    public static PublishedValue<IModEmoExpression?> PreviewTarget { get; } = new(null, "numeira.mod-emo.expression-preview.preview-target");
 
     private static PropCache<int, ImmutableList<RenderGroup>> RendererCache { get; } = new("numeira.mod-emo.expression-preview.renderer-cache", static (context, go) =>
     {
@@ -72,24 +73,45 @@ internal sealed class ExpressionPreview : IRenderFilter
     }, (left, right) => left.SequenceEqual(right));
 
     private readonly static PropCache<int, GameObject?> SelectionCache = new("numeira.mod-emo.expression-preview.selection-cache", (context, _) => context.Observe(SelectionMonitor.Active, x => x, (x, y) => x == y), (x, y) => x == y);
-    private readonly static PropCache<int, IModEmoExpression?> SelectedExpression = new("numeira.mod-emo.expression-preview.selected-expression", (context, _) =>
+    private static PropCache<ModEmo, IModEmoExpression?> SelectedExpression { get; } = new("numeira.mod-emo.expression-preview.selected-expression", (context, component) =>
     {
-        if (context.Observe(PreviewTarget, x => x, (x, y) => x == y) is { } locked)
-            return locked;
-
         var active = SelectionCache.Get(context, 0);
-        if (active == null)
-            return null;
+        if (active != null && active.GetComponentInParent<IModEmoExpression>() is { } expression)
+            return expression;
 
-        if (active.GetComponentInParent<IModEmoExpression>() is not { } expression)
-            return null;
+        if (context.Observe(component, x => x.Settings.PreviewExpression?.Get(x), (x, y) => x == y) is { } defaultPreview)
+        {
+            if (context.GetComponent<IModEmoExpression>(defaultPreview) is { } exp)
+                return exp;
+        }
 
-        return expression;
+        return null;
     }, (x, y) => x == y);
 
     public ImmutableList<RenderGroup> GetTargetGroups(ComputeContext context)
     {
-        return RendererCache.Get(context, 0);
+        var result = Iterate(context).ToImmutableList();
+        return result;
+
+        static IEnumerable<RenderGroup> Iterate(ComputeContext context)
+        {
+            foreach (var root in context.GetAvatarRoots())
+            {
+                if (!context.ActiveInHierarchy(root))
+                    continue;
+
+                var component = context.GetComponentsInChildren<ModEmo>(root, true).FirstOrDefault(x => context.ActiveAndEnabled(x));
+                if (component == null)
+                    continue;
+
+                var renderer = context.Observe(component, x => x.GetFaceRenderer());
+                if (renderer == null)
+                    continue;
+
+                yield return RenderGroup.For(renderer).WithData(component);
+            }
+            yield break;
+        }
     }
 
     public async Task<IRenderFilterNode> Instantiate(RenderGroup group, IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context)
@@ -117,7 +139,7 @@ internal sealed class ExpressionPreview : IRenderFilter
             rootComponent = renderGroup.GetData<ModEmo>();
 
             selectionChangedTime = DateTime.Now;
-            selectedExpression = SelectedExpression.Get(context, 0);
+            selectedExpression = SelectedExpression.Get(context, rootComponent);
         }
 
         public Node(Node source, ComputeContext context)
@@ -126,72 +148,75 @@ internal sealed class ExpressionPreview : IRenderFilter
             originalRenderer = source.originalRenderer;
             rootComponent = source.rootComponent;
             selectionChangedTime = DateTime.Now;
-            selectedExpression = SelectedExpression.Get(context, 0);
-
+            selectedExpression = SelectedExpression.Get(context, rootComponent);
         }
 
         public void OnFrame(Renderer original, Renderer proxy)
         {
-            if (proxy is not SkinnedMeshRenderer smr || original is not SkinnedMeshRenderer origSmr || smr.sharedMesh is not { } mesh || mesh == null)
-                return;
-
-            if (selectedExpression is not { } expression)
-                return;
-
-            if (expression.Component!.GetComponentInParent<ModEmo>() != rootComponent)
-                return;
-
-            float time = (float)(DateTime.Now - selectionChangedTime).TotalSeconds - 1;
-            if (selectedExpression.IsLoop)
+            try
             {
-                time = (time * 0.5f) % 1;
-            }
-            else
-            {
-                time = (Math.Clamp((float)Math.Sin(time), -0.2f, 0.2f) + 0.2f) / 0.4f;
-            }
+                if (proxy is not SkinnedMeshRenderer smr || original is not SkinnedMeshRenderer origSmr || smr.sharedMesh is not { } mesh || mesh == null)
+                    return;
 
-            if (!AutoPlay)
-                time = PreviewTime;
+                if (selectedExpression is not { } expression || expression == null)
+                    return;
 
-            previewWriter.Renderer = smr;
-            previewWriter.Reset();
-            selectedExpression.CollectAnimation(previewWriter, default);
+                if (expression.Component!.GetComponentInParent<ModEmo>() != rootComponent)
+                    return;
 
-            if (sceneReflesher == null)
-            {
-                if (previewWriter.Curves.Select(x => x.Value.Length).MaxOrDefault() > 1)
-                    sceneReflesher = SceneViewReflesher.BeginReflesh();
-            }
-
-            foreach (var kvp in previewWriter.Curves)
-            {
-                var (index, curve) = kvp;
-                if (curve.Length == 0)
-                    continue;
-
-                bool isCancel = index < 0;
-                if (isCancel)
-                    index = ~index;
-
-                var lastTime = curve.Keys.Select(x => x.Time).MaxOrDefault();
-                var value = curve.Evaluate(time * lastTime);
-
-                if (isCancel)
+                float time = (float)(DateTime.Now - selectionChangedTime).TotalSeconds - 1;
+                if (selectedExpression.IsLoop)
                 {
-                    float orig = origSmr.GetBlendShapeWeight(index);
-                    var weight = value / 100f;
-                    value = orig * (1 - weight);
+                    time = (time * 0.5f) % 1;
+                }
+                else
+                {
+                    time = (Math.Clamp((float)Math.Sin(time), -0.2f, 0.2f) + 0.2f) / 0.4f;
                 }
 
-                smr.SetBlendShapeWeight(index, value);
-            }
+                if (!AutoPlay)
+                    time = PreviewTime;
 
-            if (TemporaryPreviewBlendShape.Value != null)
-            {
-                if (previewWriter.GetBlendShapeIndex(TemporaryPreviewBlendShape.Value) is {} index)
-                    smr.SetBlendShapeWeight(index, 100);
+                previewWriter.Renderer = smr;
+                previewWriter.Reset();
+                selectedExpression.CollectAnimation(previewWriter, default);
+
+                if (sceneReflesher == null)
+                {
+                    if (previewWriter.Curves.Select(x => x.Value.Length).MaxOrDefault() > 1)
+                        sceneReflesher = SceneViewReflesher.BeginReflesh();
+                }
+
+                foreach (var kvp in previewWriter.Curves)
+                {
+                    var (index, curve) = kvp;
+                    if (curve.Length == 0)
+                        continue;
+
+                    bool isCancel = index < 0;
+                    if (isCancel)
+                        index = ~index;
+
+                    var lastTime = curve.Keys.Select(x => x.Time).MaxOrDefault();
+                    var value = curve.Evaluate(time * lastTime);
+
+                    if (isCancel)
+                    {
+                        float orig = origSmr.GetBlendShapeWeight(index);
+                        var weight = value / 100f;
+                        value = orig * (1 - weight);
+                    }
+
+                    smr.SetBlendShapeWeight(index, value);
+                }
+
+                if (TemporaryPreviewBlendShape.Value != null)
+                {
+                    if (previewWriter.GetBlendShapeIndex(TemporaryPreviewBlendShape.Value) is {} index)
+                        smr.SetBlendShapeWeight(index, 100);
+                }
             }
+            catch {}
         }
 
         public Task<IRenderFilterNode?> Refresh(IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context, RenderAspects updatedAspects)

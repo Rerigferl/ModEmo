@@ -30,7 +30,14 @@ internal sealed class FaceInfo
         for (int i  = 0; i < count; i++)
         {
             var name = mesh.GetBlendShapeName(i);
-            if (UnsafeMeshUtils.IsMarkerBlendShape(mesh, i, component.Settings.MarkerBlendshapeVertexCountThreshold, component.Settings.MarkerBlendshapeThreshold) && !IsReservedBlendShape(name))
+            bool isMarkerBlendshape = component.Settings.MarkerDetectMode switch
+            {
+                MarkerBlendShapeDetectMode.ByName => component.Settings.SeparatorStringRegEx.IsMatch(name),
+                MarkerBlendShapeDetectMode.ByVertex => UnsafeMeshUtils.IsMarkerBlendShape(mesh, i, component.Settings.MarkerBlendshapeVertexCountThreshold, component.Settings.MarkerBlendshapeThreshold) && !IsReservedBlendShape(name),
+                _ => false,
+            };
+
+            if (isMarkerBlendshape)
             {
                 groupRangeMaps.TryAdd(currentGroup ?? component.Settings.DefaultGroupName, new Range(groupStartIndex, blendShapes.Count));
                 groupStartIndex = blendShapes.Count;
@@ -80,10 +87,7 @@ internal sealed class FaceInfo
         {
             get
             {
-                using var x = renderer.GetBlendshapeWeights();
-                if (Index > x.Span.Length)
-                    return 0;
-                return x.Span[Index];
+                return renderer.GetBlendShapeWeight(Index);
             }
         }
 

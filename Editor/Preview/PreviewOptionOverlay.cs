@@ -33,7 +33,7 @@ internal sealed class PreviewOptionOverlay : Overlay, ITransientOverlay
         var timeSlider = root.Q<Slider>("FrameTimeSlider");
         timeSlider?.SetValueWithoutNotify(ExpressionPreview.PreviewTime);
         timeSlider?.RegisterValueChangedCallback(x => ExpressionPreview.PreviewTime = x.newValue);
-
+        timeSlider?.SetEnabled(!ExpressionPreview.AutoPlay);
         var autoPlayToggle = root.Q<Toggle>("AutoPlayToggle");
         autoPlayToggle?.RegisterValueChangedCallback(x =>
         {

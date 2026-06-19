@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using nadena.dev.modular_avatar.core;
 
 namespace Numeira
 {
@@ -87,8 +88,12 @@ namespace Numeira
 
         public string DefaultGroupName = "Uncategorized";
 
+        public MarkerBlendShapeDetectMode MarkerDetectMode = MarkerBlendShapeDetectMode.ByVertex;
         public float MarkerBlendshapeThreshold = 5e-08f;
         public int MarkerBlendshapeVertexCountThreshold = 3;
+
+        [ExpressionSelector]
+        public AvatarObjectReference PreviewExpression = new();
 
         [NonSerialized]
         private Regex? separatorStringRegexCache;
@@ -109,5 +114,11 @@ namespace Numeira
                 return separatorStringRegexCache;
             }
         }
+
     }
+}
+public enum MarkerBlendShapeDetectMode
+{
+    ByName,
+    ByVertex,
 }
