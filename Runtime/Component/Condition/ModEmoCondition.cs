@@ -1,4 +1,4 @@
-﻿namespace Numeira
+namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Condition")]
     internal sealed class ModEmoCondition : ModEmoConditionBase

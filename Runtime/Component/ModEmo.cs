@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using nadena.dev.modular_avatar.core;
 
 namespace Numeira

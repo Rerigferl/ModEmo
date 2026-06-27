@@ -1,4 +1,4 @@
-﻿#if FACE_EMO
+#if FACE_EMO
 using Suzuryg.FaceEmo.Components;
 using Suzuryg.FaceEmo.Components.Data;
 #endif

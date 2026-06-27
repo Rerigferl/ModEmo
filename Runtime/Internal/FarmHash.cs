@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This file is derived from MessagePipe project by Cysharp, Inc.
  * Original source: https://github.com/Cysharp/MessagePipe/blob/56cd68b2deafc1957832a57577aaad40dc647cde/src/MessagePipe.Unity/Assets/Scripts/MessagePack/Internal/FarmHash.cs
  * 

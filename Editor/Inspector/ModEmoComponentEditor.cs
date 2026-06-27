@@ -1,4 +1,4 @@
-﻿
+
 namespace Numeira;
 
 [CustomEditor(typeof(ModEmo))]

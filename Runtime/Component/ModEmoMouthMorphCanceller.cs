@@ -1,4 +1,4 @@
-﻿namespace Numeira
+namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Mouth Morph Canceller")]
     internal sealed class ModEmoMouthMorphCanceller : ModEmoTagComponent, IModEmoMouthMorphCanceller

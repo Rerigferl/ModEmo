@@ -1,4 +1,4 @@
-﻿namespace Numeira
+namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Expression Folder")]
     internal class ModEmoExpressionFolder : ModEmoNamedTagComponent, IModEmoExpressionFolder

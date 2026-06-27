@@ -1,4 +1,4 @@
-﻿namespace Numeira
+namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Gesture Condition")]
     internal sealed class ModEmoGestureCondition : ModEmoConditionBase

@@ -1,4 +1,4 @@
-﻿namespace Numeira
+namespace Numeira
 {
     [AddComponentMenu("ModEmo/Utilities/ModEmo Existing Blendshape Modifier")]
     [RequireComponent(typeof(ModEmoBlendShapeSelector))]

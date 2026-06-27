@@ -1,4 +1,4 @@
-﻿using Numeira.Animation;
+using Numeira.Animation;
 
 namespace Numeira;
 

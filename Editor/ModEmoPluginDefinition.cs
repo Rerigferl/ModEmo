@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Reflection;
 using nadena.dev.modular_avatar.core;
 using nadena.dev.ndmf.vrchat;

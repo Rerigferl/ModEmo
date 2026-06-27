@@ -1,4 +1,4 @@
-﻿namespace Numeira;
+namespace Numeira;
 #if UNITY_EDITOR
 internal readonly ref struct ShurikenHeaderGroupScope
 {

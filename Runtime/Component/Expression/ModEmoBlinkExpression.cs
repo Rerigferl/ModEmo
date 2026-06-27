@@ -1,4 +1,4 @@
-﻿
+
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Blink Expression")]

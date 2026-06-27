@@ -1,4 +1,4 @@
-﻿using nadena.dev.ndmf.util;
+using nadena.dev.ndmf.util;
 using Numeira.Animation;
 
 namespace Numeira;

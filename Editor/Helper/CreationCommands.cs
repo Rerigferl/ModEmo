@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using nadena.dev.ndmf.runtime;

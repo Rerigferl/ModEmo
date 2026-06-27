@@ -1,4 +1,4 @@
-﻿namespace Numeira;
+namespace Numeira;
 
 [FilePath("numeira/ModEmoPreviewPrefs.asset", FilePathAttribute.Location.ProjectFolder)]
 public class ModEmoPreviewPrefs : ScriptableSingleton<ModEmoPreviewPrefs>

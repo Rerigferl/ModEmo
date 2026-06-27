@@ -1,4 +1,4 @@
-﻿namespace Numeira
+namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "AnimationClip Expression")]
     internal sealed class ModEmoAnimationClipExpression : ModEmoExpression, IModEmoAnimationCollector

@@ -1,4 +1,4 @@
-﻿namespace Numeira;
+namespace Numeira;
 
 internal readonly ref struct ObjectDirtyMarkerScope
 {

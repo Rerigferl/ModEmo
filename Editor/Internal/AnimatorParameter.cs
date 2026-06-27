@@ -1,4 +1,4 @@
-﻿using nadena.dev.modular_avatar.core;
+using nadena.dev.modular_avatar.core;
 
 namespace Numeira;
 

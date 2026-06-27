@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using Numeira.Animation;
 using UnityKeyframe = UnityEngine.Keyframe;
 

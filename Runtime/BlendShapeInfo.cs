@@ -1,4 +1,4 @@
-﻿namespace Numeira;
+namespace Numeira;
 
 public readonly struct BlendShapeInfo
 {

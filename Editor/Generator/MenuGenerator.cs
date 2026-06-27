@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.IO;
 using nadena.dev.modular_avatar.core;
 using Numeira.Animation;

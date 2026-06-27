@@ -1,4 +1,4 @@
-﻿namespace Numeira;
+namespace Numeira;
 
 internal sealed class Enums<T> where T : struct, Enum
 {

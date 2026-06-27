@@ -1,4 +1,4 @@
-﻿namespace Numeira;
+namespace Numeira;
 
 internal enum Hand
 {

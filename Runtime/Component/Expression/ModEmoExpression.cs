@@ -1,4 +1,4 @@
-﻿
+
 namespace Numeira
 {
     internal abstract class ModEmoExpression : ModEmoNamedTagComponent, IModEmoExpression

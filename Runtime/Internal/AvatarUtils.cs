@@ -1,4 +1,4 @@
-﻿using nadena.dev.ndmf.runtime;
+using nadena.dev.ndmf.runtime;
 
 namespace Numeira;
 

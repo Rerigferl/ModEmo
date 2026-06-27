@@ -1,4 +1,4 @@
-﻿namespace Numeira;
+namespace Numeira;
 
 [Serializable]
 internal struct Condition

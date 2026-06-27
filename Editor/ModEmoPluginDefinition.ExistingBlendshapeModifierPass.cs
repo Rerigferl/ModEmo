@@ -1,4 +1,4 @@
-﻿#if ZATOOLS
+#if ZATOOLS
 using System.Buffers;
 using KusakaFactory.Zatools.Runtime;
 

@@ -1,4 +1,4 @@
-﻿namespace Numeira;
+namespace Numeira;
 
 internal readonly struct RuntimeSerializedObject
 {

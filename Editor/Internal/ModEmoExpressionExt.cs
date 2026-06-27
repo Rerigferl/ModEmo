@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using nadena.dev.ndmf.util;
 using Numeira.Animation;
 

@@ -1,4 +1,4 @@
-﻿using nadena.dev.ndmf.preview;
+using nadena.dev.ndmf.preview;
 using UnityEditor.Overlays;
 using UnityEngine.UIElements;
 

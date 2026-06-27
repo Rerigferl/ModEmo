@@ -1,4 +1,4 @@
-﻿namespace Numeira
+namespace Numeira
 {
     [RequireComponent(typeof(ModEmoExpression))]
     [AddComponentMenu(ComponentMenuPrefix + "LipSync Control")]
