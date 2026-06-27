@@ -15,6 +15,8 @@
         {
             foreach (var selector in this.GetComponentsInDirectChildren<ModEmoBlendShapeSelector>(includeSelf: true))
             {
+                if (!selector.enabled)
+                    continue;
                 foreach (var x in selector.BlendShapes)
                 {
                     if (x.Name is SelfProxyName)

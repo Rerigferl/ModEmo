@@ -59,47 +59,55 @@ internal class ModEmoExpressionEditor : Editor
 
     public static void OnFooterGUI(Editor editor, IModEmoExpression expression)
     {
-        var go = expression.GameObject;
-
-        IsExpressionSettingsOpen = EditorGUILayout.BeginFoldoutHeaderGroup(IsExpressionSettingsOpen, "Expression Settings");
-        EditorGUILayout.EndFoldoutHeaderGroup();
-
-        if (IsExpressionSettingsOpen)
+        EditorGUIUtility.labelWidth = 150f;
+        try
         {
-            EditorGUI.indentLevel += 1;
+            var go = expression.GameObject;
 
-            EditorGUILayout.BeginHorizontal();
-            RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle("Loop", expression.IsLoop), value => expression.Component.GetOrAddComponent<ModEmoLoopControl>(x => x.WithVisibile(false)).enabled = value);
-            RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle("Blink", expression.Blink == true), value => expression.Component.GetOrAddComponent<ModEmoBlinkControl>(x => x.WithVisibile(false)).enabled = value);
-            RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle("LipSync", expression.LipSync), value => expression.Component.GetOrAddComponent<ModEmoLipSyncControl>(x => x.WithVisibile(false)).enabled = value);
-            EditorGUILayout.EndHorizontal();
+            IsExpressionSettingsOpen = EditorGUILayout.BeginFoldoutHeaderGroup(IsExpressionSettingsOpen, "Expression Settings");
+            EditorGUILayout.EndFoldoutHeaderGroup();
 
-            EditorGUILayout.BeginHorizontal();
-            RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle("EyeTracking", expression.EyeTracking), value => expression.Component.GetOrAddComponent<ModEmoEyeTrackingControl>(x => x.WithVisibile(false)).enabled = value);
-            RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle("Mouth Morph Cancel", expression.EnableMouthMorphCancel), value => expression.Component.GetOrAddComponent<ModEmoMouthMorphCancelControl>(x => x.WithVisibile(false)).enabled = value);
-            EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.Toggle("- - - - -", false);
-            EditorGUI.EndDisabledGroup();
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUI.indentLevel -= 1;
-        }
-
-        EditorGUILayout.Space();
-
-        IsComponentShortcutsOpen = EditorGUILayout.BeginFoldoutHeaderGroup(IsComponentShortcutsOpen, "Component Shortcuts");
-        EditorGUILayout.EndFoldoutHeaderGroup();
-
-        if (IsComponentShortcutsOpen)
-        {
-            EditorGUI.indentLevel += 1;
-
-            if (Button("Add Blendshape"))
+            if (IsExpressionSettingsOpen)
             {
-                Undo.AddComponent<ModEmoBlendShapeSelector>(go);
+                EditorGUI.indentLevel += 1;
+
+                EditorGUILayout.BeginHorizontal();
+                RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle("Loop", expression.IsLoop), value => expression.Component.GetOrAddComponent<ModEmoLoopControl>(x => x.WithVisibile(false)).enabled = value);
+                RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle("Blink", expression.Blink == true), value => expression.Component.GetOrAddComponent<ModEmoBlinkControl>(x => x.WithVisibile(false)).enabled = value);
+                RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle("LipSync", expression.LipSync), value => expression.Component.GetOrAddComponent<ModEmoLipSyncControl>(x => x.WithVisibile(false)).enabled = value);
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUILayout.BeginHorizontal();
+                RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle("EyeTracking", expression.EyeTracking), value => expression.Component.GetOrAddComponent<ModEmoEyeTrackingControl>(x => x.WithVisibile(false)).enabled = value);
+                RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle("Mouth Morph Cancel", expression.EnableMouthMorphCancel), value => expression.Component.GetOrAddComponent<ModEmoMouthMorphCancelControl>(x => x.WithVisibile(false)).enabled = value);
+                EditorGUI.BeginDisabledGroup(true);
+                EditorGUILayout.Toggle("- - - - -", false);
+                EditorGUI.EndDisabledGroup();
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUI.indentLevel -= 1;
             }
 
-            EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
+
+            IsComponentShortcutsOpen = EditorGUILayout.BeginFoldoutHeaderGroup(IsComponentShortcutsOpen, "Component Shortcuts");
+            EditorGUILayout.EndFoldoutHeaderGroup();
+
+            if (IsComponentShortcutsOpen)
+            {
+                EditorGUI.indentLevel += 1;
+
+                if (Button("Add Blendshape"))
+                {
+                    Undo.AddComponent<ModEmoBlendShapeSelector>(go);
+                }
+
+                EditorGUI.indentLevel -= 1;
+            }
+        }
+        finally
+        {
+            EditorGUIUtility.labelWidth = 0;
         }
 
         static bool Button(string content)

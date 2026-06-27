@@ -1,10 +1,18 @@
 ﻿#if UNITY_EDITOR
-using System.Diagnostics.CodeAnalysis;
 
 namespace Numeira;
 
 internal static class RuntimeGUIUtils
 {
+    private static GUIContent? temporaryGUIContent;
+
+    public static GUIContent ToTempGUIContent(this string text)
+    {
+        var g = temporaryGUIContent ??= new();
+        g.text = text;
+        return g;
+    }
+
     public static T ChangeCheck<T>(Func<T> gui, Action<T> callback)
     {
         EditorGUI.BeginChangeCheck();

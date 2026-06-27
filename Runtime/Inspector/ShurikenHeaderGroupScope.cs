@@ -2,21 +2,20 @@
 #if UNITY_EDITOR
 internal readonly ref struct ShurikenHeaderGroupScope
 {
-    private static readonly GUIStyle InnerBoxStyle;
-
-    private readonly bool NeedEndLayoutGroup;
-    private readonly bool InsertSpaceToEnd;
-    public readonly bool IsOpened;
-    public readonly SerializedProperty? Property;
-
-    static ShurikenHeaderGroupScope()
+    internal static GUIStyle InnerBoxStyle
     {
-        InnerBoxStyle = new("HelpBox")
+        get => innerBoxStyle ??= new("HelpBox")
         {
             margin = new RectOffset(),
             padding = new RectOffset(6, 6, 6, 6),
         };
     }
+    private static GUIStyle? innerBoxStyle;
+
+    private readonly bool NeedEndLayoutGroup;
+    private readonly bool InsertSpaceToEnd;
+    public readonly bool IsOpened;
+    public readonly SerializedProperty? Property;
 
     public ShurikenHeaderGroupScope(SerializedProperty group, string title, bool drawToggle = true, bool insertSpaceToEnd = true, Action<GenericMenu>? menuCallback = null)
     {

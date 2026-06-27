@@ -4,256 +4,9 @@ using UnityEditorInternal;
 
 namespace Numeira;
 
-//[CustomEditor(typeof(ModEmoBlendShapeSelector), true)]
-[CanEditMultipleObjects]
-internal sealed class ModEmoBlendShapeSelectorEditor : Editor
-{
-    private SerializedProperty blendShapesProperty = null!;
-
-    private ModEmoBlendShapeSelector Component => (target as ModEmoBlendShapeSelector)!;
-
-    private ModEmo? Root => Component.GetComponentInParent<ModEmo>(true);
-
-    private bool[] categoryOpenStatus = null!;
-    private Vector2[] categoryScrolls = null!;
-
-    private List<KeyValuePair<string, List<string>>> CategorizedBlendShapes = null!;
-
-    private ImmutableDictionary<string, BlendShapeInfo> BlendShapes = null!;
-    private BlendShapeList? blendShapeList;
-
-    private readonly List<string> temporaryItemStack = new();
-
-    private string searchText = string.Empty;
-    private Regex? searchTextRegEx;
-
-    private bool isExpressionChild = false;
-
-    internal Guid Identifier;
-    private static ulong previewingControlId = 0;
-    private static Guid? previewingIdentifier = null;
-
-    private static bool IsExpressionChild(ModEmoBlendShapeSelector selector)
-    {
-        var t = selector.transform;
-        while(t != null)
-        {
-            if (t.GetComponent<IModEmoExpression>() != null)
-                return true;
-
-            if (t != selector.transform && t.GetComponent<IModEmoBlendShapeFolder>() == null)
-                return false;
-
-            t = t.parent;
-        }
-        return false;
-    }
-
-    public void OnEnable()
-    {
-        Identifier = Guid.NewGuid();
-
-        blendShapesProperty = serializedObject.FindProperty("BlendShapes");
-        blendShapeList = new(serializedObject, blendShapesProperty);
-
-        if (Root == null)
-            return;
-
-        (CategorizedBlendShapes, BlendShapes) = ModEmoData.GetCategorizedBlendShapes(Root) ?? default;
-
-        categoryOpenStatus = new bool[CategorizedBlendShapes.Count];
-        categoryScrolls = new Vector2[CategorizedBlendShapes.Count];
-
-        isExpressionChild = IsExpressionChild(Component);
-    }
-
-    public override void OnInspectorGUI()
-    {
-        serializedObject.Update();
-
-        EditorGUILayout.BeginHorizontal();
-
-        EditorGUILayout.BeginVertical();
-
-        //isSettingsOpening = EditorGUILayout.BeginFoldoutHeaderGroup(isSettingsOpening, "Settings");
-        //EditorGUILayout.EndFoldoutHeaderGroup();
-        if (isExpressionChild)
-        {
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("Keyframe"));
-            EditorGUILayout.Separator();
-        }
-
-        //EditorGUILayout.PropertyField(blendShapesProperty, new GUIContent("BlendShapes"));
-        blendShapeList?.DoLayoutList();
-
-        EditorGUILayout.EndVertical();
-
-
-        if (Root != null && CategorizedBlendShapes is not null)
-        {
-            EditorGUILayout.BeginVertical(GUILayout.Width(200));
-
-            EditorGUI.BeginChangeCheck();
-            ((GUIPosition)EditorGUILayout.GetControlRect()).SearchField("", ref searchText);
-            if (EditorGUI.EndChangeCheck())
-            {
-                if (string.IsNullOrEmpty(searchText))
-                    searchTextRegEx = null;
-                else
-                    searchTextRegEx = new Regex(searchText, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-            }
-
-            float lineHeight = EditorGUIUtility.singleLineHeight * 1.25f;
-
-            var categories = CategorizedBlendShapes.AsSpan();
-            var content = new GUIContent();
-            var stack = temporaryItemStack;
-            for (int i = 0; i < categories.Length; i++)
-            {
-                stack.Clear();
-                var category = categories[i];
-                var blendShapes = category.Value.AsSpan();
-
-                foreach (var blendShape in blendShapes)
-                {
-                    if (searchTextRegEx is { } regex && !regex.IsMatch(blendShape))
-                        continue;
-                    stack.Add(blendShape);
-                }
-
-                if (stack.Count == 0)
-                    continue;
-
-                using var scope = new ShurikenHeaderGroupScope(ref categoryOpenStatus.AsSpan()[i], category.Key, menuCallback: menu => MenuCallback(menu, category));
-                if (!scope.IsOpened)
-                    continue;
-
-                bool needScroll = stack.Count > 16;
-
-                var maxHeight = lineHeight * Math.Min(24, stack.Count);
-
-                ref var scroll = ref categoryScrolls.AsSpan()[i];
-
-                if (needScroll)
-                    scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.MaxHeight(maxHeight));
-
-                var items = stack.AsSpan();
-                for (int i2 = 0; i2 < items.Length; i2++)
-                {
-                    var blendShapeName = items[i2];
-                    content.text = blendShapeName;
-                    var id = blendShapeName.GetFarmHash64();
-
-                    var rect = EditorGUILayout.GetControlRect(false, lineHeight);
-
-                    float viewTop = needScroll ? scroll.y : 0;
-                    float viewBottom = viewTop + maxHeight;
-                    float itemTop = rect.y;
-                    float itemBottom = rect.y + rect.height;
-                    bool isVisible = !needScroll || (itemBottom > viewTop && itemTop < viewBottom);
-
-                    if (isVisible)
-                    {
-                        if (Event.current.type == EventType.Repaint)
-                        {
-                            if (rect.Contains(Event.current.mousePosition))
-                            {
-                                ExpressionPreview.TemporaryPreviewBlendShape.Value = blendShapeName;
-                                previewingControlId = id;
-                                previewingIdentifier = Identifier;
-                            }
-                            else if (previewingIdentifier == Identifier && previewingControlId == id)
-                            {
-                                ExpressionPreview.TemporaryPreviewBlendShape.Value = null;
-                                previewingControlId = 0;
-                                previewingIdentifier = null;
-                            }
-                        }
-
-                        if (GUI.Button(rect, blendShapeName))
-                        {
-                            var blendShapeValue = BlendShapes.TryGetValue(blendShapeName, out var value) ? value.Max : 100;
-                            Undo.RecordObject(Component, "Modify BlendShapes");
-                            if (Event.current.shift)
-                            {
-                                Component.BlendShapes.RemoveAll(y => y.Name == blendShapeName);
-                            }
-                            else if (Event.current.button == 1)
-                            {
-                                Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = true, Value = blendShapeValue });
-                            }
-                            else
-                            {
-                                Component.BlendShapes.Add(new() { Name = blendShapeName, Cancel = false, Value = blendShapeValue });
-                            }
-                            EditorUtility.SetDirty(Component);
-                        }
-                    }
-                }
-
-                if (needScroll)
-                    EditorGUILayout.EndScrollView();
-            }
-
-            EditorGUILayout.EndVertical();
-        }
-
-
-        EditorGUILayout.EndHorizontal();
-
-        serializedObject.ApplyModifiedProperties();
-    }
-
-    private void MenuCallback(GenericMenu menu, KeyValuePair<string, List<string>> group)
-    {
-        menu.AddItem(new("Add Existing Blendshapes"), false, () =>
-        {
-            Undo.RecordObject(Component, "Add Blendshapes");
-            foreach (var item in group.Value)
-            {
-                if (!BlendShapes.TryGetValue(item, out var blendShape) || blendShape.Value == 0)
-                    continue;
-                Component.BlendShapes.Add(new() { Name = item, Cancel = false, Value = blendShape.Value });
-            }
-        });
-
-        menu.AddItem(new("Add Cancel BlendShapes"), false, () =>
-        {
-            Undo.RecordObject(Component, "Add Cancel Blendshapes");
-            foreach (var item in group.Value)
-            {
-                if (!BlendShapes.TryGetValue(item, out var blendShape) || blendShape.Value == 0)
-                    continue;
-                Component.BlendShapes.Add(new() { Name = item, Cancel = true, Value = blendShape.Max });
-            }
-        });
-    }
-
-    private sealed class BlendShapeList : ReorderableListWrapper
-    {
-        public BlendShapeList(SerializedObject serializedObject, SerializedProperty elements) : base(serializedObject, elements, "Blendshapes")
-        {
-        }
-
-        public override bool DisplayRemove => true;
-
-        protected override void OnItemGUI(Rect rect, int index, bool isActive, bool isFocused)
-        {
-            var position = (GUIPosition)rect;
-            var (left, right) = position.HorizontalSeparate(position.Width - 32, 4);
-            var property = Elements.GetArrayElementAtIndex(index);
-            EditorGUI.PropertyField(left, property);
-            if (GUI.Button(right.Center(new(24, 24)), EditorGUIUtility.TrIconContent("Toolbar Minus", "Remove selection from the list")))
-            {
-                RemoveIndicies.Add(index);
-            }
-        }
-    }
-}
-
 [CustomEditor(typeof(ModEmoBlendShapeSelector), true)]
 [CanEditMultipleObjects]
-internal sealed class ModEmoBlendShapeSelectorEditor2 : Editor
+internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 {
     private SerializedProperty blendShapesProperty = null!;
 
@@ -336,7 +89,8 @@ internal sealed class ModEmoBlendShapeSelectorEditor2 : Editor
 
         if (Root != null && faceInfo != null)
         {
-            EditorGUILayout.BeginVertical(GUILayout.Width(200));
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.BeginVertical(GUILayout.MaxWidth(200));
 
             EditorGUI.BeginChangeCheck();
             ((GUIPosition)EditorGUILayout.GetControlRect()).SearchField("", ref searchText);
@@ -597,7 +351,7 @@ internal abstract class ReorderableListWrapper
     public void DoLayoutList()
     {
         list ??= InitializeList();
-        var rect = (GUIPosition)EditorGUILayout.GetControlRect();
+        var rect = (GUIPosition)EditorGUILayout.GetControlRect(false);
         bool hasMultiple = Elements.hasMultipleDifferentValues;
 
         if (!hasMultiple)
@@ -605,7 +359,7 @@ internal abstract class ReorderableListWrapper
 
         var (leftRect, rightRect) = rect.HorizontalSeparate(rect.Width - 48, 2);
         bool foldout = Elements.isExpanded = EditorGUI.BeginFoldoutHeaderGroup(leftRect, Elements.isExpanded, Title);
-        EditorGUILayout.EndFoldoutHeaderGroup();
+        EditorGUI.EndFoldoutHeaderGroup();
         EditorGUI.PropertyField(rightRect, Elements.FindPropertyRelative("Array.size"), GUIContent.none);
 
         if (!hasMultiple)
