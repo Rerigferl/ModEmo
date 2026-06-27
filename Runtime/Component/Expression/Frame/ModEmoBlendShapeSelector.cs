@@ -3,12 +3,12 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "BlendShape")]
-    internal sealed class ModEmoBlendShapeSelector : ModEmoTagComponent, IModEmoBlendShapeConsumer, IModEmoAnimationProvider
+    internal sealed class ModEmoBlendShapeSelector : ModEmoTagComponent, IModEmoBlendshapeConsumer, IModEmoAnimationProvider
     {
         public float Keyframe = 0;
         public List<BlendShape> BlendShapes = new();
 
-        public IEnumerable<BlendShape> GetUsageBlendshapes() => BlendShapes;
+        public IEnumerable<BlendShape> GetUsedBlendshapes() => BlendShapes;
 
         public void OnEnable() { }
 

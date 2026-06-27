@@ -6,11 +6,11 @@ namespace Numeira
     {
         public bool IsLoop => true;
 
-        public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true).SelectMany(x => x.GetBlendShapes());
+        public IEnumerable<BlendShape> GetUsedBlendshapes() => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true).SelectMany(x => x.GetUsedBlendshapes());
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            foreach (var b in GetBlendShapes())
+            foreach (var b in GetUsedBlendshapes())
                 hashCode.Add(b);
 
             base.CalculateContentHash(ref hashCode);

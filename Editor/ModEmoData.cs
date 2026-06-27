@@ -51,7 +51,7 @@ internal sealed class ModEmoData
 
         if (component.MouthMorphCanceller is { } mmc)
         {
-            foreach(var x in mmc.GetBlendShapes())
+            foreach(var x in mmc.GetUsedBlendshapes())
             {
                 if (FaceInfo.BlendshapeMap.TryGetValue(x.Name, out var info))
                     info.UsageInfo.UseEnableGate = true;
@@ -74,7 +74,7 @@ internal sealed class ModEmoData
 
             foreach (var x in rbc.Component.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true))
             {
-                foreach (var blendShape in x.GetBlendShapes())
+                foreach (var blendShape in x.GetUsedBlendshapes())
                 {
                     if (FaceInfo.BlendshapeMap.TryGetValue(blendShape.Name, out var info))
                         info.UsageInfo.UseOverrideGate = true;

@@ -1,6 +1,6 @@
 ﻿namespace Numeira;
 
-internal interface IModEmoBlendShapeConsumer : IModEmoComponent
+internal interface IModEmoBlendshapeConsumer : IModEmoComponent
 {
-    public IEnumerable<BlendShape> GetUsageBlendshapes();
+    public IEnumerable<BlendShape> GetUsedBlendshapes();
 }

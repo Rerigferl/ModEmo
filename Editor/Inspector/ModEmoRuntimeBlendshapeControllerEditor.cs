@@ -49,7 +49,7 @@ internal sealed class ModEmoRuntimeBlendshapeControllerEditor : Editor
         {
             foreach(var x in expression.Component.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true))
             {
-                foreach(var y in x.GetBlendShapes())
+                foreach(var y in x.GetUsedBlendshapes())
                 {
                     items.Add(y.Name);
                 }
@@ -77,7 +77,7 @@ internal sealed class ModEmoRuntimeBlendshapeControllerEditor : Editor
 
         foreach (var x in target.Component.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true))
         {
-            foreach (var blendShape in x.GetBlendShapes())
+            foreach (var blendShape in x.GetUsedBlendshapes())
             {
                 items.Add(blendShape.Name);
             }
