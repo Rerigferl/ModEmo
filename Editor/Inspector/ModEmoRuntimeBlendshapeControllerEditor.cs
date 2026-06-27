@@ -47,7 +47,7 @@ internal sealed class ModEmoRuntimeBlendshapeControllerEditor : Editor
 
         foreach(var expression in root.ExportExpressions().SelectMany(x => x))
         {
-            foreach(var x in expression.Component.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
+            foreach(var x in expression.Component.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true))
             {
                 foreach(var y in x.GetBlendShapes())
                 {
@@ -75,7 +75,7 @@ internal sealed class ModEmoRuntimeBlendshapeControllerEditor : Editor
             }
         }
 
-        foreach (var x in target.Component.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
+        foreach (var x in target.Component.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true))
         {
             foreach (var blendShape in x.GetBlendShapes())
             {

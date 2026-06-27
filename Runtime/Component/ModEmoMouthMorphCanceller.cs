@@ -3,7 +3,7 @@
     [AddComponentMenu(ComponentMenuPrefix + "Mouth Morph Canceller")]
     internal sealed class ModEmoMouthMorphCanceller : ModEmoTagComponent, IModEmoMouthMorphCanceller
     {
-        public IModEmoBlendShapeProvider[] Children => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(true);
+        public IModEmoBlendshapeConsumer[] Children => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(true);
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
@@ -13,11 +13,11 @@
             }
         }
 
-        public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true).SelectMany(x => x.GetBlendShapes());
+        public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true).SelectMany(x => x.GetBlendShapes());
 
     }
 
-    internal interface IModEmoMouthMorphCanceller : IModEmoBlendShapeProvider
+    internal interface IModEmoMouthMorphCanceller : IModEmoBlendshapeConsumer
     { }
 
 #if UNITY_EDITOR

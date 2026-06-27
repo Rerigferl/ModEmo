@@ -10,7 +10,7 @@ namespace Numeira
         public bool OverrideKeyframe = false;
         public float Keyframe = 0;
 
-        public IModEmoBlendShapeProvider[] Children => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: IncludeSelf);
+        public IModEmoBlendshapeConsumer[] Children => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: IncludeSelf);
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
@@ -31,12 +31,12 @@ namespace Numeira
             }
         }
 
-        public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true).SelectMany(x => x.GetBlendShapes());
+        public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true).SelectMany(x => x.GetBlendShapes());
     }
 
-    internal interface IModEmoBlendShapeFolder : IModEmoComponent, IModEmoBlendShapeProvider, IModEmoAnimationProvider
+    internal interface IModEmoBlendShapeFolder : IModEmoComponent, IModEmoBlendshapeConsumer, IModEmoAnimationProvider
     {
-        public IModEmoBlendShapeProvider[] Children => Component.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>();
+        public IModEmoBlendshapeConsumer[] Children => Component.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>();
     }
 
 #if UNITY_EDITOR

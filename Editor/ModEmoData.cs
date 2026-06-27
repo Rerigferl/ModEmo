@@ -72,7 +72,7 @@ internal sealed class ModEmoData
                 }
             }
 
-            foreach (var x in rbc.Component.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
+            foreach (var x in rbc.Component.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true))
             {
                 foreach (var blendShape in x.GetBlendShapes())
                 {

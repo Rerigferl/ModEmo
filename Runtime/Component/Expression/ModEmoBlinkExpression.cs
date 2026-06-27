@@ -6,7 +6,7 @@ namespace Numeira
     {
         public bool IsLoop => true;
 
-        public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true).SelectMany(x => x.GetBlendShapes());
+        public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true).SelectMany(x => x.GetBlendShapes());
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {

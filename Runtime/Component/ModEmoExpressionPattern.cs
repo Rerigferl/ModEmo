@@ -5,14 +5,14 @@ namespace Numeira
     [AddComponentMenu(ComponentMenuPrefix + "Expression Pattern")]
     internal sealed class ModEmoExpressionPattern : ModEmoExpressionFolder, IModEmoExpressionPattern
     {
-        public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true).Where(x => !x.GameObject.GetComponents<IModEmoExpression>().Where(x => x is not IModEmoExpressionPattern).Any()).SelectMany(x => x.GetBlendShapes());
+        public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true).Where(x => !x.GameObject.GetComponents<IModEmoExpression>().Where(x => x is not IModEmoExpressionPattern).Any()).SelectMany(x => x.GetBlendShapes());
 
         ExpressionMode IModEmoExpression.Mode => ExpressionMode.Default;
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
             hashCode.Add((this as IModEmoExpression).Name.GetFarmHash64());
-            foreach (var x in this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
+            foreach (var x in this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true))
             {
                 x.CalculateContentHash(ref hashCode);
             }

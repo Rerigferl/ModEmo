@@ -10,7 +10,7 @@ namespace Numeira
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
             hashCode.Add(GetName().GetFarmHash64());
-            foreach (var frame in this.GetComponentsInDirectChildren<IModEmoBlendShapeProvider>(includeSelf: true))
+            foreach (var frame in this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true))
             {
                 frame.CalculateContentHash(ref hashCode);
             }
