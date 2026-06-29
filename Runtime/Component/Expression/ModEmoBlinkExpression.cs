@@ -1,10 +1,11 @@
-
+﻿
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Blink Expression")]
     internal sealed class ModEmoBlinkExpression : ModEmoExpression, IModEmoLoopControl, IModEmoAnimationCollector
     {
         public bool IsLoop => true;
+        public override int LayerIndex => 1;
 
         public IEnumerable<BlendShape> GetUsedBlendshapes() => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true).SelectMany(x => x.GetUsedBlendshapes());
 

@@ -1,4 +1,4 @@
-
+﻿
 
 namespace Numeira
 {
@@ -8,6 +8,8 @@ namespace Numeira
         public IEnumerable<BlendShape> GetBlendShapes() => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true).Where(x => !x.GameObject.GetComponents<IModEmoExpression>().Where(x => x is not IModEmoExpressionPattern).Any()).SelectMany(x => x.GetUsedBlendshapes());
 
         ExpressionMode IModEmoExpression.Mode => ExpressionMode.Default;
+
+        public int LayerIndex => 0;
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {

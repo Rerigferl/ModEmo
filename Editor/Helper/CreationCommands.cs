@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using nadena.dev.ndmf.runtime;
@@ -117,6 +117,7 @@ internal static class CreationContextMenu
         AddMenu("ModEmo/Create Pattern", () => CreateNewObject("Expression Pattern (1)", go, typeof(ModEmoExpressionPattern)), enabled: isRoot);
 
         menu.AddSeparator("ModEmo/");
+        AddMenu("ModEmo/Expression/Create Blink Expression", () => CreateNewObject("Blink", go, typeof(ModEmoBlinkExpression)), enabled: isRoot);
         AddMenu("ModEmo/Expression/Create Expression", () => CreateNewExpression("Expression (1)", go), enabled: isExpressionFolder);
         AddMenu("ModEmo/Expression/Create Empty Expression", () => CreateNewExpression("Expression (1)", go, empty: true), enabled: isExpressionFolder);
         AddMenu("ModEmo/Expression/Create Simplify Expression", () => CreateNewObject("Expression (1)", go, typeof(ModEmoDefaultExpression), DefaultConditionType, typeof(ModEmoBlendShapeSelector)), enabled: isExpressionFolder);

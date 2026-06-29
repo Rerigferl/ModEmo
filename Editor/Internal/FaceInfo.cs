@@ -65,6 +65,37 @@ internal sealed class FaceInfo
         return name.StartsWith("vrc.", StringComparison.OrdinalIgnoreCase);
     }
 
+    public string? RegisterControlBlendshape(string name, BlendshapeControlType type, int layer = 0)
+    {
+        if (!this.BlendshapeMap.TryGetValue(name, out var info))
+            return null;
+
+        if (type is BlendshapeControlType.Normal)
+        {
+            info.UsageInfo.ControlGateLayers |= (1u << layer);
+        }
+        else if (type is BlendshapeControlType.Cancel)
+        {
+            info.UsageInfo.CancelGateFlags |= (1u << layer);
+        }
+
+        DefaultInterpolatedStringHandler handler = new(0, 0, null, stackalloc char[128]);
+        handler.AppendLiteral(ParameterNames.Internal.BlendShapes.Prefix);
+        handler.AppendFormatted(name);
+
+        handler.AppendLiteral("/");
+        handler.AppendFormatted(type switch
+        {
+            BlendshapeControlType.Normal => "Value",
+            BlendshapeControlType.Cancel => "Cancel",
+            _ => "",
+        });
+        handler.AppendLiteral("/");
+        handler.AppendFormatted(layer);
+
+        return handler.ToStringAndClear();
+    }
+
     public sealed class BlendshapeInfo
     {
         private readonly SkinnedMeshRenderer renderer;
@@ -105,6 +136,9 @@ internal sealed class FaceInfo
             public bool UseEnableGate;
             public bool UseControlGate;
             public bool UseOverrideGate;
+
+            public uint CancelGateFlags;
+            public uint ControlGateLayers;
 
             public readonly bool AllowControl => UseControlGate || UseOverrideGate;
         }

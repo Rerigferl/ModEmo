@@ -1,4 +1,4 @@
-using nadena.dev.ndmf.util;
+﻿using nadena.dev.ndmf.util;
 using Numeira.Animation;
 
 namespace Numeira;
@@ -21,6 +21,8 @@ internal static class BlendShapeControllerGenerator
         state.Motion = blendTree;
 
         var facePath = data.Face.gameObject.AvatarRootPath();
+
+        var bitBuffer = (stackalloc int[32]);
 
         foreach (var blendShape in data.FaceInfo.BlendShapes)
         {
@@ -87,23 +89,36 @@ internal static class BlendShapeControllerGenerator
 
             if (usageInfo.UseCancelGate)
             {
-                var cancelTree = parent.AddBlendTree("Cancel").WithThreshold(nextThreshold).Motion;
-                cancelTree.BlendParameter = $"{paramNameBase}/Cancel";
+                var layerIndex = BinaryUtils.PopIndex(usageInfo.CancelGateFlags, bitBuffer);
+                for (int i = 0; i < layerIndex.Length; i++)
+                {
+                    var cancelTree = parent.AddBlendTree("Cancel").WithThreshold(nextThreshold).Motion;
+                    cancelTree.BlendParameter = $"{paramNameBase}/Cancel/{i}";
 
-                cancelTree.Append(min, threshold: 1);
+                    cancelTree.Append(min, threshold: 1);
 
-                parent = cancelTree;
-                animatorController.Parameters.AddFloat(cancelTree.BlendParameter);
-                nextThreshold = 0;
+                    parent = cancelTree;
+                    animatorController.Parameters.AddFloat(cancelTree.BlendParameter);
+                    nextThreshold = 0;
+                }
             }
 
-            var controlTree = parent.AddBlendTree("Control").WithThreshold(nextThreshold).Motion;
-            controlTree.BlendParameter = $"{paramNameBase}/Value";
+            {
+                var layerIndex = BinaryUtils.PopIndex(usageInfo.ControlGateLayers, bitBuffer);
+                for (int i = 0; i < layerIndex.Length; i++)
+                {
+                    var controlTree = parent.AddBlendTree("Control").WithThreshold(nextThreshold).Motion;
+                    controlTree.BlendParameter = $"{paramNameBase}/Value/{i}";
 
-            controlTree.Append(min, threshold: 0);
-            controlTree.Append(max, threshold: 1);
+                    controlTree.Append(max, threshold: 1);
 
-            animatorController.Parameters.AddFloat(controlTree.BlendParameter);
+                    parent = controlTree;
+                    animatorController.Parameters.AddFloat(controlTree.BlendParameter);
+                    nextThreshold = 0;
+                }
+
+                parent.Append(min, nextThreshold);
+            }
         }
     }
 

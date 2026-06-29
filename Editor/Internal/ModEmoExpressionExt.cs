@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using nadena.dev.ndmf.util;
 using Numeira.Animation;
 
@@ -45,10 +45,11 @@ internal static class ModEmoExpressionExt
             const string cancelShapeNamePrefix = "cancel.";
             const string blendShapeNamePrefix = "blendShape.";
             var name = binding.PropertyName.AsSpan();
-            bool isCancel = false;
+            BlendshapeControlType type = BlendshapeControlType.Normal;
+
             if (name.StartsWith(cancelShapeNamePrefix))
             {
-                isCancel = true;
+                type = BlendshapeControlType.Cancel;
                 name = name[cancelShapeNamePrefix.Length..];
             }
 
@@ -56,11 +57,11 @@ internal static class ModEmoExpressionExt
                 return;
 
             name = name[blendShapeNamePrefix.Length..];
-
-            binding = new(typeof(Animator), "", $"{ParameterNames.Internal.BlendShapes.Prefix}{name}{(isCancel ? "/Cancel" : "/Value")}");
+            var nameStr = name.ToString();
+            binding = new(typeof(Animator), "", data.FaceInfo.RegisterControlBlendshape(nameStr, type, expression.LayerIndex) ?? "");
 
             float maxValue = 100;
-            if (data.FaceInfo.BlendshapeMap.TryGetValue(name.ToString(), out var info))
+            if (data.FaceInfo.BlendshapeMap.TryGetValue(nameStr, out var info))
             {
                 maxValue = info.Max;
             }

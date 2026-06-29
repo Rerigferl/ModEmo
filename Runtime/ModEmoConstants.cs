@@ -1,4 +1,4 @@
-namespace Numeira;
+﻿namespace Numeira;
 
 internal static partial class ModEmoConstants
 {
@@ -36,6 +36,12 @@ internal static partial class ModEmoConstants
 
             public const string One = $"{Prefix}One";
             public const string SmoothAmount = $"{Prefix}SmoothAmount";
+
+            public static class Expression
+            {
+                public const string Prefix = $"{Internal.Prefix}Expression/";
+                public const string ConditionPrefix = $"{Prefix}Condition/";
+            }
 
             public static class BlendShapes
             {

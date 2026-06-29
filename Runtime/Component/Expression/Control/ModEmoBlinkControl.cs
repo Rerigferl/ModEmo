@@ -1,4 +1,4 @@
-namespace Numeira
+﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Blink Control")]
     internal sealed class ModEmoBlinkControl : ModEmoTagComponent, IModEmoBlinkControl, IModEmoAnimationProvider

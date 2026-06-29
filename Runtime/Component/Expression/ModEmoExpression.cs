@@ -1,9 +1,11 @@
-
+﻿
 namespace Numeira
 {
     internal abstract class ModEmoExpression : ModEmoNamedTagComponent, IModEmoExpression
     {
         ExpressionMode IModEmoExpression.Mode => GetMode();
+
+        public virtual int LayerIndex => 0;
 
         protected virtual ExpressionMode GetMode() => ExpressionMode.Default;
 

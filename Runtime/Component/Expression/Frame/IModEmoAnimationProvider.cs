@@ -7,6 +7,8 @@ internal interface IModEmoAnimationProvider : IModEmoComponent
 
 internal interface IModEmoAnimationCollector : IModEmoComponent
 {
+    int LayerIndex { get; }
+
     public IEnumerable<IModEmoAnimationProvider> GetAnimationProviders()
     {
         foreach(var component in Component.GetComponentsInDirectChildren<IModEmoAnimationProvider>(includeSelf: true))
