@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
 using nadena.dev.modular_avatar.core;
 using nadena.dev.ndmf.vrchat;
@@ -79,6 +79,10 @@ internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefini
 
             if (context.PlatformProvider.QualifiedName == WellKnownPlatforms.VRChatAvatar30)
             {
+                builder.Parameters
+                    .AddFloat("GestureLeft", 0)
+                    .AddFloat("GestureRight", 0);
+
                 GestureWeightSmootherGenerator.Generate(context, builder);
             }
             else
