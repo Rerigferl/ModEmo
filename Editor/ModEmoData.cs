@@ -1,8 +1,7 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 using nadena.dev.ndmf.util;
 using Numeira.Animation;
-
 namespace Numeira;
 
 internal sealed class ModEmoData
@@ -48,6 +47,14 @@ internal sealed class ModEmoData
         var animationWriterContext = new AnimationWriterContext(context.AvatarRootTransform, Face.transform, Face.transform.AvatarRootPath());
         foreach (var x in expressions)
             x.CollectAnimation(writer, animationWriterContext);
+
+        foreach (var x in FaceInfo.BlendShapes)
+        {
+            if (x.UsageInfo.UseCancelGate && Mathf.Approximately(x.Value, 0) && !x.UsageInfo.UseControlGate)
+            {
+                x.UsageInfo.UseCancelGate = false;
+            }
+        }
 
         if (component.MouthMorphCanceller is { } mmc)
         {
@@ -156,11 +163,12 @@ internal sealed class ModEmoData
                 return;
 
             if (!isCancel)
+            {
                 if (Mathf.Approximately(info.Value, keyframe.Value))
                     return;
-
-            info.UsageInfo.UseControlGate = true;
-            if (isCancel && !Mathf.Approximately(info.Value, 0))
+                info.UsageInfo.UseControlGate = true;
+            }
+            else
             {
                 info.UsageInfo.UseCancelGate = true;
             }

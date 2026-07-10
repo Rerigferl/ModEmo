@@ -88,7 +88,7 @@ namespace Numeira
 
         public string DefaultGroupName = "Uncategorized";
 
-        public MarkerBlendShapeDetectMode MarkerDetectMode = MarkerBlendShapeDetectMode.ByVertex;
+        public MarkerBlendShapeDetectMode MarkerDetectMode = MarkerBlendShapeDetectMode.ByName;
         public float MarkerBlendshapeThreshold = 5e-08f;
         public int MarkerBlendshapeVertexCountThreshold = 3;
 

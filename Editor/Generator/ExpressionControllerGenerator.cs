@@ -79,11 +79,11 @@ internal static class ExpressionControllerGenerator
 
 
                 var fallback = new AnimationClipBuilder() { Name = "Fallback" };
-                fallback.AddAnimatedParameter($"{ParameterNames.Expression.Index}/{id}", 0, 0);
+                fallback.AddAnimatedParameter($"{ParameterNames.Internal.Expression.ConditionPrefix}{id}", 0, 0);
 
                 var expressionAnimation = new AnimationClipBuilder() { Name = expression.Name };
-                expressionAnimation.AddAnimatedParameter($"{ParameterNames.Expression.Index}/{id}", 0, 1);
-                animatorController.Parameters.AddFloat($"{ParameterNames.Expression.Index}/{id}", 0);
+                expressionAnimation.AddAnimatedParameter($"{ParameterNames.Internal.Expression.ConditionPrefix}{id}", 0, 1);
+                animatorController.Parameters.AddFloat($"{ParameterNames.Internal.Expression.ConditionPrefix}{id}", 0);
                 foreach (var conditionGroup in expression.Conditions)
                 {
                     float? lastValue = null;
@@ -123,7 +123,7 @@ internal static class ExpressionControllerGenerator
                     continue;
 
                 var tree = preserve.AddBlendTree(expression.Expression.Name).Motion;
-                tree.BlendParameter = $"{ParameterNames.Expression.Index}/{expression.Id}";
+                tree.BlendParameter = $"{ParameterNames.Internal.Expression.ConditionPrefix}{expression.Id}";
 
                 tree.AddAnimationClip("0").Motion.AddAnimatedParameter(tree.BlendParameter, 0, 0);
                 tree.AddAnimationClip("1").Motion.AddAnimatedParameter(tree.BlendParameter, 0, 1);
@@ -168,9 +168,9 @@ internal static class ExpressionControllerGenerator
                     t.AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex - Epsilon);
                     for (int i2 = 1; i2 < array.Length; i2++)
                     {
-                        t.AddCondition(AnimatorConditionMode.Less, $"{ParameterNames.Expression.Index}/{array[i2].Id}", 1);
+                        t.AddCondition(AnimatorConditionMode.Less, $"{ParameterNames.Internal.Expression.ConditionPrefix}{array[i2].Id}", 1);
 
-                        state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{array[i2].Id}", 0);
+                        state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Internal.Expression.ConditionPrefix}{array[i2].Id}", 0);
 
                         state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex);
                         state.AddExitTransition().AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex);
@@ -183,24 +183,24 @@ internal static class ExpressionControllerGenerator
                 else
                 {
 
-                    defaultExpState?.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
+                    defaultExpState?.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Internal.Expression.ConditionPrefix}{expData.Id}", 0);
 
                     var t = idle.AddTransition(state)
                         .AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex + Epsilon)
                         .AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex - Epsilon)
-                        .AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{expData.Id}", 0);
+                        .AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Internal.Expression.ConditionPrefix}{expData.Id}", 0);
 
                     t.AddCondition(AnimatorConditionMode.Greater, ParameterNames.IsLocal, 0);
 
-                    state.AddExitTransition().AddCondition(AnimatorConditionMode.Less, $"{ParameterNames.Expression.Index}/{expData.Id}", 1);
+                    state.AddExitTransition().AddCondition(AnimatorConditionMode.Less, $"{ParameterNames.Internal.Expression.ConditionPrefix}{expData.Id}", 1);
                     state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, ParameterNames.Expression.Pattern, expData.PatternIndex);
                     state.AddExitTransition().AddCondition(AnimatorConditionMode.Less, ParameterNames.Expression.Pattern, expData.PatternIndex);
 
                     for (int i2 = i - 1; i2 >= 1; i2--)
                     {
-                        t.AddCondition(AnimatorConditionMode.Less, $"{ParameterNames.Expression.Index}/{array[i2].Id}", 1);
+                        t.AddCondition(AnimatorConditionMode.Less, $"{ParameterNames.Internal.Expression.ConditionPrefix}{array[i2].Id}", 1);
 
-                        state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Expression.Index}/{array[i2].Id}", 0);
+                        state.AddExitTransition().AddCondition(AnimatorConditionMode.Greater, $"{ParameterNames.Internal.Expression.ConditionPrefix}{array[i2].Id}", 0);
                     }
                 }
 

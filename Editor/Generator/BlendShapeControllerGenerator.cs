@@ -33,19 +33,23 @@ internal static class BlendShapeControllerGenerator
 
             var min = new AnimationClipBuilder() { Name = $"{name} Min" };
             var max = new AnimationClipBuilder() { Name = $"{name} Max" };
-            //var @default = new AnimationClipBuilder() { Name = $"{name} Default" };
+            var @default = new AnimationClipBuilder() { Name = $"{name} Default" };
             var propertyName = $"blendShape.{name}";
 
             min.Add(new EditorCurveBinding() { path = facePath, propertyName = propertyName, type = typeof(SkinnedMeshRenderer) }, 0, 0);
             max.Add(new EditorCurveBinding() { path = facePath, propertyName = propertyName, type = typeof(SkinnedMeshRenderer) }, 0, blendShape.Max);
-            //@default.Add(new() { path = facePath, propertyName = propertyName, type = typeof(SkinnedMeshRenderer) }, 0, blendShape.Value);
+
+            @default.Add(new() { path = facePath, propertyName = propertyName, type = typeof(SkinnedMeshRenderer) }, 0, blendShape.Value);
 
             var paramNameBase = $"{ParameterNames.Internal.BlendShapes.Prefix}{name}";
 
             BlendTreeBuilder parent;
 
-            if (usageInfo.UseControlGate == false)
+            if (!usageInfo.AllowControl)
             {
+                if (!usageInfo.UseOverrideGate)
+                    continue;
+
                 var overrideTree = blendTree.AddBlendTree("Override").Motion;
                 overrideTree.BlendParameter = $"{paramNameBase}/Override";
                 animatorController.Parameters.AddFloat(overrideTree.BlendParameter);
@@ -93,7 +97,7 @@ internal static class BlendShapeControllerGenerator
                 for (int i = 0; i < layerIndex.Length; i++)
                 {
                     var cancelTree = parent.AddBlendTree("Cancel").WithThreshold(nextThreshold).Motion;
-                    cancelTree.BlendParameter = $"{paramNameBase}/Cancel/{i}";
+                    cancelTree.BlendParameter = $"{paramNameBase}/Cancel/{layerIndex[i]}";
 
                     cancelTree.Append(min, threshold: 1);
 
@@ -103,12 +107,13 @@ internal static class BlendShapeControllerGenerator
                 }
             }
 
+            if (usageInfo.UseControlGate)
             {
                 var layerIndex = BinaryUtils.PopIndex(usageInfo.ControlGateLayers, bitBuffer);
                 for (int i = 0; i < layerIndex.Length; i++)
                 {
                     var controlTree = parent.AddBlendTree("Control").WithThreshold(nextThreshold).Motion;
-                    controlTree.BlendParameter = $"{paramNameBase}/Value/{i}";
+                    controlTree.BlendParameter = $"{paramNameBase}/Value/{layerIndex[i]}";
 
                     controlTree.Append(max, threshold: 1);
 
@@ -118,6 +123,10 @@ internal static class BlendShapeControllerGenerator
                 }
 
                 parent.Append(min, nextThreshold);
+            }
+            else
+            {
+                parent.Append(@default, nextThreshold);
             }
         }
     }

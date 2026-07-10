@@ -26,7 +26,7 @@ internal static class ModEmoExpressionExt
                 float value = blendShape.Value;
                 value /= blendShape.Max;
 
-                anim.AddAnimatedParameter($"{ParameterNames.Internal.BlendShapes.Prefix}{blendShape.Name}/Value", 0, value);
+                anim.AddAnimatedParameter(data.FaceInfo.RegisterControlBlendshape(blendShape.Name, BlendshapeControlType.Normal, expression.LayerIndex) ?? "", 0, value);
             }
 
             if (writeBlink)
