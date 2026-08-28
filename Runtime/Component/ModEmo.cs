@@ -60,6 +60,8 @@ namespace Numeira
 
         public override int GetHashCode()
         {
+            if (this == null)
+                return 0;
             HashCode hash = new();
             CalculateContentHash(ref hash);
             return hash.ToHashCode();
