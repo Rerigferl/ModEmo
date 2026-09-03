@@ -93,7 +93,7 @@ internal static class BlendShapeControllerGenerator
 
             if (usageInfo.UseCancelGate)
             {
-                var layerIndex = BinaryUtils.PopIndex(usageInfo.CancelGateFlags, bitBuffer);
+                var layerIndex = usageInfo.CancelGateLayers.PopIndex(bitBuffer);
                 for (int i = 0; i < layerIndex.Length; i++)
                 {
                     var cancelTree = parent.AddBlendTree("Cancel").WithThreshold(nextThreshold).Motion;
@@ -109,7 +109,7 @@ internal static class BlendShapeControllerGenerator
 
             if (usageInfo.UseControlGate)
             {
-                var layerIndex = BinaryUtils.PopIndex(usageInfo.ControlGateLayers, bitBuffer);
+                var layerIndex = usageInfo.ControlGateLayers.PopIndex(bitBuffer);
                 for (int i = 0; i < layerIndex.Length; i++)
                 {
                     var controlTree = parent.AddBlendTree("Control").WithThreshold(nextThreshold).Motion;

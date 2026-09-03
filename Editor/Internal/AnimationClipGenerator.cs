@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using Numeira.Animation;
 using UnityKeyframe = UnityEngine.Keyframe;
 
@@ -326,5 +326,36 @@ internal sealed class AnimationClipBuilderWriter : AnimationWriter
         if (frames.Length != 0)
             return;
         Builder.Add(binding, 0, value);
+    }
+}
+
+internal sealed class TimeSeparatedAnimationClipBuilderWriter : AnimationWriter
+{
+    public TimeSeparatedAnimationClipBuilderWriter(Func<float, AnimationClipBuilder> factory)
+    {
+        this.factory = factory;
+    }
+
+    private Func<float, AnimationClipBuilder> factory;
+    private readonly Dictionary<float, AnimationClipBuilder> clips = new();
+
+    protected override void Write(AnimationBinding binding, Curve.Keyframe keyframe)
+    {
+        clips.GetOrAdd(keyframe.Time, factory).Add(binding, 0, keyframe.Value);
+    }
+
+    protected override void WriteDefaultValue(AnimationBinding binding, float value)
+    {
+        var builder = clips.GetOrAdd(0, factory);
+        var frames = builder[binding];
+        if (frames.Length != 0)
+            return;
+        builder.Add(binding, 0, value);
+    }
+
+    public IEnumerable<KeyValuePair<float, AnimationClipBuilder>> GetAnimationClips()
+    {
+        var maxKey = Math.Max(1, clips.Keys.Max());
+        return clips.OrderBy(x => x.Key).Select(x => KeyValuePair.Create(x.Key / maxKey, x.Value));
     }
 }

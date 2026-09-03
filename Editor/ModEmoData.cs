@@ -52,7 +52,7 @@ internal sealed class ModEmoData
         {
             if (x.UsageInfo.UseCancelGate && Mathf.Approximately(x.Value, 0) && !x.UsageInfo.UseControlGate)
             {
-                x.UsageInfo.UseCancelGate = false;
+                x.UsageInfo.CancelGateLayers.Clear();
             }
         }
 
@@ -166,11 +166,11 @@ internal sealed class ModEmoData
             {
                 if (Mathf.Approximately(info.Value, keyframe.Value))
                     return;
-                info.UsageInfo.UseControlGate = true;
+                info.UsageInfo.ControlGateLayers[0] = true;
             }
             else
             {
-                info.UsageInfo.UseCancelGate = true;
+                info.UsageInfo.CancelGateLayers[0] = true;
             }
 
             info.UsageInfo.UseOverrideGate = true;

@@ -72,11 +72,11 @@ internal sealed class FaceInfo
 
         if (type is BlendshapeControlType.Normal)
         {
-            info.UsageInfo.ControlGateLayers |= (1u << layer);
+            info.UsageInfo.ControlGateLayers[layer] = true;
         }
         else if (type is BlendshapeControlType.Cancel)
         {
-            info.UsageInfo.CancelGateFlags |= (1u << layer);
+            info.UsageInfo.CancelGateLayers[layer] = true;
         }
 
         DefaultInterpolatedStringHandler handler = new(0, 0, null, stackalloc char[128]);
@@ -93,7 +93,11 @@ internal sealed class FaceInfo
         handler.AppendLiteral("/");
         handler.AppendFormatted(layer);
 
-        return handler.ToStringAndClear();
+        var result = handler.ToStringAndClear();
+
+        Debug.Log($"[ModEmo] Register control blendshape: {name} -> {result}");
+
+        return result;
     }
 
     public sealed class BlendshapeInfo
@@ -132,13 +136,13 @@ internal sealed class FaceInfo
 
         public struct BlendshapeUsageInfo
         {
-            public bool UseCancelGate;
+            public readonly bool UseCancelGate => !CancelGateLayers.IsDefault;
             public bool UseEnableGate;
-            public bool UseControlGate;
+            public readonly bool UseControlGate => !ControlGateLayers.IsDefault;
             public bool UseOverrideGate;
 
-            public uint CancelGateFlags;
-            public uint ControlGateLayers;
+            public BitFlags<uint> CancelGateLayers;
+            public BitFlags<uint> ControlGateLayers;
 
             public readonly bool AllowControl => UseControlGate || UseOverrideGate;
         }

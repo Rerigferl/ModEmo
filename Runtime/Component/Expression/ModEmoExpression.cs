@@ -7,6 +7,25 @@ namespace Numeira
 
         public virtual int LayerIndex => 0;
 
+        public IEnumerable<string> MotionTime
+        {
+            get
+            {
+                var motionTimes = GetComponents<IModEmoMotionTimeProvider>();
+                var subExpressions = this.GetComponentsInDirectChildren<IModEmoExpression>();
+                if (subExpressions.Length >= 2 && motionTimes.Length >= 2)
+                {
+                    yield return motionTimes[0].ParameterName!;
+                    yield return motionTimes[1].ParameterName!;
+                    yield break;
+                }
+
+                if (motionTimes.Length < 1 || string.IsNullOrEmpty(motionTimes[0].ParameterName))
+                    yield break;
+                yield return motionTimes[0].ParameterName!;
+            }
+        }
+
         protected virtual ExpressionMode GetMode() => ExpressionMode.Default;
 
         protected override void CalculateContentHash(ref HashCode hashCode)

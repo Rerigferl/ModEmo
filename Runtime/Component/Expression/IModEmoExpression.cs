@@ -1,4 +1,4 @@
-namespace Numeira
+﻿namespace Numeira
 {
     internal interface IModEmoExpression : IModEmoNamedComponent, IModEmoAnimationCollector
     {
@@ -20,7 +20,7 @@ namespace Numeira
 
         bool IsLoop => Component.GetComponent<IModEmoLoopControl>()?.IsLoop is true;
 
-        string? MotionTime => Component.GetComponent<IModEmoMotionTimeProvider>()?.ParameterName;
+        IEnumerable<string> MotionTime { get; }
 
         bool Blink => Component.GetComponent<IModEmoBlinkControl>()?.Enable ?? true;
 

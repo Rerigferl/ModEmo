@@ -11,6 +11,8 @@ namespace Numeira
 
         public int LayerIndex => 0;
 
+        public IEnumerable<string> MotionTime => Array.Empty<string>();
+
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
             hashCode.Add((this as IModEmoExpression).Name.GetFarmHash64());

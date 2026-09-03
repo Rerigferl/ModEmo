@@ -235,9 +235,7 @@ internal static class ExpressionControllerGenerator
             var t = stateMachine.AddAnyStateTransition(state).WithDuration(defaultDuration);
             t.AddCondition(AnimatorConditionMode.Equals, ParameterNames.Expression.Index, expressionData.Index);
 
-            state.Motion = expression.MakeAnimationClip(context);
-            //defaultState.Motion ??= state.Motion;
-            state.MotionTime = expression.MotionTime;
+            state.Motion = expression.ToMotion(context);
 
             var tr = state.AddTrackingControl();
             //tr.Eyes = TrackingType.Animation;
