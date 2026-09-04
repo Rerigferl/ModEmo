@@ -43,41 +43,23 @@ internal static class BlendShapeControllerGenerator
 
             var paramNameBase = $"{ParameterNames.Internal.BlendShapes.Prefix}{name}";
 
-            BlendTreeBuilder parent;
-
-            if (!usageInfo.AllowControl)
-            {
-                if (!usageInfo.UseOverrideGate)
-                    continue;
-
-                var overrideTree = blendTree.AddBlendTree("Override").Motion;
-                overrideTree.BlendParameter = $"{paramNameBase}/Override";
-                animatorController.Parameters.AddFloat(overrideTree.BlendParameter);
-
-                overrideTree.Append(min, threshold: float.Epsilon);
-                overrideTree.Append(max, threshold: 1);
-                continue;
-            }
+            BlendTreeBuilder parent = blendTree.AddDirectBlendTree($"{name}");
+            float nextThreshold = 0;
 
             if (usageInfo.UseEnableGate)
             {
-                var enableSwitch = blendTree.AddBlendTree($"{name}").Motion;
+                var enableSwitch = parent.AddBlendTree($"Enable").WithThreshold(nextThreshold).Motion;
                 enableSwitch.BlendParameter = $"{paramNameBase}/Enable";
                 enableSwitch.Append(data.BlankClip, threshold: 0);
                 parent = enableSwitch;
+                nextThreshold = 1;
 
                 animatorController.Parameters.AddFloat(enableSwitch.BlendParameter, 1);
             }
-            else
-            {
-                parent = blendTree;
-            }
-
-            float nextThreshold;
 
             if (usageInfo.UseOverrideGate)
             {
-                var overrideTree = parent.AddBlendTree("Override").WithThreshold(1).Motion;
+                var overrideTree = parent.AddBlendTree("Override").WithThreshold(nextThreshold).Motion;
                 overrideTree.BlendParameter = $"{paramNameBase}/Override";
                 parent = overrideTree;
                 animatorController.Parameters.AddFloat(overrideTree.BlendParameter);
@@ -85,10 +67,6 @@ internal static class BlendShapeControllerGenerator
                 overrideTree.Append(min, threshold: float.Epsilon);
                 overrideTree.Append(max, threshold: 1);
                 nextThreshold = 0;
-            }
-            else
-            {
-                nextThreshold = 1;
             }
 
             if (usageInfo.UseCancelGate)

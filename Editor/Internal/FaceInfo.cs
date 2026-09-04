@@ -144,7 +144,7 @@ internal sealed class FaceInfo
             public BitFlags<uint> CancelGateLayers;
             public BitFlags<uint> ControlGateLayers;
 
-            public readonly bool AllowControl => UseControlGate || UseOverrideGate;
+            public readonly bool AllowControl => UseControlGate || UseOverrideGate || UseCancelGate;
         }
     }
 }
