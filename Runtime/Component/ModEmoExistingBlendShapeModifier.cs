@@ -1,8 +1,8 @@
-namespace Numeira
+﻿namespace Numeira
 {
     [AddComponentMenu("ModEmo/Utilities/ModEmo Existing Blendshape Modifier")]
     [RequireComponent(typeof(ModEmoBlendShapeSelector))]
-    internal sealed class ModEmoExistingBlendShapeModifier : ModEmoTagComponent
+    internal sealed class ModEmoExistingBlendShapeModifier : ModEmoTagComponent, IPreviewable, IOwnerComponent<IKeyframeWriterComponent>
     {
         public string TargetBlendShapeName = "";
         private const string SelfProxyName = "${}";
@@ -24,6 +24,15 @@ namespace Numeira
                     else
                         yield return x;
                 }
+            }
+        }
+
+        public void RegisterAnimations(IAnimationRegistry registry, in AnimationGeneratorOptions options)
+        {
+            var context = registry.RegisterAnimation(options);
+            foreach(var writer in this.GetOwnedComponents())
+            {
+                writer.WriteKeyframes(context, options);
             }
         }
     }

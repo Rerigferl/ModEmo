@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
 
 namespace Numeira;
@@ -8,6 +8,32 @@ namespace Numeira;
 #endif
 internal static class AnimationUtils
 {
+    public static bool TryConvertToAnimatorFloat<T>(T value, out float result)
+    {
+        if (typeof(T) == typeof(float))
+        {
+            result = (float)(object)value!;
+            return true;
+        }
+
+        if (typeof(T) == typeof(int))
+        {
+            result = (int)(object)value!;
+            return true;
+        }
+
+        if (typeof(T) == typeof(bool))
+        {
+            var v = (bool)(object)value!;
+            result = v ? 1 : 0;
+            return true;
+        }
+        result = default;
+        return false;
+    }
+
+    public static float ConvertToAnimatorFloat<T>(T value) => TryConvertToAnimatorFloat(value, out float result) ? result : default;
+
 #if UNITY_EDITOR
     public static EditorCurveBinding CreateAAPBinding(string name)
         => new() { path = "", propertyName = name, type = typeof(Animator) };

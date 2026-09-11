@@ -1,11 +1,23 @@
-namespace Numeira;
+﻿namespace Numeira;
 
 internal static class ListExt
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Span<T> AsSpan<T>(this List<T> list)
     {
-        var tuple = Unsafe.As<Tuple<T[], int>>(list);
-        return tuple.Item1.AsSpan(0, tuple.Item2);
+        var dummy = Unsafe.As<DummyList<T>>(list);
+        return dummy.Array.AsSpan(0, dummy.Length);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SetLength<T>(this List<T> list, int length)
+    {
+        Unsafe.As<DummyList<T>>(list).Length = length;
+    }
+
+    private sealed class DummyList<T>
+    {
+        public T[] Array = null!;
+        public int Length;
     }
 }

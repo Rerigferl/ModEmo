@@ -1,12 +1,18 @@
-namespace Numeira
+﻿namespace Numeira
 {
-    [AddComponentMenu(ComponentMenuPrefix + "AnimationClip Expression")]
-    internal sealed class ModEmoAnimationClipExpression : ModEmoExpression, IModEmoAnimationCollector
+    [Obsolete]
+    [AddComponentMenu("/" + ComponentMenuPrefix + "AnimationClip Expression")]
+    internal sealed class ModEmoAnimationClipExpression : ModEmoExpression, IAnimationSourceComponent
     {
         public AnimationClip? AnimationClip;
 
         protected override string GetName() => string.IsNullOrEmpty(Name) && AnimationClip != null ? AnimationClip.name : base.GetName();
 
+        void IAnimationSourceComponent.RegisterAnimations(IAnimationRegistry registry, in AnimationGeneratorOptions options)
+        {
+
+        }
+        /*
         void IModEmoAnimationCollector.CollectAnimation(IAnimationWriterSource source, in AnimationWriterContext context)
         {
             if (AnimationClip == null)
@@ -29,5 +35,6 @@ namespace Numeira
             }
 #endif
         }
+        */
     }
 }

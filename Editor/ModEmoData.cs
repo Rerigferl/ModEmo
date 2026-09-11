@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using nadena.dev.ndmf.util;
 using Numeira.Animation;
+using static Numeira.Curve;
 namespace Numeira;
 
 internal sealed class ModEmoData
@@ -43,10 +44,31 @@ internal sealed class ModEmoData
         if (component.GetBlinkExpression() is { } blink)
             expressions.Add(blink);
 
-        var writer = new Collector(FaceInfo);
-        var animationWriterContext = new AnimationWriterContext(context.AvatarRootTransform, Face.transform, Face.transform.AvatarRootPath());
+        var collector = new BlendshapeCollectorRegistry(OnRegisterBlendshape);
+        void OnRegisterBlendshape(BlendshapeControlType type, Transform target, string name, float value)
+        {
+            if (target != Face.transform)
+                return;
+
+            if (!FaceInfo.BlendshapeMap.TryGetValue(name, out var info))
+                return;
+
+            if (type is BlendshapeControlType.Normal)
+            {
+                if (Mathf.Approximately(info.Value, value))
+                    return;
+                info.UsageInfo.ControlGateLayers[0] = true;
+            }
+            else
+            {
+                info.UsageInfo.CancelGateLayers[0] = true;
+            }
+
+            info.UsageInfo.UseOverrideGate = true;
+        }
+
         foreach (var x in expressions)
-            x.CollectAnimation(writer, animationWriterContext);
+            x.RegisterAnimations(collector, new() { AnimationName = "", AvatarRootTransform = context.AvatarRootTransform, FaceObject = Face.transform });
 
         foreach (var x in FaceInfo.BlendShapes)
         {
@@ -58,11 +80,11 @@ internal sealed class ModEmoData
 
         if (component.MouthMorphCanceller is { } mmc)
         {
-            foreach(var x in mmc.GetUsedBlendshapes())
-            {
-                if (FaceInfo.BlendshapeMap.TryGetValue(x.Name, out var info))
-                    info.UsageInfo.UseEnableGate = true;
-            }
+            // foreach(var x in mmc.GetUsedBlendshapes())
+            // {
+            //     if (FaceInfo.BlendshapeMap.TryGetValue(x.Name, out var info))
+            //         info.UsageInfo.UseEnableGate = true;
+            // }
         }
 
         if (component.GetComponentInDirectChildren<IModEmoRuntimeBlendshapeController>(includeSelf: true) is { } rbc)
@@ -146,34 +168,60 @@ internal sealed class ModEmoData
         return (groups, blendShapes.ToImmutableDictionary());
 
     }
+}
 
-    private sealed class Collector : BlendshapeCollector
+internal sealed class BlendshapeCollectorRegistry : IAnimationRegistry
+{
+    public delegate void CallbackDelegate(BlendshapeControlType type, Transform target,string name, float value);
+
+    private readonly Context context;
+
+    public BlendshapeCollectorRegistry(CallbackDelegate callback)
     {
-        public FaceInfo FaceInfo;
+        this.context = new Context(callback);
+    }
 
-        public Collector(FaceInfo faceInfo)
+    public IKeyframeWriterContext RegisterAnimation(in AnimationGeneratorOptions options, string? blendParameter = null)
+        => context;
+
+    public (IKeyframeWriterContext X, IKeyframeWriterContext Y) RegisterTwoAxisAnimation(in AnimationGeneratorOptions options, string blendParameterX, string blendParameterY) 
+        => (context, context);
+
+    public IKeyframeWriterContext RegisterMultipleConditionAnimation(in AnimationGeneratorOptions options, params string[] blendParameters)
+        => context;
+
+    private sealed class Context : IKeyframeWriterContext
+    {
+        private readonly CallbackDelegate callback;
+
+        public Context(CallbackDelegate callback)
         {
-            this.FaceInfo = faceInfo;
+            this.callback = callback;
         }
 
-        protected override void WriteWithBlendshape(AnimationBinding binding, Curve.Keyframe keyframe, ReadOnlySpan<char> blendShapeName, bool isCancel)
+        public void AddBlendshape(Transform target, string name, float time, float value)
         {
-            var name = blendShapeName.ToString();
-            if (!FaceInfo.BlendshapeMap.TryGetValue(name, out var info))
-                return;
+            callback(BlendshapeControlType.Normal, target, name, value);
+        }
 
-            if (!isCancel)
-            {
-                if (Mathf.Approximately(info.Value, keyframe.Value))
-                    return;
-                info.UsageInfo.ControlGateLayers[0] = true;
-            }
-            else
-            {
-                info.UsageInfo.CancelGateLayers[0] = true;
-            }
+        public void AddCancelBlendshape(Transform target, string name, float time, float value)
+        {
+            callback(BlendshapeControlType.Cancel, target, name, value);
+        }
 
-            info.UsageInfo.UseOverrideGate = true;
+        public void AddRotation(Transform target, float time, Vector3 eularAngle, bool relative = true)
+        {
+
+        }
+
+        public void SetAnimatorParameter<T>(string name, float time, T value)
+        {
+
+        }
+
+        public void SetAvatarParameter<T>(string name, T value)
+        {
+
         }
     }
 }

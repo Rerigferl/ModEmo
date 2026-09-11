@@ -261,7 +261,7 @@ internal static class ExpressionControllerGenerator
         off.Motion = context.GetData().BlankClip;
 
         var on = stateMachine.AddState("ON");
-        on.Motion = expression.MakeAnimationClip(context, writeDefaultValues: false, writeBlink: false);
+        on.Motion = expression.ToMotion(context, layerIndex: 1, writeDefaultValues: false, writeBlink: false);
 
         off.AddTransition(on)
             .AddCondition(AnimatorConditionMode.Greater, ParameterNames.Blink.Value, 1 - Epsilon)
@@ -299,11 +299,11 @@ internal static class ExpressionControllerGenerator
 
         var enable = voiceSwitch.AddAnimationClip("Enable").WithThreshold(float.Epsilon).Motion;
 
-        foreach (var blendShape in cancellar.GetUsedBlendshapes())
-        {
-            var name = $"{ParameterNames.Internal.BlendShapes.Prefix}{blendShape.Name}/Enable";
-            disable.AddAnimatedParameter(name, 0, 1);
-            enable.AddAnimatedParameter(name, 0, 0);
-        }
+        // foreach (var blendShape in cancellar.GetUsedBlendshapes())
+        // {
+        //     var name = $"{ParameterNames.Internal.BlendShapes.Prefix}{blendShape.Name}/Enable";
+        //     disable.AddAnimatedParameter(name, 0, 1);
+        //     enable.AddAnimatedParameter(name, 0, 0);
+        // }
     }
 }

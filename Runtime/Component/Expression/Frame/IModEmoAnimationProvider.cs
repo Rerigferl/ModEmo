@@ -1,10 +1,12 @@
 ﻿namespace Numeira;
 
+[Obsolete]
 internal interface IModEmoAnimationProvider : IModEmoComponent
 {
     void WriteAnimation(IAnimationWriter writer, in AnimationWriterContext context);
 }
 
+[Obsolete]
 internal interface IModEmoAnimationCollector : IModEmoComponent
 {
     int LayerIndex { get; }
@@ -36,6 +38,7 @@ internal interface IModEmoAnimationCollector : IModEmoComponent
     }
 }
 
+[Obsolete]
 internal interface IAnimationWriter
 {
     public delegate void PreWriteKeyframeDelegate(ref AnimationBinding binding, ref Curve.Keyframe keyframe);
@@ -49,11 +52,13 @@ internal interface IAnimationWriter
     public void WriteDefaultValue(AnimationBinding binding, float value);
 }
 
+[Obsolete]
 internal interface IAnimationWriterSource : IAnimationWriter
 {
 
 }
 
+[Obsolete]
 internal abstract class AnimationWriter : IAnimationWriterSource, IAnimationWriter
 {
     public static DefaultAnimationWriter Shared { get; } = new();
@@ -90,6 +95,7 @@ internal abstract class AnimationWriter : IAnimationWriterSource, IAnimationWrit
     }
 }
 
+[Obsolete]
 internal abstract class BlendshapeCollector : AnimationWriter
 {
     protected override void Write(AnimationBinding binding, Curve.Keyframe keyframe)
@@ -177,6 +183,7 @@ internal struct AnimationBinding
 #endif
 }
 
+[Obsolete]
 internal readonly struct AnimationWriterContext
 {
     public AnimationWriterContext(Transform avatarRootTransform, Transform faceObjectTransform, string faceObjectPath)
@@ -193,6 +200,7 @@ internal readonly struct AnimationWriterContext
 
 internal static class AnimationWriterExt
 {
+    [Obsolete]
     public static EventUnsubscriber RegisterPreWriteKeyframe(this IAnimationWriter writer, IAnimationWriter.PreWriteKeyframeDelegate @delegate)
     {
         writer.PreWriteKeyframe += @delegate;

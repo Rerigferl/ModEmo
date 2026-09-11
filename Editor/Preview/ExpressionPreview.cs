@@ -1,11 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using nadena.dev.ndmf.preview;
-using UnityEngine;
-using UnityEngine.Internal;
+using Numeira.Animation;
 
 namespace Numeira;
 
@@ -46,42 +44,16 @@ internal sealed class ExpressionPreview : IRenderFilter
 
     public static PublishedValue<string?> TemporaryPreviewBlendShape { get; } = new(null);
 
-    private static PropCache<int, ImmutableList<RenderGroup>> RendererCache { get; } = new("numeira.mod-emo.expression-preview.renderer-cache", static (context, go) =>
-    {
-        var result = Iterate(context).OrderBy(x => x.GetData<ModEmo>().GetInstanceID()).ToImmutableList();
-        return result;
-
-        static IEnumerable<RenderGroup> Iterate(ComputeContext context)
-        {
-            foreach (var root in context.GetAvatarRoots())
-            {
-                if (!context.ActiveInHierarchy(root))
-                    continue;
-
-                var component = context.GetComponentsInChildren<ModEmo>(root, true).FirstOrDefault(x => context.ActiveAndEnabled(x));
-                if (component == null)
-                    continue;
-
-                var renderer = context.Observe(component, x => x.GetFaceRenderer());
-                if (renderer == null)
-                    continue;
-
-                yield return RenderGroup.For(renderer).WithData(component);
-            }
-            yield break;
-        }
-    }, (left, right) => left.SequenceEqual(right));
-
     private readonly static PropCache<int, GameObject?> SelectionCache = new("numeira.mod-emo.expression-preview.selection-cache", (context, _) => context.Observe(SelectionMonitor.Active, x => x, (x, y) => x == y), (x, y) => x == y);
-    private static PropCache<ModEmo, IModEmoExpression?> SelectedExpression { get; } = new("numeira.mod-emo.expression-preview.selected-expression", (context, component) =>
+    private static PropCache<ModEmo, IPreviewable?> SelectedExpression { get; } = new("numeira.mod-emo.expression-preview.selected-expression", (context, component) =>
     {
         var active = SelectionCache.Get(context, 0);
-        if (active != null && active.GetComponentInParent<IModEmoExpression>() is { } expression)
+        if (active != null && active.GetComponentInParent<IPreviewable>() is { } expression)
             return expression;
 
         if (context.Observe(component, x => x.Settings.PreviewExpression?.Get(x), (x, y) => x == y) is { } defaultPreview)
         {
-            if (context.GetComponent<IModEmoExpression>(defaultPreview) is { } exp)
+            if (context.GetComponent<IPreviewable>(defaultPreview) is { } exp)
                 return exp;
         }
 
@@ -126,11 +98,11 @@ internal sealed class ExpressionPreview : IRenderFilter
         private readonly ComputeContext context;
         private readonly ModEmo rootComponent;
         private readonly Renderer originalRenderer;
-        private readonly IModEmoExpression? selectedExpression;
+        private readonly IPreviewable? selectedExpression;
         private readonly DateTime selectionChangedTime;
         private IDisposable? sceneReflesher;
 
-        private static readonly PreviewWriter previewWriter = new();
+        private readonly PreviewRegistry registry = new();
 
         public Node(RenderGroup renderGroup, IEnumerable<(Renderer, Renderer)> proxyPairs, ComputeContext context)
         {
@@ -158,14 +130,14 @@ internal sealed class ExpressionPreview : IRenderFilter
                 if (proxy is not SkinnedMeshRenderer smr || original is not SkinnedMeshRenderer origSmr || smr.sharedMesh is not { } mesh || mesh == null)
                     return;
 
-                if (selectedExpression is not { } expression || expression == null)
+                if (selectedExpression is not { } previewable || previewable == null)
                     return;
 
-                if (expression.Component!.GetComponentInParent<ModEmo>() != rootComponent)
+                if (previewable.Component!.GetComponentInParent<ModEmo>() != rootComponent)
                     return;
 
                 float time = (float)(DateTime.Now - selectionChangedTime).TotalSeconds - 1;
-                if (selectedExpression.IsLoop)
+                if (previewable is IModEmoExpression exp && exp.IsLoop)
                 {
                     time = (time * 0.5f) % 1;
                 }
@@ -177,43 +149,19 @@ internal sealed class ExpressionPreview : IRenderFilter
                 if (!AutoPlay)
                     time = PreviewTime;
 
-                previewWriter.Renderer = smr;
-                previewWriter.Reset();
-                selectedExpression.CollectAnimation(previewWriter, default);
+                previewable.RegisterAnimations(registry, new() { AnimationName = "", AvatarRootTransform = context.GetAvatarRoot(rootComponent.gameObject).transform, FaceObject = originalRenderer.transform, });
+                registry.Flush(context, origSmr, smr, time);
 
                 if (sceneReflesher == null)
                 {
-                    if (previewWriter.Curves.Select(x => x.Value.Length).MaxOrDefault() > 1)
+                    if (registry.HasMultiFrame())
                         sceneReflesher = SceneViewReflesher.BeginReflesh();
-                }
-
-                foreach (var kvp in previewWriter.Curves)
-                {
-                    var (index, curve) = kvp;
-                    if (curve.Length == 0)
-                        continue;
-
-                    bool isCancel = index < 0;
-                    if (isCancel)
-                        index = ~index;
-
-                    var lastTime = curve.Keys.Select(x => x.Time).MaxOrDefault();
-                    var value = curve.Evaluate(time * lastTime);
-
-                    if (isCancel)
-                    {
-                        float orig = origSmr.GetBlendShapeWeight(index);
-                        var weight = value / 100f;
-                        value = orig * (1 - weight);
-                    }
-
-                    smr.SetBlendShapeWeight(index, value);
                 }
 
                 if (TemporaryPreviewBlendShape.Value != null)
                 {
-                    if (previewWriter.GetBlendShapeIndex(TemporaryPreviewBlendShape.Value) is {} index)
-                        smr.SetBlendShapeWeight(index, 100);
+                    //if (previewWriter.GetBlendShapeIndex(TemporaryPreviewBlendShape.Value) is {} index)
+                     //   smr.SetBlendShapeWeight(index, 100);
                 }
             }
             catch {}
@@ -290,6 +238,89 @@ internal sealed class ExpressionPreview : IRenderFilter
 
                 return index;
             }
+        }
+    }
+
+    private sealed class PreviewRegistry : IAnimationRegistry
+    {
+        private Context context = new();
+
+        public PropCache<SkinnedMeshRenderer, Mesh> meshCache = new("numeira.mod-emo.expression-preview.meshCahce", (context, smr) => context.Observe(smr, x => x.sharedMesh), (x, y) => x == y);
+
+
+        public IKeyframeWriterContext RegisterAnimation(in AnimationGeneratorOptions options, string? blendParameter = null)
+        {
+            context.Clear();
+            return context;
+        }
+
+        //public (IKeyframeWriterContext X, IKeyframeWriterContext Y) RegisterTwoAxisAnimation(in AnimationGeneratorOptions options, string blendParameterX, string blendParameterY) => (BlankContext.Instance, BlankContext.Instance);
+
+        //public IKeyframeWriterContext RegisterMultipleConditionAnimation(in AnimationGeneratorOptions options, params string[] blendParameters) => BlankContext.Instance;
+
+        public void Flush(ComputeContext context, SkinnedMeshRenderer original, SkinnedMeshRenderer proxy, float time)
+        {
+            var clip = this.context.AnimationClip;
+            var mesh = meshCache.Get(context, proxy);
+
+            foreach (var binding in clip.Bindings)
+            {
+                var index = mesh.GetBlendShapeIndex(binding.propertyName);
+                if (index < 0)
+                    continue;
+
+                if (clip.Evaluate(binding, time) is not { } value)
+                    continue;
+
+                if (binding.type == typeof(SkinnedMeshRenderer))
+                {
+                    // suru-
+                }
+                else if (binding.type == typeof(MeshRenderer))
+                {
+                    var origMesh = meshCache.Get(context, original);
+                    var index2 = origMesh.GetBlendShapeIndex(binding.propertyName);
+                    if (index2 < 0)
+                        continue;
+
+                    float orig = original.GetBlendShapeWeight(index);
+                    var weight = value / origMesh.GetBlendShapeFrameWeight(index, 0);
+                    value = orig * (1 - weight);
+                }
+
+                proxy.SetBlendShapeWeight(index, value);
+            }
+        }
+
+        public bool HasMultiFrame()
+        {
+            return context.AnimationClip.Length > 0;
+        }
+
+        private sealed class Context : IKeyframeWriterContext
+        {
+            public AnimationClipBuilder AnimationClip { get; } = new();
+            public SkinnedMeshRenderer? Renderer { get; set; }
+
+            public void Clear() => AnimationClip.Clear();
+
+            public void AddBlendshape(Transform target, string name, float time, float value)
+            {
+                AnimationClip.Add(new AnimationBinding(typeof(SkinnedMeshRenderer), "", name), time, value);
+            }
+
+            public void AddCancelBlendshape(Transform target, string name, float time, float value)
+            {
+                AnimationClip.Add(new AnimationBinding(typeof(MeshRenderer), "", name), time, value);
+            }
+
+            public void AddRotation(Transform target, float time, Vector3 eularAngle, bool relative = true)
+            {
+                // TODO!!!
+            }
+
+            public void SetAnimatorParameter<T>(string name, float time, T value) { }
+            public void SetAvatarParameter<T>(string name, T value) { }
         }
     }
 }

@@ -3,7 +3,7 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Transform")]
-    internal sealed class ModEmoTransform : ModEmoTagComponent, IModEmoAnimationProvider
+    internal sealed class ModEmoTransform : ModEmoTagComponent, IKeyframeWriterComponent
     {
         public float Keyframe = 0;
 
@@ -17,45 +17,18 @@ namespace Numeira
 
         public void OnEnable() { }
 
-        public void WriteAnimation(IAnimationWriter writer, in AnimationWriterContext context)
+        public void WriteKeyframes(IKeyframeWriterContext context, in AnimationGeneratorOptions options)
         {
             if (!enabled || Target.Get(this) is not { } target)
             {
                 return;
             }
 
-            var tr = target.transform;
-
-            var bindBase = new AnimationBinding(typeof(Transform), Target.referencePath, "");
-
             if (UsePosition)
-            {
-                var def = tr.localPosition;
-                writer.WriteDefaultValue(bindBase with { PropertyName = "localPosition.x" }, def.x);
-                writer.WriteDefaultValue(bindBase with { PropertyName = "localPosition.y" }, def.y);
-                writer.WriteDefaultValue(bindBase with { PropertyName = "localPosition.z" }, def.z);
-
-                var aft = def + Position;
-
-                writer.Write(bindBase with { PropertyName = "localPosition.x" }, Keyframe, aft.x);
-                writer.Write(bindBase with { PropertyName = "localPosition.y" }, Keyframe, aft.y);
-                writer.Write(bindBase with { PropertyName = "localPosition.z" }, Keyframe, aft.z);
-            }
+                throw new NotImplementedException("Position mada dekitenai");
 
             if (UseRotation)
-            {
-                var def = tr.localEulerAngles;
-
-                writer.WriteDefaultValue(bindBase with { PropertyName = "localEulerAngles.x" }, def.x);
-                writer.WriteDefaultValue(bindBase with { PropertyName = "localEulerAngles.y" }, def.y);
-                writer.WriteDefaultValue(bindBase with { PropertyName = "localEulerAngles.z" }, def.z);
-
-                var aft = def + Rotation;
-
-                writer.Write(bindBase with { PropertyName = "localEulerAngles.x" }, Keyframe, aft.x);
-                writer.Write(bindBase with { PropertyName = "localEulerAngles.y" }, Keyframe, aft.y);
-                writer.Write(bindBase with { PropertyName = "localEulerAngles.z" }, Keyframe, aft.z);
-            }
+            context.AddRotation(target.transform, Keyframe, Rotation, true);
         }
 
         protected override void CalculateContentHash(ref HashCode hashCode)

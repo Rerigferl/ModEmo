@@ -1,42 +1,69 @@
-﻿
-namespace Numeira
+﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Blink Expression")]
-    internal sealed class ModEmoBlinkExpression : ModEmoExpression, IModEmoLoopControl, IModEmoAnimationCollector
+    internal sealed class ModEmoBlinkExpression : ModEmoExpression, IModEmoLoopControl, IAnimationSourceComponent
     {
         public bool IsLoop => true;
         public override int LayerIndex => 1;
 
-        public IEnumerable<BlendShape> GetUsedBlendshapes() => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true).SelectMany(x => x.GetUsedBlendshapes());
-
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            foreach (var b in GetUsedBlendshapes())
-                hashCode.Add(b);
-
             base.CalculateContentHash(ref hashCode);
         }
 
-        void IModEmoAnimationCollector.CollectAnimation(IAnimationWriterSource source, in AnimationWriterContext context)
+        public void RegisterAnimations(IAnimationRegistry registry, in AnimationGeneratorOptions options)
         {
-            var children = (this as IModEmoAnimationCollector).GetAnimationProviders();
-            var collector = AnimationWriter.Shared;
-            
-            collector.Curves.Clear();
-            foreach(var child in children)
+            var context = registry.RegisterAnimation(options);
+            var writer = new WriterContext(context);
+
+            foreach (var x in (this as IOwnerComponent<IKeyframeWriterComponent>).GetOwnedComponents())
             {
-                child.WriteAnimation(collector, context);
+                x.WriteKeyframes(writer, options);
+            }
+        }
+
+        private sealed class WriterContext : IKeyframeWriterContext
+        {
+            public IKeyframeWriterContext Source { get; }
+
+            public WriterContext(IKeyframeWriterContext source)
+            {
+                Source = source;
             }
 
-            foreach (var (binding, curve) in collector.Curves)
+            public void AddBlendshape(Transform target, string name, float time, float value)
             {
-                var value = curve.Evaluate(0);
-                source.Write(binding, 0 / 60f, 0);
-                source.Write(binding, 60 / 60f, 0);
-                source.Write(binding, 65 / 60f, value);
-                source.Write(binding, 67 / 60f, value);
-                source.Write(binding, 80 / 60f, 0);
-                source.Write(binding, 300 / 60f, 0);
+                Source.AddBlendshape(target, name, 0 / 60f, 0);
+                Source.AddBlendshape(target, name, 60 / 60f, 0);
+                Source.AddBlendshape(target, name, 65 / 60f, value);
+                Source.AddBlendshape(target, name, 67 / 60f, value);
+                Source.AddBlendshape(target, name, 80 / 60f, 0);
+                Source.AddBlendshape(target, name, 300 / 60f, 0);
+            }
+
+            public void AddCancelBlendshape(Transform target, string name, float time, float value)
+            {
+                Source.AddCancelBlendshape(target, name, 0 / 60f, 0);
+                Source.AddCancelBlendshape(target, name, 60 / 60f, 0);
+                Source.AddCancelBlendshape(target, name, 65 / 60f, value);
+                Source.AddCancelBlendshape(target, name, 67 / 60f, value);
+                Source.AddCancelBlendshape(target, name, 80 / 60f, 0);
+                Source.AddCancelBlendshape(target, name, 300 / 60f, 0);
+            }
+
+            public void AddRotation(Transform target, float time, Vector3 eularAngle, bool relative = true)
+            {
+                Source.AddRotation(target, time, eularAngle, relative);
+            }
+
+            public void SetAvatarParameter<T>(string name, T value)
+            {
+                Source.SetAvatarParameter(name, value);
+            }
+
+            public void SetAnimatorParameter<T>(string name, float time, T value)
+            {
+                Source.SetAnimatorParameter(name, time, value);
             }
         }
     }

@@ -1,23 +1,16 @@
-namespace Numeira
+﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Mouth Morph Canceller")]
     internal sealed class ModEmoMouthMorphCanceller : ModEmoTagComponent, IModEmoMouthMorphCanceller
     {
-        public IModEmoBlendshapeConsumer[] Children => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(true);
-
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            foreach (var x in Children)
-            {
-                x.CalculateContentHash(ref hashCode);
-            }
+            // TODO!
         }
-
-        public IEnumerable<BlendShape> GetUsedBlendshapes() => this.GetComponentsInDirectChildren<IModEmoBlendshapeConsumer>(includeSelf: true).SelectMany(x => x.GetUsedBlendshapes());
 
     }
 
-    internal interface IModEmoMouthMorphCanceller : IModEmoBlendshapeConsumer
+    internal interface IModEmoMouthMorphCanceller : IOwnerComponent<IBlendshapeWriterComponent>
     { }
 
 #if UNITY_EDITOR

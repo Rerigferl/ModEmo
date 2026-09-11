@@ -1,7 +1,6 @@
-
+﻿
 namespace Numeira
 {
-    [RequireComponent(typeof(ModEmoExpression))]
     [AddComponentMenu(ComponentMenuPrefix + "Motion Time")]
     internal class ModEmoMotionTime : ModEmoTagComponent, IModEmoMotionTimeProvider
     {
@@ -14,7 +13,7 @@ namespace Numeira
         }
     }
 
-    internal interface IModEmoMotionTimeProvider
+    internal interface IModEmoMotionTimeProvider : ISubComponent<IModEmoMotionTimeProvider>
     {
         string? ParameterName { get; }
     }

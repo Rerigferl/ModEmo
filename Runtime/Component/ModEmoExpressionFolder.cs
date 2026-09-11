@@ -1,4 +1,4 @@
-namespace Numeira
+﻿namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Expression Folder")]
     internal class ModEmoExpressionFolder : ModEmoNamedTagComponent, IModEmoExpressionFolder
@@ -12,29 +12,20 @@ namespace Numeira
         }
     }
 
-    internal interface IModEmoExpressionFolder : IModEmoNamedComponent
+    internal interface IModEmoExpressionFolder : IModEmoNamedComponent, ISubComponent<IModEmoExpressionFolder>, IOwnerComponent<IModEmoExpression>, IOwnerComponent<IModEmoExpressionFolder>
     {
         IEnumerable<IModEmoExpression> Expressions
         {
             get
             {
-                foreach (var x in Component.GetComponentsInDirectChildren<IModEmoExpression>())
+                foreach(var x in this.GetOwnedComponents<IModEmoExpression>())
                 {
-                    if (x == this)
-                        continue;
-
                     yield return x;
                 }
-
-                foreach (var x in Component.GetComponentsInDirectChildren<IModEmoExpressionFolder>())
+                foreach (var x in this.GetOwnedComponents<IModEmoExpressionFolder>())
                 {
-                    if (x == this)
-                        continue;
-
                     foreach (var y in x.Expressions)
-                    {
                         yield return y;
-                    }
                 }
             }
         }

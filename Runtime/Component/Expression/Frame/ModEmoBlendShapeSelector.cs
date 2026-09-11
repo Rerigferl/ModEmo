@@ -1,27 +1,31 @@
 ﻿
-
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "BlendShape")]
-    internal sealed class ModEmoBlendShapeSelector : ModEmoTagComponent, IModEmoBlendshapeConsumer, IModEmoAnimationProvider
+    internal sealed class ModEmoBlendShapeSelector : ModEmoTagComponent, IBlendshapeWriterComponent
     {
         public float Keyframe = 0;
         public List<BlendShape> BlendShapes = new();
 
-        public IEnumerable<BlendShape> GetUsedBlendshapes() => BlendShapes;
-
         public void OnEnable() { }
 
-        public void WriteAnimation(IAnimationWriter writer, in AnimationWriterContext context)
+        public void WriteKeyframes(IKeyframeWriterContext context, in AnimationGeneratorOptions options)
         {
             if (!enabled)
                 return;
+
             foreach (var blendShape in BlendShapes.AsSpan())
             {
-                var binding = new AnimationBinding(typeof(SkinnedMeshRenderer), context.FaceObjectPath ?? "", $"{(blendShape.Cancel ? "cancel." : "")}blendShape.{blendShape.Name}");
-               
-                writer.WriteDefaultValue(binding, 0);
-                writer.Write(binding, Keyframe, blendShape.Value);
+                if (!blendShape.Cancel)
+                {
+                    context.AddBlendshapeDefault(options.FaceObject, blendShape.Name, 0);
+                    context.AddBlendshape(options.FaceObject, blendShape.Name, Keyframe, blendShape.Value);
+                }
+                else
+                {
+                    context.AddCancelBlendshapeDefault(options.FaceObject, blendShape.Name, 0);
+                    context.AddCancelBlendshape(options.FaceObject, blendShape.Name, Keyframe, blendShape.Value);
+                }
             }
         }
 
