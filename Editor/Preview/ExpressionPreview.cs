@@ -80,7 +80,7 @@ internal sealed class ExpressionPreview : IRenderFilter
                 if (renderer == null)
                     continue;
 
-                yield return RenderGroup.For(renderer).WithData(component);
+                yield return RenderGroup.For(renderer).WithData(component, (x, y) => x.GetHashCode() == y.GetHashCode());
             }
             yield break;
         }
@@ -149,19 +149,22 @@ internal sealed class ExpressionPreview : IRenderFilter
                 if (!AutoPlay)
                     time = PreviewTime;
 
+                registry.Clear();
+
                 previewable.RegisterAnimations(registry, new() { AnimationName = "", AvatarRootTransform = context.GetAvatarRoot(rootComponent.gameObject).transform, FaceObject = originalRenderer.transform, });
+
+                if (TemporaryPreviewBlendShape.Value != null)
+                {
+                    var c = registry.RegisterAnimation(default);
+                    c.AddBlendshape(proxy.transform, TemporaryPreviewBlendShape.Value, 0, 100);
+                }
+
                 registry.Flush(context, origSmr, smr, time);
 
                 if (sceneReflesher == null)
                 {
                     if (registry.HasMultiFrame())
                         sceneReflesher = SceneViewReflesher.BeginReflesh();
-                }
-
-                if (TemporaryPreviewBlendShape.Value != null)
-                {
-                    //if (previewWriter.GetBlendShapeIndex(TemporaryPreviewBlendShape.Value) is {} index)
-                     //   smr.SetBlendShapeWeight(index, 100);
                 }
             }
             catch {}
@@ -247,10 +250,10 @@ internal sealed class ExpressionPreview : IRenderFilter
 
         public PropCache<SkinnedMeshRenderer, Mesh> meshCache = new("numeira.mod-emo.expression-preview.meshCahce", (context, smr) => context.Observe(smr, x => x.sharedMesh), (x, y) => x == y);
 
+        public void Clear() => context.Clear();
 
         public IKeyframeWriterContext RegisterAnimation(in AnimationGeneratorOptions options, string? blendParameter = null)
         {
-            context.Clear();
             return context;
         }
 
