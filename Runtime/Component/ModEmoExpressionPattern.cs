@@ -3,7 +3,7 @@
 namespace Numeira
 {
     [AddComponentMenu(ComponentMenuPrefix + "Expression Pattern")]
-    internal sealed class ModEmoExpressionPattern : ModEmoExpressionFolder, IModEmoExpressionPattern
+    internal sealed class ModEmoExpressionPattern : ModEmoExpressionFolder, IModEmoExpressionPattern, IPreviewable
     {
         ExpressionMode IModEmoExpression.Mode => ExpressionMode.Default;
 
