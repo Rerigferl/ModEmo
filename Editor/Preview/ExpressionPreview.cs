@@ -305,21 +305,43 @@ internal sealed class ExpressionPreview : IRenderFilter
             public AnimationClipBuilder AnimationClip { get; } = new();
             public SkinnedMeshRenderer? Renderer { get; set; }
 
-            public void Clear() => AnimationClip.Clear();
+            private readonly DefaultBlendshapeRecords defaultBlendshapeRecords = new();
+
+            public void Clear()
+            {
+                defaultBlendshapeRecords.Clear();
+                AnimationClip.Clear();
+            }
 
             public void AddBlendshape(Transform target, string name, float time, float value)
             {
+                defaultBlendshapeRecords.Add(name, time, BlendshapeControlType.Normal, true);
                 AnimationClip.Add(new AnimationBinding(typeof(SkinnedMeshRenderer), "", name), time, value);
             }
 
             public void AddCancelBlendshape(Transform target, string name, float time, float value)
             {
+                defaultBlendshapeRecords.Add(name, time, BlendshapeControlType.Cancel, true);
                 AnimationClip.Add(new AnimationBinding(typeof(MeshRenderer), "", name), time, value);
             }
 
             public void AddRotation(Transform target, float time, Vector3 eularAngle, bool relative = true)
             {
                 // TODO!!!
+            }
+
+            public void AddBlendshapeDefault(Transform target, string name, float value)
+            {
+                if (defaultBlendshapeRecords.Contains(name, BlendshapeControlType.Normal, true))
+                    return;
+                AddBlendshape(target, name, 0, value);
+            }
+
+            public void AddCancelBlendshapeDefault(Transform target, string name, float value)
+            {
+                if (defaultBlendshapeRecords.Contains(name, BlendshapeControlType.Cancel, true))
+                    return;
+                AddCancelBlendshape(target, name, 0, value);
             }
 
             public void SetAnimatorParameter<T>(string name, float time, T value) { }

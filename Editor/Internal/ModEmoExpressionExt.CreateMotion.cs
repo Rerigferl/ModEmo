@@ -248,10 +248,16 @@ partial class ModEmoExpressionExt
                 clip.IsLoop = options.IsLoop;
             }
 
+            private readonly DefaultBlendshapeRecords defaultBlendshapeRecords = new();
+
+            private bool IsFaceObject(Transform target) => target == Parent.FaceInfo.Renderer.transform;
+
             public void AddBlendshape(Transform target, string name, float time, float value)
             {
+                bool isFaceObject = IsFaceObject(target);
                 var faceInfo = Parent.FaceInfo;
-                if (target == faceInfo.Renderer.transform)
+
+                if (isFaceObject)
                 {
                     if (!faceInfo.BlendshapeMap.TryGetValue(name, out var info) || faceInfo.RegisterControlBlendshape(name, BlendshapeControlType.Normal, Parent.LayerIndex) is not { } x)
                         return;
@@ -260,17 +266,27 @@ partial class ModEmoExpressionExt
                     value /= info.Max;
                     
                     Clip.AddAnimatedParameter(x, time, value);
+                    defaultBlendshapeRecords.Add(name, time, BlendshapeControlType.Normal, true);
                 }
                 else
                 {
                     Clip.Add(new() { type = typeof(SkinnedMeshRenderer), path = target.AvatarRootPath(), propertyName = $"blendShape.{name}" }, time, value);
+                    defaultBlendshapeRecords.Add(name, time, BlendshapeControlType.Normal, false);
                 }
             }
 
+            public void AddBlendshapeDefault(Transform target, string name, float value)
+            {
+                if (defaultBlendshapeRecords.Contains(name, BlendshapeControlType.Normal, IsFaceObject(target)))
+                    return;
+
+                AddBlendshape(target, name, 0, value);
+            }
+            
             public void AddCancelBlendshape(Transform target, string name, float time, float value)
             {
                 var faceInfo = Parent.FaceInfo;
-                if (target == faceInfo.Renderer.transform)
+                if (IsFaceObject(target))
                 {
                     if (!faceInfo.BlendshapeMap.TryGetValue(name, out var info) || faceInfo.RegisterControlBlendshape(name, BlendshapeControlType.Cancel, Parent.LayerIndex) is not { } x)
                         return;
@@ -279,7 +295,16 @@ partial class ModEmoExpressionExt
                     value /= info.Max;
 
                     Clip.AddAnimatedParameter(x, time, value);
+                    defaultBlendshapeRecords.Add(name, time, BlendshapeControlType.Cancel, true);
                 }
+            }
+
+            public void AddCancelBlendshapeDefault(Transform target, string name, float value)
+            {
+                if (!IsFaceObject(target) || defaultBlendshapeRecords.Contains(name, BlendshapeControlType.Cancel, true))
+                    return;
+
+                AddCancelBlendshape(target, name, 0, value);
             }
 
             public void AddRotation(Transform target, float time, Vector3 eularAngle, bool relative = true)
