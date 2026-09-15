@@ -151,11 +151,12 @@ internal sealed class ExpressionPreview : IRenderFilter
 
                 registry.Clear();
 
-                previewable.RegisterAnimations(registry, new() { AnimationName = "", AvatarRootTransform = context.GetAvatarRoot(rootComponent.gameObject).transform, FaceObject = originalRenderer.transform, });
+                var opt = new AnimationGeneratorOptions() { AnimationName = "", AvatarRootTransform = context.GetAvatarRoot(rootComponent.gameObject).transform, FaceObject = originalRenderer.transform, };
+                previewable.RegisterAnimations(registry, opt);
 
                 if (TemporaryPreviewBlendShape.Value != null)
                 {
-                    var c = registry.RegisterAnimation(default);
+                    var c = registry.RegisterAnimation(opt);
                     c.AddBlendshape(proxy.transform, TemporaryPreviewBlendShape.Value, 0, 100);
                 }
 
