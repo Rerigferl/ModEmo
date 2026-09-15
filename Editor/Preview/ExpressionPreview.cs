@@ -186,62 +186,6 @@ internal sealed class ExpressionPreview : IRenderFilter
         {
             sceneReflesher?.Dispose();
         }
-
-        private sealed class PreviewWriter : BlendshapeCollector
-        {
-            private readonly Dictionary<uint, int> blendShapeIndexCache = new();
-
-            public SkinnedMeshRenderer? Renderer { get; set; }
-
-            public IEnumerable<KeyValuePair<int, Curve>> Curves => curves;
-
-            private readonly Dictionary<int, Curve> curves = new();
-
-            public void Reset()
-            {
-                foreach (var x in curves.Values)
-                    x.Reset();
-            }
-
-            protected override void WriteDefaultValue(AnimationBinding binding, float value)
-            {
-                var name = GetTargetBlendshapeName(binding, out _);
-                if (name.IsEmpty)
-                    return;
-
-                if (GetBlendShapeIndex(name) is not {} index)
-                    return;
-
-                curves.GetOrAdd(index, _ => new()).AddKey(default, false);
-
-            }
-
-            protected override void WriteWithBlendshape(AnimationBinding binding, Curve.Keyframe keyframe, ReadOnlySpan<char> blendShapeName, bool isCancel)
-            {
-                if (GetBlendShapeIndex(blendShapeName) is not {} index)
-                    return;
-                
-                if (isCancel)
-                    index = ~index;
-
-                curves.GetOrAdd(index, _ => new()).AddKey(keyframe);
-            }
-
-            public int? GetBlendShapeIndex(ReadOnlySpan<char> name)
-            {
-                if (Renderer is not { } renderer || renderer.sharedMesh is not { } mesh)
-                    return null;
-
-                var nameHash = FarmHash.Hash32(MemoryMarshal.AsBytes(name));
-                if (!blendShapeIndexCache.TryGetValue(nameHash, out var index))
-                {
-                    index = mesh.GetBlendShapeIndex(name.ToString());
-                    blendShapeIndexCache.Add(nameHash, index);
-                }
-
-                return index;
-            }
-        }
     }
 
     private sealed class PreviewRegistry : IAnimationRegistry
@@ -254,6 +198,7 @@ internal sealed class ExpressionPreview : IRenderFilter
 
         public IKeyframeWriterContext RegisterAnimation(in AnimationGeneratorOptions options, string? blendParameter = null)
         {
+            context.Renderer = options.FaceObject.GetComponent<SkinnedMeshRenderer>();
             return context;
         }
 
@@ -330,18 +275,24 @@ internal sealed class ExpressionPreview : IRenderFilter
                 // TODO!!!
             }
 
-            public void AddBlendshapeDefault(Transform target, string name, float value)
+            public void AddBlendshapeDefault(Transform target, string name)
             {
                 if (defaultBlendshapeRecords.Contains(name, BlendshapeControlType.Normal, true))
                     return;
+                float value = 0;
+                if (Renderer?.sharedMesh.GetBlendShapeIndex(name) is { } idx)
+                {
+                    value = Renderer.GetBlendShapeWeight(idx);
+                }
+
                 AddBlendshape(target, name, 0, value);
             }
 
-            public void AddCancelBlendshapeDefault(Transform target, string name, float value)
+            public void AddCancelBlendshapeDefault(Transform target, string name)
             {
                 if (defaultBlendshapeRecords.Contains(name, BlendshapeControlType.Cancel, true))
                     return;
-                AddCancelBlendshape(target, name, 0, value);
+                AddCancelBlendshape(target, name, 0, 0);
             }
 
             public void SetAnimatorParameter<T>(string name, float time, T value) { }

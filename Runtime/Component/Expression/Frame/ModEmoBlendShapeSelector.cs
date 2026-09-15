@@ -18,12 +18,12 @@ namespace Numeira
             {
                 if (!blendShape.Cancel)
                 {
-                    context.AddBlendshapeDefault(options.FaceObject, blendShape.Name, 0);
+                    context.AddBlendshapeDefault(options.FaceObject, blendShape.Name);
                     context.AddBlendshape(options.FaceObject, blendShape.Name, Keyframe, blendShape.Value);
                 }
                 else
                 {
-                    context.AddCancelBlendshapeDefault(options.FaceObject, blendShape.Name, 0);
+                    context.AddCancelBlendshapeDefault(options.FaceObject, blendShape.Name);
                     context.AddCancelBlendshape(options.FaceObject, blendShape.Name, Keyframe, blendShape.Value);
                 }
             }

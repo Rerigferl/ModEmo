@@ -275,10 +275,15 @@ partial class ModEmoExpressionExt
                 }
             }
 
-            public void AddBlendshapeDefault(Transform target, string name, float value)
+            public void AddBlendshapeDefault(Transform target, string name)
             {
                 if (defaultBlendshapeRecords.Contains(name, BlendshapeControlType.Normal, IsFaceObject(target)))
                     return;
+
+                float value = 0;
+                if (Parent.FaceInfo.BlendshapeMap.TryGetValue(name, out var info))
+                    value = info.Value;
+
 
                 AddBlendshape(target, name, 0, value);
             }
@@ -299,12 +304,12 @@ partial class ModEmoExpressionExt
                 }
             }
 
-            public void AddCancelBlendshapeDefault(Transform target, string name, float value)
+            public void AddCancelBlendshapeDefault(Transform target, string name)
             {
                 if (!IsFaceObject(target) || defaultBlendshapeRecords.Contains(name, BlendshapeControlType.Cancel, true))
                     return;
 
-                AddCancelBlendshape(target, name, 0, value);
+                AddCancelBlendshape(target, name, 0, 0);
             }
 
             public void AddRotation(Transform target, float time, Vector3 eularAngle, bool relative = true)
