@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 /*
@@ -300,6 +300,12 @@ public struct DeterministicHashCode
     {
         Add(value?.GetHashCode() ?? 0);
     }
+
+    public void Add(string value)
+        => Add(value.AsSpan());
+
+    public void Add(ReadOnlySpan<char> value) 
+        => Add((int)Numeira.FarmHash.Hash32(MemoryMarshal.AsBytes(value)));
 
     public void Add<T>(T value, IEqualityComparer<T>? comparer)
     {

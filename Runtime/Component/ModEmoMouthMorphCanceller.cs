@@ -5,7 +5,13 @@
     {
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            // TODO!
+            foreach(var x in this.GetOwnedComponents())
+            {
+                foreach (var y in x.GetUsedBlendshapeNames())
+                {
+                    hashCode.Add(y);
+                }
+            }
         }
 
     }

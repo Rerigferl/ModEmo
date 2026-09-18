@@ -8,5 +8,5 @@ internal interface IKeyframeWriterComponent : IModEmoComponent, ISubComponent<IK
 
 internal interface IBlendshapeWriterComponent : IKeyframeWriterComponent, ISubComponent<IBlendshapeWriterComponent>
 {
-
+    public IEnumerable<string> GetUsedBlendshapeNames();
 }

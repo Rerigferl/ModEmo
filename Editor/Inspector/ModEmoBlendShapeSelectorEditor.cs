@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 using UnityEditorInternal;
 
@@ -203,30 +203,48 @@ internal sealed class ModEmoBlendShapeSelectorEditor : Editor
 
         serializedObject.ApplyModifiedProperties();
     }
-
     private void MenuCallback(GenericMenu menu, ReadOnlyMemory<FaceInfo.BlendshapeInfo> group)
     {
         menu.AddItem(new("Add Existing Blendshapes"), false, () =>
         {
-            Undo.RecordObject(Component, "Add Blendshapes");
-            foreach (var item in group.Span)
-            {
-                if (item.Value == 0)
-                    continue;
-                Component.BlendShapes.Add(new() { Name = item.Name, Cancel = false, Value = item.Value });
-            }
+            AddBlendShapes("Add Blendshapes", group, item =>
+                item.Value == 0 ? null : new BlendShape { Name = item.Name, Cancel = false, Value = item.Value });
         });
 
         menu.AddItem(new("Add Cancel BlendShapes"), false, () =>
         {
-            Undo.RecordObject(Component, "Add Cancel Blendshapes");
-            foreach (var item in group.Span)
-            {
-                if (item.Value == 0)
-                    continue;
-                Component.BlendShapes.Add(new() { Name = item.Name, Cancel = true, Value = item.Max });
-            }
+            AddBlendShapes("Add Cancel Blendshapes", group, item =>
+                item.Value == 0 ? null : new BlendShape { Name = item.Name, Cancel = true, Value = item.Max });
         });
+
+        if (targets.Length == 1 && Component.GetComponent<IModEmoMouthMorphCanceller>() is { } mmc)
+        {
+            menu.AddSeparator("");
+            menu.AddItem(new("Add Used Blendshapes from Expressions"), false, () =>
+            {
+                AddBlendShapes("Add Blendshapes", group, item =>
+                    item.UsageInfo.AllowControl ? null : new BlendShape { Name = item.Name, Cancel = false, Value = 100 });
+            });
+        }
+    }
+
+    private void AddBlendShapes(string undoName, ReadOnlyMemory<FaceInfo.BlendshapeInfo> group, Func<FaceInfo.BlendshapeInfo, BlendShape?> selector)
+    {
+        Undo.SetCurrentGroupName(undoName);
+        int groupId = Undo.GetCurrentGroup();
+
+        Undo.RegisterCompleteObjectUndo(Component, undoName);
+
+        foreach (var item in group.Span)
+        {
+            if (selector(item) is not { } newItem)
+                continue;
+            Component.BlendShapes.Add(newItem);
+        }
+
+        EditorUtility.SetDirty(Component);
+        Undo.CollapseUndoOperations(groupId);
+        Undo.IncrementCurrentGroup();
     }
 
     private sealed class BlendShapeList : ReorderableListWrapper

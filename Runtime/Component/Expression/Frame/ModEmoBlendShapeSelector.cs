@@ -7,6 +7,9 @@ namespace Numeira
         public float Keyframe = 0;
         public List<BlendShape> BlendShapes = new();
 
+        public IEnumerable<string> GetUsedBlendshapeNames()
+            => BlendShapes.Select(x => x.Name);
+
         public void OnEnable() { }
 
         public void WriteKeyframes(IKeyframeWriterContext context, in AnimationGeneratorOptions options)

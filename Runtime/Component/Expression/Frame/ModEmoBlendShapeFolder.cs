@@ -24,6 +24,9 @@
             }
         }
 
+        public IEnumerable<string> GetUsedBlendshapeNames()
+            => this.GetOwnedComponents().SelectMany(x => x.GetUsedBlendshapeNames());
+
         private sealed class Proxy : IKeyframeWriterContext
         {
             public static readonly Proxy Instance = new();

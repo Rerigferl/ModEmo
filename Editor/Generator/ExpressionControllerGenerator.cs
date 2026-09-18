@@ -279,6 +279,8 @@ internal static class ExpressionControllerGenerator
         if (modEmo.MouthMorphCanceller is not { } cancellar)
             return;
 
+        var faceInfo = context.GetData().FaceInfo;
+
         var blendTree = new OneDirectionBlendTreeBuilder()
         {
             Name = "",
@@ -297,13 +299,21 @@ internal static class ExpressionControllerGenerator
         voiceSwitch.BlendParameter = "Voice";
         voiceSwitch.Append(disable, threshold: 0);
 
-        var enable = voiceSwitch.AddAnimationClip("Enable").WithThreshold(float.Epsilon).Motion;
+        var enable = voiceSwitch.AddAnimationClip("Enable")
+            .WithThreshold(Epsilon * 2)
+            .Motion;
 
-        // foreach (var blendShape in cancellar.GetUsedBlendshapes())
-        // {
-        //     var name = $"{ParameterNames.Internal.BlendShapes.Prefix}{blendShape.Name}/Enable";
-        //     disable.AddAnimatedParameter(name, 0, 1);
-        //     enable.AddAnimatedParameter(name, 0, 0);
-        // }
+
+        foreach (var blendShape in cancellar.GetOwnedComponents<IBlendshapeWriterComponent>().SelectMany(x => x.GetUsedBlendshapeNames()))
+        {
+            if (!faceInfo.BlendshapeMap.TryGetValue(blendShape, out var info) || !info.UsageInfo.AllowControl)
+                continue;
+
+            info.UsageInfo.UseEnableGate = true;
+
+            var name = $"{ParameterNames.Internal.BlendShapes.Prefix}{blendShape}/Enable";
+            disable.AddAnimatedParameter(name, 0, 1);
+            enable.AddAnimatedParameter(name, 0, 0);
+        }
     }
 }

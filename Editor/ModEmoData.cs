@@ -78,15 +78,6 @@ internal sealed class ModEmoData
             }
         }
 
-        if (component.MouthMorphCanceller is { } mmc)
-        {
-            // foreach(var x in mmc.GetUsedBlendshapes())
-            // {
-            //     if (FaceInfo.BlendshapeMap.TryGetValue(x.Name, out var info))
-            //         info.UsageInfo.UseEnableGate = true;
-            // }
-        }
-
         if (component.GetComponentInDirectChildren<IModEmoRuntimeBlendshapeController>(includeSelf: true) is { } rbc)
         {
             foreach(var pattern in rbc.Blacklist)
