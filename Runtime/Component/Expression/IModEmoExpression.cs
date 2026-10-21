@@ -1,6 +1,6 @@
 ﻿namespace Numeira
 {
-    internal interface IModEmoExpression : IModEmoNamedComponent, IAnimationSourceComponent, IOwnerComponent<IModEmoMotionTimeProvider>, ISubComponent<IModEmoExpression>, IOwnerComponent<IPositionProviderComponent>
+    internal interface IModEmoExpression : IModEmoNamedComponent, IAnimationSourceComponent, IOwnerComponent<IModEmoMotionTimeProvider>, ISubComponent<IModEmoExpression>, IOwnerComponent<IPositionProviderComponent>, ISubComponentOrder
     {
         ExpressionMode Mode { get; }
 
@@ -48,5 +48,7 @@
                 // TODO!
             }
         }
+
+        SubComponentOrder ISubComponentOrder.Order => SubComponentOrder.Descending;
     }
 }

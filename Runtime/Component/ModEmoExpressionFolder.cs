@@ -12,7 +12,7 @@
         }
     }
 
-    internal interface IModEmoExpressionFolder : IModEmoNamedComponent, ISubComponent<IModEmoExpressionFolder>, IOwnerComponent<IModEmoExpression>, IOwnerComponent<IModEmoExpressionFolder>
+    internal interface IModEmoExpressionFolder : IModEmoNamedComponent, ISubComponent<IModEmoExpressionFolder>, IOwnerComponent<IModEmoExpression>, IOwnerComponent<IModEmoExpressionFolder>, ISubComponentOrder
     {
         IEnumerable<IModEmoExpression> Expressions
         {
@@ -29,5 +29,7 @@
                 }
             }
         }
+
+        SubComponentOrder ISubComponentOrder.Order => SubComponentOrder.Descending;
     }
 }

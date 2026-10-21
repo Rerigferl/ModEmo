@@ -15,6 +15,11 @@
 
         protected virtual string GetName() => Name;
 
+        protected override void CalculateContentHash(ref HashCode hashCode)
+        {
+            hashCode.Add((this as IModEmoNamedComponent).Name);
+        }
+
         string IModEmoNamedComponent.Name
         {
             get

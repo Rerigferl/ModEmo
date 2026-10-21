@@ -22,5 +22,14 @@ internal static class OwnerCompoenentExt
         => owner.GetOwnedComponents();
 
     public static IEnumerable<T> GetOwnedComponents<T>(this IOwnerComponent owner) where T : ISubComponent<T>
-        => (owner is IOwnerComponent<T> o) ? o.GetOwnedComponents() : Enumerable.Empty<T>();
+        => (owner is IOwnerComponent<T> o) ? o.GetOwnedComponents() : owner.GetOwnedComponentsDirect<T>();
+
+    private static IEnumerable<T> GetOwnedComponentsDirect<T>(this IOwnerComponent owner) where T : ISubComponent<T>
+    {
+        foreach (var x in owner.Component.GetComponentsInDirectChildren<T>(includeSelf: true))
+        {
+            if (x.GetOwner() == owner)
+                yield return x;
+        }
+    }
 }

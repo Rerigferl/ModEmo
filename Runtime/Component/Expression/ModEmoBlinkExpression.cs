@@ -1,10 +1,12 @@
 ﻿namespace Numeira
 {
-    [AddComponentMenu(ComponentMenuPrefix + "Blink Expression")]
-    internal sealed class ModEmoBlinkExpression : ModEmoExpression, IModEmoLoopControl, IAnimationSourceComponent
+    [AddComponentMenu("/" + ComponentMenuPrefix + "Blink Expression (Legacy)")]
+    internal class ModEmoBlinkExpression : ModEmoExpression, IModEmoLoopControl, IAnimationSourceComponent
     {
-        public bool IsLoop => true;
+        public bool IsLoop => !UseBlinkTimer;
         public override int LayerIndex => 1;
+
+        protected virtual bool UseBlinkTimer => false;
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
@@ -13,12 +15,26 @@
 
         public void RegisterAnimations(IAnimationRegistry registry, in AnimationGeneratorOptions options)
         {
-            var context = registry.RegisterAnimation(options);
-            var writer = new WriterContext(context);
-
-            foreach (var x in (this as IOwnerComponent<IKeyframeWriterComponent>).GetOwnedComponents())
+            if (!UseBlinkTimer)
             {
-                x.WriteKeyframes(writer, options);
+                /* legacy mode */
+
+                var context = registry.RegisterAnimation(options);
+                var writer = new WriterContext(context);
+
+                foreach (var x in (this as IOwnerComponent<IKeyframeWriterComponent>).GetOwnedComponents())
+                {
+                    x.WriteKeyframes(writer, options);
+                }
+            }
+            else
+            {
+                var context = registry.RegisterAnimation(options, ModEmoConstants.Parameters.Blink.Timer);
+
+                foreach (var x in this.GetOwnedComponents<IKeyframeWriterComponent>())
+                {
+                    x.WriteKeyframes(context, options);
+                }
             }
         }
 

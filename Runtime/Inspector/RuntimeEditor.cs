@@ -1,9 +1,9 @@
-namespace Numeira;
+﻿namespace Numeira;
 
 internal static partial class RuntimeEditor
 {
 #if UNITY_EDITOR
-    public static Action<GameObject, GameObject>? CreateNewObject;
+    public static Action<GameObject, GameObject, bool>? CreateNewObject;
 
     internal abstract class ModEmoComponentEditorBase : Editor
     {

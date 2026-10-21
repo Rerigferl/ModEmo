@@ -117,7 +117,7 @@ internal static class CreationContextMenu
         AddMenu("ModEmo/Create Pattern", () => CreateNewObject("Expression Pattern (1)", go, typeof(ModEmoExpressionPattern)), enabled: isRoot);
 
         menu.AddSeparator("ModEmo/");
-        AddMenu("ModEmo/Expression/Create Blink Expression", () => CreateNewObject("Blink", go, typeof(ModEmoBlinkExpression)), enabled: isRoot);
+        AddMenu("ModEmo/Expression/Create Blink Expression", () => CreateNewObject("Blink", go, new Func<GameObject, Component>[] { x => x.AddComponent<ModEmoBlinkExpressionV2>(), x => { var c = x.AddComponent<ModEmoBlendShapeSelector>(); c.Keyframe = 1; return c; } }), enabled: isRoot);
         AddMenu("ModEmo/Expression/Create Expression", () => CreateNewExpression("Expression (1)", go), enabled: isExpressionFolder);
         AddMenu("ModEmo/Expression/Create Empty Expression", () => CreateNewExpression("Expression (1)", go, empty: true), enabled: isExpressionFolder);
         AddMenu("ModEmo/Expression/Create Simplify Expression", () => CreateNewObject("Expression (1)", go, typeof(ModEmoDefaultExpression), DefaultConditionType, typeof(ModEmoBlendShapeSelector)), enabled: isExpressionFolder);
@@ -193,7 +193,7 @@ internal static class CreationContextMenu
         var obj = ObjectFactory.CreateGameObject(name, typeof(ModEmoDefaultExpression));
         if (empty)
         {
-            CreateNewObject(obj, parent);
+            CreateNewObject(obj, parent, setAsFirst: true);
             return;
         }
 
@@ -209,19 +209,38 @@ internal static class CreationContextMenu
         ObjectFactory.PlaceGameObject(sampleCondition, conditions);
         ObjectFactory.PlaceGameObject(sampleFrame, motions);
 
-        CreateNewObject(obj, parent);
+        CreateNewObject(obj, parent, setAsFirst: true);
     }
 
     private static void CreateNewObject(string name, GameObject parent, params Type[] components)
     {
+        Func<GameObject, Component> Select(Type type) => x => x.AddComponent(type);
+        CreateNewObject(name, parent, components.Select(Select).ToArray());
+        return;
         var newObj = ObjectFactory.CreateGameObject(parent.scene, HideFlags.None, name, components);
-        CreateNewObject(newObj, parent);
+        CreateNewObject(newObj, parent, setAsFirst: !components.Any(x => x == typeof(ModEmoExpressionPattern)));
     }
 
-    private static void CreateNewObject(GameObject go, GameObject parent)
+    private static void CreateNewObject(string name, GameObject parent, params Func<GameObject, Component>[] components)
+    {
+        var newObj = ObjectFactory.CreateGameObject(parent.scene, HideFlags.None, name);
+        bool setAsFirst = false;
+        foreach (var component in components)
+        {
+            var c = component(newObj);
+            if (c is ISubComponentOrder s && s.Order == SubComponentOrder.Descending)
+            {
+                setAsFirst = true;
+            }
+        }
+        CreateNewObject(newObj, parent, setAsFirst: setAsFirst);
+    }
+
+    private static void CreateNewObject(GameObject go, GameObject parent, bool setAsFirst = false)
     {
         ObjectFactory.PlaceGameObject(go, parent);
-        go.transform.SetAsFirstSibling();
+        if (setAsFirst)
+            go.transform.SetAsFirstSibling();
         Selection.activeObject = go;
         SceneHierarchyWindow.FrameAndRenameNewGameObject();
     }

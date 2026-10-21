@@ -28,6 +28,7 @@ internal static partial class ModEmoConstants
             public const string Prefix = $"{Parameters.Prefix}Blink/";
             public const string Value = $"{Prefix}Value";
             public const string Sync = $"{Prefix}Sync";
+            public const string Timer = $"{Prefix}Timer";
         }
 
         public static class Internal

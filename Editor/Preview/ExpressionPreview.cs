@@ -212,6 +212,8 @@ internal sealed class ExpressionPreview : IRenderFilter
             var clip = this.context.AnimationClip;
             var mesh = meshCache.Get(context, proxy);
 
+            time *= clip.Length;
+
             foreach (var binding in clip.Bindings)
             {
                 var index = mesh.GetBlendShapeIndex(binding.propertyName);

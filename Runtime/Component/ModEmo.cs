@@ -1,10 +1,10 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using nadena.dev.modular_avatar.core;
 
 namespace Numeira
 {
     [AddComponentMenu("ModEmo/ModEmo")]
-    internal sealed class ModEmo : ModEmoTagComponent
+    internal sealed class ModEmo : ModEmoTagComponent, IOwnerComponent<IModEmoExpressionPattern>, ISubComponentOrder
     {
         public ModEmoSettings Settings = new();
 
@@ -18,6 +18,8 @@ namespace Numeira
         public IModEmoMouthMorphCanceller? MouthMorphCanceller => this.GetComponentInDirectChildren<IModEmoMouthMorphCanceller>();
 
         public IModEmoRuntimeBlendshapeController? RuntimeBlendshapeController => this.GetComponentInDirectChildren<IModEmoRuntimeBlendshapeController>(includeSelf: true);
+
+        SubComponentOrder ISubComponentOrder.Order => SubComponentOrder.Ascending;
 
         private sealed class ExpressionGroups : IEnumerable<ExpressionGroup>
         {
@@ -60,6 +62,8 @@ namespace Numeira
 
         public override int GetHashCode()
         {
+            if (this == null)
+                return 0;
             HashCode hash = new();
             CalculateContentHash(ref hash);
             return hash.ToHashCode();

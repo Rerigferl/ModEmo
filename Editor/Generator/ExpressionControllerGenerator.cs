@@ -253,22 +253,39 @@ internal static class ExpressionControllerGenerator
 
         animatorController.Parameters.AddFloat(ParameterNames.Blink.Value, 1);
         animatorController.Parameters.AddFloat(ParameterNames.Blink.Sync, 1);
+        animatorController.Parameters.AddFloat(ParameterNames.Blink.Timer, 0);
 
         var layer = animatorController.AddLayer("[ModEmo] Blink");
         var stateMachine = layer.StateMachine;
 
-        var off = stateMachine.AddState("OFF");
-        off.Motion = context.GetData().BlankClip;
+        var state = stateMachine.AddState("Blink (WD On)");
+        state.WriteDefaults = true;
+        var dbt = new DirectBlendTreeBuilder() { Name = "Blink", DefaultDirectBlendParameter = ParameterNames.Internal.One, };
+        state.Motion = dbt;
 
-        var on = stateMachine.AddState("ON");
-        on.Motion = expression.ToMotion(context, layerIndex: 1, writeDefaultValues: false, writeBlink: false);
+        /*
+            Source.AddBlendshape(target, name, 0 / 60f, 0);
+            Source.AddBlendshape(target, name, 60 / 60f, 0);
+            Source.AddBlendshape(target, name, 65 / 60f, value);
+            Source.AddBlendshape(target, name, 67 / 60f, value);
+            Source.AddBlendshape(target, name, 80 / 60f, 0);
+            Source.AddBlendshape(target, name, 300 / 60f, 0);
+         */
 
-        off.AddTransition(on)
-            .AddCondition(AnimatorConditionMode.Greater, ParameterNames.Blink.Value, 1 - Epsilon)
-            .AddCondition(AnimatorConditionMode.Greater, ParameterNames.Blink.Sync, 1 - Epsilon);
+        var syncGate = dbt.AddDirectBlendTree("Sync").WithDirectBlendParameter(ParameterNames.Blink.Sync).Motion;
+        var valueGate = syncGate.AddDirectBlendTree("Value").WithDirectBlendParameter(ParameterNames.Blink.Value).Motion;
 
-        on.AddTransition(off).AddCondition(AnimatorConditionMode.Less, ParameterNames.Blink.Value, 1);
-        on.AddTransition(off).AddCondition(AnimatorConditionMode.Less, ParameterNames.Blink.Sync, 1);
+
+        var timer = valueGate.AddAnimationClip("Timer").Motion;
+        timer.IsLoop = true;
+        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 0 / 60f, 0);
+        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 60 / 60f, 0);
+        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 65 / 60f, 1);
+        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 67 / 60f, 1);
+        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 80 / 60f, 0);
+        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 300 / 60f, 0);
+
+        valueGate.Append(expression.ToMotion(context, layerIndex: 1, writeDefaultValues: false, writeBlink: false));
     }
 
     private static void GenerateMouthMorphCancellar(BuildContext context, AnimatorControllerBuilder animatorController)

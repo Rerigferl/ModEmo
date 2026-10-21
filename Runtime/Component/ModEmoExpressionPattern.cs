@@ -16,8 +16,9 @@ namespace Numeira
         }
     }
 
-    internal interface IModEmoExpressionPattern : IModEmoExpression, IModEmoExpressionFolder
+    internal interface IModEmoExpressionPattern : IModEmoExpression, IModEmoExpressionFolder, ISubComponent<IModEmoExpressionPattern>, ISubComponentOrder
     {
+        SubComponentOrder ISubComponentOrder.Order => SubComponentOrder.Descending;
     }
 
 #if UNITY_EDITOR
