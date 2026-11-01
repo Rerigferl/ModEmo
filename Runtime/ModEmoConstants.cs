@@ -31,6 +31,16 @@ internal static partial class ModEmoConstants
             public const string Timer = $"{Prefix}Timer";
         }
 
+        public static class FaceTracking
+        {
+            public const string LeftEyeClose = $"v2/EyeClosedLeft";
+            public const string RightEyeClose = $"v2/EyeClosedRight";
+            public const string LeftEyeX = $"v2/EyeLeftX";
+            public const string LeftEyeY = $"v2/EyeLeftY";
+            public const string RightEyeX = $"v2/EyeRightX";
+            public const string RightEyeY = $"v2/EyeRightY";
+        }
+
         public static class Internal
         {
             public const string Prefix = $"{Parameters.Prefix}I/";

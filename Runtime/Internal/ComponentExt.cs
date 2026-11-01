@@ -2,6 +2,7 @@
 
 internal static class ComponentExt
 {
+    [Obsolete("Use GetOwnedComponents instead")]
     public static T[] GetComponentsInDirectChildren<T>(this Component co, bool includeInactive = false, bool includeSelf = false)
         => GetComponentsInDirectChildren<T>(co.gameObject, includeInactive, includeSelf ? co : null);
 

@@ -13,28 +13,30 @@ internal interface ISubComponent<T> : ISubComponent where T : ISubComponent<T>
     {
         if (this is IOwnerComponent<T>)
         {
-            var components = temporaryList;
-            GameObject.GetComponents(components);
+            var components = GameObject.GetCachedComponents();
 
             if (components.Count != 0)
             {
                 foreach (var component in components)
                 {
-                    if (component == this)
+                    if (component is not IOwnerComponent<T> o || component is not ISubComponent<T> s)
                         continue;
 
-                    return component;
+                    if (o == this)
+                        continue;
+
+                    return o;
                 }
             }
         }
         else
         {
-            if (GameObject.TryGetComponent<IOwnerComponent<T>>(out var self))
+            if (GameObject.TryGetCachedComponent<IOwnerComponent<T>>(out var self))
                 return self;
         }
 
         var parent = GameObject.transform.parent;
-        if (parent != null && parent.TryGetComponent<IOwnerComponent<T>>(out var p))
+        if (parent != null && parent.gameObject.TryGetCachedComponent<IOwnerComponent<T>>(out var p))
             return p;
 
         return null;

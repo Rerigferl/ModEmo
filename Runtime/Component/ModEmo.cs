@@ -36,7 +36,7 @@ namespace Numeira
                 {
                     if (!x.activeInHierarchy)
                         continue;
-                    if (x.GetComponent<IModEmoExpressionPattern>() != null)
+                    if (x.GetCachedComponent<IModEmoExpressionPattern>() != null)
                         yield return new(x);
                 }
             }
@@ -71,7 +71,7 @@ namespace Numeira
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
-            foreach (var x in this.GetComponentsInDirectChildren<IModEmoExpressionPattern>())
+            foreach (var x in this.GetOwnedComponents())
             {
                 x.CalculateContentHash(ref hashCode);
             }
