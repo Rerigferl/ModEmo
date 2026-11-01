@@ -1,9 +1,7 @@
 ﻿namespace Numeira
 {
-    internal sealed class ModEmoFaceTrackingExpression : ModEmoNamedTagComponent, IModEmoExpression, IOwnerComponent<IFaceTrackingExpressionMarker>
+    internal sealed class ModEmoFaceTrackingExpression : ModEmoExpression, IAnimationSourceComponent, IOwnerComponent<IFaceTrackingExpressionMarker>
     {
-        public ExpressionMode Mode => ExpressionMode.Default;
-
         public bool AllowSelf => false;
 
         void IAnimationSourceComponent.RegisterAnimations(IAnimationRegistry registry, in AnimationGeneratorOptions options)
@@ -22,6 +20,21 @@
 
             return null;
         }
+#if UNITY_EDITOR
+        public override void OnInspectorExtension(IInspectorExtensionContext context)
+        {
+            base.OnInspectorExtension(context);
+
+            context.RegisterComponentShortcut("Add Expression", go =>
+            {
+                var go2 = new GameObject("New Expression");
+                Undo.RegisterCreatedObjectUndo(go2, go2.name);
+                go2.AddComponent<FaceTrackingExpressionMarker>();
+                go2.AddComponent<ModEmoDefaultExpression>();
+                RuntimeEditor.CreateNewObject?.Invoke(go2, go, false);
+            });
+        }
+#endif
     }
 
 #if UNITY_EDITOR

@@ -3,7 +3,6 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEditor.AssetImporters;
 using UnityEditor.Graphs;
-using static UnityEditor.PlayerSettings;
 
 namespace Numeira.HarmonyPatch;
 
@@ -58,7 +57,7 @@ internal sealed class AddComponentMenuPatch : HarmonyPatch<AddComponentMenuPatch
         if (editor == null || editor.target == null || editor.target is not GameObject go)
             return;
 
-        if (go.GetComponent<IModEmoExpression>() is { } expression)
+        if (go.TryGetComponent<IInspectorExtension>(out var ie))
         {
             var rect = EditorGUILayout.GetControlRect(false, 1);
             if (Event.current.type is EventType.Repaint)
@@ -66,9 +65,135 @@ internal sealed class AddComponentMenuPatch : HarmonyPatch<AddComponentMenuPatch
 
             EditorGUILayout.Space();
 
-            ModEmoExpressionEditor.OnFooterGUI(editor, expression);
 
+            EditorGUIUtility.labelWidth = 150f;
+            try
+            {
+                var c = InspectorExtensionContext.Instance;
+                c.ClearRegisteredComponentShortcut();
+                ie.OnInspectorExtension(c);
+                c.DoComponentShortcut(go);
+            }
+            finally
+            {
+                EditorGUIUtility.labelWidth = 0f;
+            }
             EditorGUILayout.Space();
+        }
+    }
+
+    private sealed class InspectorExtensionContext : IInspectorExtensionContext
+    {
+        public static InspectorExtensionContext Instance { get; } = new();
+
+        private sealed class IndentLevelDisposable : IDisposable
+        {
+            public static IndentLevelDisposable Instance { get; } = new();
+            public void Dispose()
+            {
+                EditorGUI.indentLevel--;
+                EditorGUILayout.Space();
+            }
+        }
+
+        private sealed class HorizontalOrVerticalDisposable : IDisposable
+        {
+            private readonly bool isVertical;
+
+            public static HorizontalOrVerticalDisposable Horizontal { get; } = new(false);
+            public static HorizontalOrVerticalDisposable Vertical { get; } = new(true);
+
+            public HorizontalOrVerticalDisposable(bool isVertical) => this.isVertical = isVertical;
+
+            public void Dispose()
+            {
+                if (isVertical)
+                    EditorGUILayout.EndVertical();
+                else
+                    EditorGUILayout.EndHorizontal();
+            }
+        }
+
+        private sealed class DisabledDisposable : IDisposable
+        {
+            public static DisabledDisposable Instance { get; } = new();
+            public void Dispose()
+            {
+                EditorGUI.EndDisabledGroup();
+            }
+        }
+
+        public IDisposable BeginGroup(string label, ref bool open)
+        {
+            open = EditorGUILayout.BeginFoldoutHeaderGroup(open, label);
+            EditorGUILayout.EndFoldoutHeaderGroup();
+            EditorGUI.indentLevel++;
+
+            return IndentLevelDisposable.Instance;
+        }
+
+        public IDisposable BeginHorizontal()
+        {
+            EditorGUILayout.BeginHorizontal();
+            return HorizontalOrVerticalDisposable.Horizontal;
+        }
+
+        public IDisposable BeginVertical()
+        {
+            EditorGUILayout.BeginVertical();
+            return HorizontalOrVerticalDisposable.Vertical;
+        }
+
+        public IDisposable BeginDisabled(bool disable)
+        {
+            EditorGUI.BeginDisabledGroup(disable);
+            return DisabledDisposable.Instance;
+        }
+
+        public bool CheckBox(string label, bool on, Action<bool>? callback = null)
+        {
+            callback ??= static _ => { };
+            return RuntimeGUIUtils.ChangeCheck(() => EditorGUILayout.Toggle(label, on), callback);
+        }
+
+        public bool Button(string label, Action? callback = null)
+        {
+            callback ??= () => { };
+            var c = EditorGUIUtility.TrTempContent(label);
+
+            var rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight * 1.5f);
+            rect = EditorGUI.IndentedRect(rect);
+
+            if (GUI.Button(rect, c))
+            {
+                callback();
+                return true;
+            }
+            return false;
+        }
+
+        private readonly List<(string Title, Action<GameObject> Callback)> registeredComponentShortcut = new();
+
+        public void ClearRegisteredComponentShortcut() => registeredComponentShortcut.Clear();
+
+        public void RegisterComponentShortcut(string title, Action<GameObject> callback)
+        {
+            registeredComponentShortcut.Add((title, callback));
+        }
+
+        public void DoComponentShortcut(GameObject gameObject)
+        {
+            bool flag = true;
+            using (BeginGroup("Component Shortcuts", ref flag))
+            {
+                foreach(var (title, callback) in registeredComponentShortcut.AsSpan())
+                {
+                    if (Button(title))
+                    {
+                        callback(gameObject);
+                    }
+                }
+            }
         }
     }
 
