@@ -49,6 +49,6 @@
             }
         }
 
-        SubComponentOrder ISubComponentOrder.Order => SubComponentOrder.Descending;
+        SubComponentOrder ISubComponentOrder.SubComponentOrder => SubComponentOrder.Descending;
     }
 }

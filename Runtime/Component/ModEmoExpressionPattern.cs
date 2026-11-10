@@ -18,7 +18,7 @@ namespace Numeira
 
     internal interface IModEmoExpressionPattern : IModEmoExpression, IModEmoExpressionFolder, ISubComponent<IModEmoExpressionPattern>, ISubComponentOrder
     {
-        SubComponentOrder ISubComponentOrder.Order => SubComponentOrder.Descending;
+        //SubComponentOrder ISubComponentOrder.SubComponentOrder => SubComponentOrder.Descending;
     }
 
 #if UNITY_EDITOR

@@ -228,7 +228,7 @@ internal static class CreationContextMenu
         foreach (var component in components)
         {
             var c = component(newObj);
-            if (c is ISubComponentOrder s && s.Order == SubComponentOrder.Descending)
+            if (c is ISubComponentOrder s && s.SubComponentOrder == SubComponentOrder.Descending)
             {
                 setAsFirst = true;
             }

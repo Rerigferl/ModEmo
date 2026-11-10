@@ -20,6 +20,7 @@
 
             return null;
         }
+
 #if UNITY_EDITOR
         public override void OnInspectorExtension(IInspectorExtensionContext context)
         {

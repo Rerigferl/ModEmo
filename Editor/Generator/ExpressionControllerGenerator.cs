@@ -25,7 +25,6 @@ internal static class ExpressionControllerGenerator
         GenerateMouthMorphCancellar(context, animatorController);
         GenerateExpressionSelector(context, animatorController, expressions);
         GenerateExpressionLayer(context, animatorController, expressions);
-        GenerateBlinkController(context, animatorController);
     }
 
     private static void GenerateIndexSelectorStates(BuildContext context, AnimatorControllerBuilder animatorController, List<ExpressionData> expressions)
@@ -241,63 +240,6 @@ internal static class ExpressionControllerGenerator
             //tr.Eyes = TrackingType.Animation;
             tr.Mouth = expression.LipSync ? TrackingType.Tracking : TrackingType.Animation;
             tr.Eyes = expression.EyeTracking ? TrackingType.Tracking : TrackingType.Animation;
-        }
-    }
-
-    private static void GenerateBlinkController(BuildContext context, AnimatorControllerBuilder animatorController)
-    {
-        var modEmo = context.GetModEmoContext().Root;
-        var expression = modEmo.GetBlinkExpression();
-        if (expression is null)
-            return;
-
-        animatorController.Parameters.AddFloat(ParameterNames.Blink.Value, 1);
-        animatorController.Parameters.AddFloat(ParameterNames.Blink.Sync, 1);
-
-        var layer = animatorController.AddLayer("[ModEmo] Blink");
-        var stateMachine = layer.StateMachine;
-
-        var state = stateMachine.AddState("Blink (WD On)");
-        state.WriteDefaults = true;
-        var dbt = new DirectBlendTreeBuilder() { Name = "Blink", DefaultDirectBlendParameter = ParameterNames.Internal.One, };
-        state.Motion = dbt;
-
-        /*
-            Source.AddBlendshape(target, name, 0 / 60f, 0);
-            Source.AddBlendshape(target, name, 60 / 60f, 0);
-            Source.AddBlendshape(target, name, 65 / 60f, value);
-            Source.AddBlendshape(target, name, 67 / 60f, value);
-            Source.AddBlendshape(target, name, 80 / 60f, 0);
-            Source.AddBlendshape(target, name, 300 / 60f, 0);
-         */
-
-        var syncGate = dbt.AddDirectBlendTree("Sync").WithDirectBlendParameter(ParameterNames.Blink.Sync).Motion;
-        var valueGate = syncGate.AddDirectBlendTree("Value").WithDirectBlendParameter(ParameterNames.Blink.Value).Motion;
-
-        if (expression is ModEmoFaceTrackingExpression ft)
-        {
-            EyeTrackingGenerator.Generate(context, animatorController, ft, valueGate);
-            return;
-        }
-
-        animatorController.Parameters.AddFloat(ParameterNames.Blink.Timer, 0);
-
-        var timer = valueGate.AddAnimationClip("Timer").Motion;
-        timer.IsLoop = true;
-        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 0 / 60f, 0);
-        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 60 / 60f, 0);
-        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 65 / 60f, 1);
-        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 67 / 60f, 1);
-        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 80 / 60f, 0);
-        timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 300 / 60f, 0);
-
-        valueGate.Append(expression.ToMotion(context, layerIndex: 1, writeDefaultValues: false, writeBlink: false));
-
-        foreach(var t in expression.GetOwnedComponents<IModEmoMotionTimeProvider>())
-        {
-            if (t.ParameterName is null) 
-                continue;
-            animatorController.Parameters.AddFloat(t.ParameterName);
         }
     }
 

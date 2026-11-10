@@ -3,6 +3,7 @@
     [AddComponentMenu(ComponentMenuPrefix + "Expression Folder")]
     internal class ModEmoExpressionFolder : ModEmoNamedTagComponent, IModEmoExpressionFolder
     {
+        public SubComponentOrder SubComponentOrder => SubComponentOrder.Descending;
         protected override void CalculateContentHash(ref HashCode hashCode)
         {
             foreach (var x in (this as IModEmoExpressionFolder).Expressions)
@@ -29,7 +30,5 @@
                 }
             }
         }
-
-        SubComponentOrder ISubComponentOrder.Order => SubComponentOrder.Descending;
     }
 }

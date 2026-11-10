@@ -2,9 +2,9 @@
 
 internal static partial class RuntimeEditor
 {
-#if UNITY_EDITOR
     public static Action<GameObject, GameObject, bool>? CreateNewObject;
 
+#if UNITY_EDITOR
     internal abstract class ModEmoComponentEditorBase : Editor
     {
         private SerializedProperty? nameProperty;

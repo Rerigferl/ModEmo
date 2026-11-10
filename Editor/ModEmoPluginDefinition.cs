@@ -91,6 +91,7 @@ internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefini
             }
 
             ExpressionControllerGenerator.Generate(context, builder);
+            BlinkGenerator.GenerateBlinkController(context, builder);
             BlendShapeControllerGenerator.Generate(context, builder);
             BlendShapeControllerGenerator.GenerateBlendshapeSyncController(context, builder);
             MenuGenerator.Generate(context, builder);

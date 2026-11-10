@@ -19,7 +19,7 @@ namespace Numeira
 
         public IModEmoRuntimeBlendshapeController? RuntimeBlendshapeController => this.GetComponentInDirectChildren<IModEmoRuntimeBlendshapeController>(includeSelf: true);
 
-        SubComponentOrder ISubComponentOrder.Order => SubComponentOrder.Ascending;
+        SubComponentOrder ISubComponentOrder.SubComponentOrder => SubComponentOrder.Ascending;
 
         private sealed class ExpressionGroups : IEnumerable<ExpressionGroup>
         {

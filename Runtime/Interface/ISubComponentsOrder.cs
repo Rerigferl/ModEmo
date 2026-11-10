@@ -2,7 +2,7 @@
 
 internal interface ISubComponentOrder
 {
-    public SubComponentOrder Order { get; }
+    public SubComponentOrder SubComponentOrder { get; }
 }
 
 internal enum SubComponentOrder
