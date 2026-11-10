@@ -1,12 +1,16 @@
 ﻿namespace Numeira
 {
     [AddComponentMenu("/" + ComponentMenuPrefix + "Blink Expression (Legacy)")]
-    internal class ModEmoBlinkExpression : ModEmoExpression, IModEmoLoopControl, IAnimationSourceComponent
+    internal class ModEmoBlinkExpression : ModEmoExpression, IModEmoBlinkExpression, IModEmoLoopControl, IAnimationSourceComponent
     {
         public bool IsLoop => !UseBlinkTimer;
         public override int LayerIndex => 1;
 
         protected virtual bool UseBlinkTimer => false;
+
+        public bool UseEyeCloseToBlinkTimer = false;
+
+        bool IModEmoBlinkExpression.UseEyeCloseToBlinkTimer => UseEyeCloseToBlinkTimer;
 
         protected override void CalculateContentHash(ref HashCode hashCode)
         {

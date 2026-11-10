@@ -51,4 +51,9 @@
 
         SubComponentOrder ISubComponentOrder.SubComponentOrder => SubComponentOrder.Descending;
     }
+
+    internal interface IModEmoBlinkExpression : IModEmoExpression
+    {
+        public bool UseEyeCloseToBlinkTimer { get; }
+    }
 }

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Numeira.Animation;
+﻿using Numeira.Animation;
 
 namespace Numeira;
 
@@ -36,7 +31,7 @@ internal static class BlinkGenerator
             return;
         }
 
-        MakeTimerState(animatorController);
+        MakeTimerState(context, animatorController, useEyeClose: expression is IModEmoBlinkExpression { UseEyeCloseToBlinkTimer: true });
 
         valueGate.Append(expression.ToMotion(context, layerIndex: 1, writeDefaultValues: false, writeBlink: false));
 
@@ -48,18 +43,19 @@ internal static class BlinkGenerator
         }
     }
 
-    private static void MakeTimerState(AnimatorControllerBuilder animatorController)
+    private static void MakeTimerState(BuildContext context, AnimatorControllerBuilder animatorController, bool useEyeClose = false)
     {
         animatorController.Parameters.AddFloat(ParameterNames.Blink.Timer, 0);
         var layer = animatorController.AddLayer("[ModEmo] Blink Timer");
         var stateM = layer.StateMachine;
-        var state = stateM.AddState("Timer");
+        var timerState = stateM.AddState("Timer");
 
         var timer = new AnimationClipBuilder
         {
             Name = "Timer",
             IsLoop = true
         };
+
         timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 0 / 60f, 0);
         timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 60 / 60f, 0);
         timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 65 / 60f, 1);
@@ -67,7 +63,50 @@ internal static class BlinkGenerator
         timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 80 / 60f, 0);
         timer.AddAnimatedParameter(ParameterNames.Blink.Timer, 300 / 60f, 0);
 
-        state.Motion = timer;
+        timerState.Motion = timer;
 
+        if (!useEyeClose)
+        {
+            return;
+        }
+
+        var eyeCloseState = stateM.AddState("EyeClose");
+        var blendTree = new DirectBlendTreeBuilder
+        {
+            Name = "EyeClose",
+            DefaultDirectBlendParameter = ParameterNames.Internal.One
+        };
+
+        var smoothed = eyeCloseState.MotionTime = ParameterNames.FaceTracking.EyeClosed + "/Smooth";
+        
+        {
+            var tree = blendTree.AddBlendTree("Smoothing").Motion;
+            tree.BlendParameter = ParameterNames.Internal.SmoothAmount;
+            var i = tree.AddBlendTree("Input").WithThreshold(0).Motion;
+            var zero = i.AddAnimationClip("0").WithThreshold(0).Motion.AddAnimatedParameter(smoothed, 0, 0);
+            var one = i.AddAnimationClip("1").WithThreshold(1).Motion.AddAnimatedParameter(smoothed, 0, 1);
+
+            var o = tree.AddBlendTree("Output").WithThreshold(1).Motion;
+            o.Append(zero, 0);
+            o.Append(one, 1);
+
+            i.BlendParameter = ParameterNames.FaceTracking.EyeClosed;
+            o.BlendParameter = smoothed;
+        }
+
+        {
+            var tree = blendTree.AddBlendTree("Timer").Motion;
+            tree.BlendParameter = smoothed;
+            tree.AddAnimationClip("0").WithThreshold(0).Motion.AddAnimatedParameter(ParameterNames.Blink.Timer, 0, 0);
+            tree.AddAnimationClip("1").WithThreshold(1).Motion.AddAnimatedParameter(ParameterNames.Blink.Timer, 0, 1);
+        }
+
+        eyeCloseState.Motion = blendTree;
+        animatorController.Parameters.AddFloat(ParameterNames.FaceTracking.EyeClosed);
+        animatorController.Parameters.AddFloat(smoothed);
+        context.GetData().Parameters.Add(new(ParameterNames.FaceTracking.EyeClosed, 0f, AnimatorParameterType.Float, false, false));
+
+        timerState.AddTransition(eyeCloseState).AddCondition(AnimatorConditionMode.Greater, ParameterNames.FaceTracking.EyeClosed, 0);
+        eyeCloseState.AddTransition(timerState).AddCondition(AnimatorConditionMode.Less, ParameterNames.FaceTracking.EyeClosed, ModEmoConstants.Epsilon);
     }
 }

@@ -2,6 +2,8 @@
 
 internal static partial class ModEmoConstants
 {
+    public const float Epsilon = 0.005f;
+
     public abstract partial class Parameters
     {
         public const string Prefix = "ME/";
@@ -39,6 +41,7 @@ internal static partial class ModEmoConstants
             public const string LeftEyeY = $"v2/EyeLeftY";
             public const string RightEyeX = $"v2/EyeRightX";
             public const string RightEyeY = $"v2/EyeRightY";
+            public const string EyeClosed = $"v2/EyeClosed";
         }
 
         public static class Internal
