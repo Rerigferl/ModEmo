@@ -2,16 +2,20 @@
 
 namespace Numeira;
 
+#if UNITY_EDITOR
 [InitializeOnLoad]
+#endif
 internal static class ComponentCache
 {
     private static uint HIERARCHY_CHANGED_SEQ = uint.MinValue;
     private static readonly Dictionary<GameObject, GameObjectDataCache> cache = new();
 
+    #if UNITY_EDITOR
     static ComponentCache()
     {
         EditorApplication.hierarchyChanged += () => HIERARCHY_CHANGED_SEQ = unchecked(HIERARCHY_CHANGED_SEQ + 1);
     }
+    #endif
 
     public static List<Component> GetCachedComponents(this GameObject gameObject) 
         => cache.GetOrAdd(gameObject, static obj => new(obj)).Components;

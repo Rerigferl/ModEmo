@@ -10,7 +10,6 @@ internal interface IOwnerComponent<T> : IOwnerComponent where T : ISubComponent<
 
 }
 
-[InitializeOnLoad]
 internal static class OwnerCompoenentExt
 {
     public static IEnumerable<T> GetOwnedComponents<T>(this IOwnerComponent<T> owner) where T : ISubComponent<T>
