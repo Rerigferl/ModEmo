@@ -106,7 +106,7 @@ internal static class BlinkGenerator
         animatorController.Parameters.AddFloat(smoothed);
         context.GetData().Parameters.Add(new(ParameterNames.FaceTracking.EyeClosed, 0f, AnimatorParameterType.Float, false, false));
 
-        timerState.AddTransition(eyeCloseState).AddCondition(AnimatorConditionMode.Greater, smoothed, 0);
+        timerState.AddTransition(eyeCloseState).AddCondition(AnimatorConditionMode.Greater, ParameterNames.FaceTracking.EyeClosed, 0);
         eyeCloseState.AddTransition(timerState).AddCondition(AnimatorConditionMode.Less, smoothed, ModEmoConstants.Epsilon);
     }
 }
