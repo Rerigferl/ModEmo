@@ -30,12 +30,7 @@ internal sealed class FaceInfo
         for (int i  = 0; i < count; i++)
         {
             var name = mesh.GetBlendShapeName(i);
-            bool isMarkerBlendshape = component.Settings.MarkerDetectMode switch
-            {
-                MarkerBlendShapeDetectMode.ByName => component.Settings.SeparatorStringRegEx.IsMatch(name),
-                MarkerBlendShapeDetectMode.ByVertex => UnsafeMeshUtils.IsMarkerBlendShape(mesh, i, component.Settings.MarkerBlendshapeVertexCountThreshold, component.Settings.MarkerBlendshapeThreshold) && !IsReservedBlendShape(name),
-                _ => false,
-            };
+            bool isMarkerBlendshape = component.Settings.SeparatorStringRegEx.IsMatch(name);
 
             if (isMarkerBlendshape)
             {
