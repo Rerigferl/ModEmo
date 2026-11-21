@@ -123,6 +123,7 @@ internal sealed partial class ModEmoPluginDefinition : Plugin<ModEmoPluginDefini
                     defaultValue = x.Value,
                     localOnly = x.IsLocal,
                     saved = x.Saved,
+                    hasExplicitDefaultValue = true,
                     syncType = x.SyncType switch
                     {
                         AnimatorParameterType.Int => ParameterSyncType.Int,
